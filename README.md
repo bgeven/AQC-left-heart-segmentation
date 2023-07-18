@@ -8,19 +8,19 @@ Bram Geven - b.w.m.geven@student.tue.nl
 ## File structure
 
 
-Dataset/
-├── Patient_0001
-├── Patient_0002
-├── ...
+Dataset/ <br>
+├── Patient_0001 <br>
+├── Patient_0002 <br>
+├── ... <br>
 
 Within each
 
->Dataset/Patient_0001/
->├── DICOM_files # optional
->├── images
->|   ├── a2ch
->|   └── a4ch
->└── segmentations
->    ├── a2ch
->    └── a4ch
+>Dataset/Patient_0001/ <br>
+>├── DICOM_files # optional <br>
+>├── images <br>
+>|   ├── a2ch <br>
+>|   └── a4ch <br>
+>└── segmentations <br>
+>    ├── a2ch <br>
+>    └── a4ch <br>
 
