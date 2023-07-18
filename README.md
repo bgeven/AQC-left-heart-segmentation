@@ -15,16 +15,6 @@ Dataset/ <br>
 
 Within each
 
-<<<<<<< Updated upstream
->Dataset/Patient_0001/ <br>
->├── DICOM_files # optional <br>
->├── images <br>
->|   ├── a2ch <br>
->|   └── a4ch <br>
->└── segmentations <br>
->    ├── a2ch <br>
->    └── a4ch <br>
-=======
 Dataset/Patient_0001/ <br>
 ├── DICOM_files # optional <br>
 ├── images <br>
@@ -33,5 +23,4 @@ Dataset/Patient_0001/ <br>
 └── segmentations <br>
     ├── a2ch <br>
     └── a4ch <br>
->>>>>>> Stashed changes
 
