@@ -13,12 +13,12 @@ Dataset/ <br>
 ├── Patient_0002 <br>
 ├── ... <br>
 
-Within each
+Within each patient folder, the following structure is expected:
 
 Dataset/Patient_0001/ <br>
 ├── DICOM_files # optional <br>
 ├── images <br>
-|   ├── a2ch <br>
+|<space><space>├── a2ch <br>
 |   └── a4ch <br>
 └── segmentations <br>
     ├── a2ch <br>
