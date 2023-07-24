@@ -128,34 +128,36 @@ def combine_segmentations(segmentations, typeOfCombination='difference', labels=
         
     return total_seg
 
-def find_coordinates_of_gaps(seg):
-    """ Find the coordinates of the gaps in a segmentation.
+def find_coordinates_of_holes(seg): 
+    """ Find the coordinates of the holes in a segmentation.
 
     Args:
         seg (numpy array): Segmentation of the image.
-    
+
     Returns:
-        gap_coordinates (list): Coordinates of the gaps in the segmentation.
+        coordinates_holes (tuple): Coordinates of the holes in the segmentation.
     """
-    # Set all values larger than 0 to 1
+    # Set all values larger than 0 to 1. 
     seg_same_val = seg.copy()
     seg_same_val[seg_same_val > 0] = 1
     
-    # Find the contours of the structures in full segmentation.
+    # Find the contours of the structures in full segmentation. 
     contours = find_contours(seg_same_val, 'external')
 
-    # Check if a contour exists
-    if len(contours) == 0:
-        gap_coordinates = [[]]
+    coordinates_holes_x_all, coordinates_holes_y_all = np.array([]), np.array([])
         
-    else:
-        # Get the main contour, based on area.
-        main_contour = max(contours, key=cv2.contourArea)
+    for contour in contours:       
+        # Create a mask from the contour. 
+        mask = cv2.drawContours(np.zeros_like(seg_same_val), [contour], 0, 255, -1)
         
-        # Create a mask from the contour.
-        mask = cv2.drawContours(np.zeros_like(seg_same_val), [main_contour], 0, 255, -1)
+        # Find the positions of all the zero pixels within the contour. 
+        coordinates_holes_contour = np.where((mask == 255) & (seg_same_val == 0))
+
+        coordinates_holes_x, coordinates_holes_y = coordinates_holes_contour[0], coordinates_holes_contour[1]
         
-        # Find the positions of all the zero pixels within the contour.
-        gap_coordinates = np.where((mask == 255) & (seg_same_val == 0))
+        coordinates_holes_x_all = np.append(coordinates_holes_x_all, coordinates_holes_x) 
+        coordinates_holes_y_all = np.append(coordinates_holes_y_all, coordinates_holes_y) 
     
-    return gap_coordinates
+    coordinates_holes = (coordinates_holes_x_all.astype('int64'), coordinates_holes_y_all.astype('int64'))
+    
+    return coordinates_holes
