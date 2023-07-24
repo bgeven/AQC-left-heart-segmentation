@@ -7,8 +7,9 @@ Bram Geven - b.w.m.geven@student.tue.nl
 
 ## File structure
 
+
 ```
-Dataset/ 
+DatasetName/ 
 ├── Patient_0001
 ├── Patient_0002
 ├── ... 
@@ -17,8 +18,8 @@ Dataset/
 Within each patient folder, the following structure is expected:
 
 ```
-Dataset/Patient_0001/
-├── DICOM_files # optional
+DatasetName/Patient_0001/
+├── DICOM_files (optional)
 ├── images
 |   ├── a2ch 
 |   └── a4ch
