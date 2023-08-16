@@ -164,7 +164,7 @@ def do_single_frame_QC(directory_segmentations, images_of_one_person):
         total_score += 1 if num_gaps23 > 0 else 0
         
         # Extend the overview dictionary with interim results, can be used for analysation. True is good, False is bad.
-        overview = [num_contours1 == 0, num_contours2 == 0, num_contours3 == 0, num_contours1 > 1, num_contours2 > 1, num_contours3 > 1, num_gaps1 != 0, num_gaps2 != 0, num_gaps3 != 0, num_gaps12 != 0, num_gaps13 != 0, num_gaps23 != 0]
+        overview = [num_contours1 == 0, num_contours2 == 0, num_contours3 == 0, num_contours1 > 1, num_contours2 > 1, num_contours3 > 1, num_gaps1 > 0, num_gaps2 > 0, num_gaps3 > 0, num_gaps12 > 0, num_gaps13 > 0, num_gaps23 > 0]
     
         QC_scores.append(total_score)
         overviews[image] = overview

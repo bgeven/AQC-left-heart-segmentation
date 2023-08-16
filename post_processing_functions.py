@@ -434,8 +434,8 @@ def post_process_segmentation(segmentation, centroids):
     if len(find_coordinates_of_holes(seg_13)[0]) > 0:
         seg_total = fill_holes_between_LV_LA(seg_total)
 
-    # Check for holes between MYO and LA, and fill them if present and larger or equal to 4 pixels. 
-    if len(find_coordinates_of_holes(seg_total)[0]) >= 4:
+    # Check for holes between MYO and LA, and fill them if present.
+    if len(find_coordinates_of_holes(seg_total)[0]) > 0:
         seg_total = fill_holes_between_MYO_LA(seg_total)
        
     return seg_total
