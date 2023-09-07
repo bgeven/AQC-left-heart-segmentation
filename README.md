@@ -2,7 +2,7 @@
 
 This repository was created for the MICCAI STACOM workshop paper "Automated quality-controlled left heart segmentation from 2D echocardiography". 
 
-Bram Geven - b.w.m.geven@student.tue.nl
+Bram Geven - bgev545@aucklanduni.ac.nz
 
 
 ## File structure
@@ -20,10 +20,8 @@ Within each patient folder, the following structure is expected:
 ```
 DatasetName/Patient_0001/
 ├── DICOM_files (optional)
-├── images
-|   ├── a2ch 
-|   └── a4ch
-└── segmentations
-    ├── a2ch
-    └── a4ch 
+├── images (optional)
+├── segmentations_original
+└── segmentations_post_processed
+
 ```
