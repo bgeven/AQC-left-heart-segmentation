@@ -365,8 +365,8 @@ def fill_holes_between_LV_MYO(seg_total):
                 distances_gap2 = [np.sqrt((x - coor_x2) ** 2 + (y - coor_y2) ** 2) for x, y in zip(outside_c_points_x, outside_c_points_y)]
                 min_MYO_thickness = min(min(distances_gap1), min(distances_gap2))
             
-                # Loop over all pixels with value 0, check if difference between pixel and outside myocardium (epicardial) 
-                # border is smaller than the minimum myocardial thickness. If this is the case, give pixel value 2. 
+                # Loop over all pixels with value 0, check if difference between pixel and outside border of myocardium  
+                # (epicardium) is smaller than the minimum myocardial thickness. If this is the case, give pixel value 2. 
                 for row, col in zip(zero_positions[0], zero_positions[1]):  
                     for x, y in zip(outside_c_points_x, outside_c_points_y):
                         if np.sqrt((x - col)**2 + (y - row)**2) <= min_MYO_thickness:
@@ -466,6 +466,7 @@ def main_post_processing(path_to_segmentations, path_to_final_segmentations, sin
         centroids = get_mean_centroids(path_to_segmentations, images_of_one_person, frames_to_process)
 
         for frame_nr, image in enumerate(images_of_one_person):
+            # In case post-processing is needed, do post-processing and save segmentation in final folder. 
             if frame_nr in frames_to_process:
                 # Define file location and load segmentation.
                 file_location_seg = os.path.join(path_to_segmentations, image)
@@ -479,7 +480,7 @@ def main_post_processing(path_to_segmentations, path_to_final_segmentations, sin
                 save_path = os.path.join(path_to_final_segmentations, image)
                 sitk.WriteImage(itk_seg_after_pp, save_path)    
             
-            # In case no post-processing needed.
+            # In case no post-processing needed, copy segmentation to final folder.
             else:
                 segmentation_location = os.path.join(path_to_segmentations, image)
                 shutil.copy(segmentation_location, path_to_final_segmentations)

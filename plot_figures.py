@@ -1,7 +1,7 @@
 import os
-import numpy as np
 import cv2
-from PIL import Image, ImageEnhance
+import numpy as np
+from PIL import Image
 import matplotlib.pyplot as plt
 from general_utilities import get_image_array, separate_segmentation, find_contours
 
