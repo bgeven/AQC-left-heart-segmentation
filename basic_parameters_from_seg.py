@@ -98,7 +98,7 @@ def pad_areas(areas):
     return areas_padded
 
 
-def find_ES_points(areas, frames_R_wave=[]):
+def find_ES_points(areas, frames_R_wave=[], nr_peaks=3, nr_peak_type='auto'):
     """Find end-systole points, from LV areas.
 
     Args:
@@ -109,10 +109,14 @@ def find_ES_points(areas, frames_R_wave=[]):
         ES_points (list): End-systole points.
     """
     # Find number of ED points and subtract 1 to find number of ES peaks
-    if len(frames_R_wave) > 0:
-        nr_peaks = nr_of_ED_points(frames_R_wave, len(areas)) - 1
+
+    if nr_peak_type == 'auto':
+        if len(frames_R_wave) > 0:
+            nr_peaks = nr_of_ED_points(frames_R_wave, len(areas)) - 1
+    elif nr_peak_type == 'force':
+        nr_peaks = nr_peaks
     else:
-        nr_peaks = 3  # Set default number of ES points to 3
+        raise ValueError('nr_peak_type should be "auto" or "force"')
 
     # Define the estimated frame difference between the peaks
     frame_difference = len(areas) / (nr_peaks + 1)
