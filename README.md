@@ -4,6 +4,8 @@ This repository was created for the MICCAI STACOM workshop paper "Automated qual
 
 Bram Geven - bgev545@aucklanduni.ac.nz
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 
 ## File structure
 
