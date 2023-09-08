@@ -5,7 +5,7 @@ from scipy.signal import find_peaks
 from general_utilities import get_image_array
 
 
-def get_factor_px2_to_cm2(pixel_spacing):
+def get_factor_px2_to_cm2(pixel_spacing: list[float]) -> float:
     """Calculate factor to convert pixel size to cm2.
 
     Args:
@@ -21,7 +21,7 @@ def get_factor_px2_to_cm2(pixel_spacing):
     return px2cm2_factor
 
 
-def seg_to_area(seg, label, px2cm2_factor):
+def seg_to_area(seg: np.ndarray, label, px2cm2_factor) -> float:
     """Calculate the area of a certain label in a segmentation.
 
     Args:
