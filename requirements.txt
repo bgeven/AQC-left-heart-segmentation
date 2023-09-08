@@ -1,0 +1,8 @@
+matplotlib==3.7.2
+numpy==1.25.2
+Pillow==10.0.0
+Pillow==10.0.0
+pydicom==2.4.3
+scipy==1.11.2
+SimpleITK==2.2.1
+SimpleITK==2.2.1
