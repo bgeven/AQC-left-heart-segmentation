@@ -1,4 +1,4 @@
-# Script containing functions to get properties from DICOM file. 
+# Functions to get properties from DICOM file. 
 import os
 import numpy as np
 import pydicom
