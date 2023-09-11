@@ -1,6 +1,8 @@
+# This script contains functions for the single-frame quality control of segmentation.
 import os
 import cv2
 import numpy as np
+from collections import defaultdict
 from general_utilities import (
     find_contours,
     combine_segmentations,
@@ -298,10 +300,7 @@ def main_single_frame_qc(path_to_segmentations):
     Returns:
         single_frame_qc (dict): Dictionary of the results of the single-frame quality control of segmentation.
     """
-    single_frame_qc = {}
-    single_frame_qc["QC_Scores"] = {}
-    single_frame_qc["Overviews"] = {}
-    single_frame_qc["Flagged_Frames"] = {}
+    single_frame_qc = defaultdict(dict)
 
     # Get list of filenames in one folder containing the segmentations.
     all_files = os.listdir(path_to_segmentations)
@@ -322,7 +321,7 @@ def main_single_frame_qc(path_to_segmentations):
         # Save the results in a dictionary.
         single_frame_qc["QC_Scores"][patient] = qc_scores
         single_frame_qc["Overviews"][patient] = overview
-        single_frame_qc["Flagged_Frames"][patient] = flagged_frames
+        single_frame_qc["Flagged_frames"][patient] = flagged_frames
 
     # Get statistics of the quality control of segmentation.
     qc_stats = get_stats_single_frame_qc(single_frame_qc["Overviews"])

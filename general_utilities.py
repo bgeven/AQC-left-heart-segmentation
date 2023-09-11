@@ -1,3 +1,4 @@
+# This script contains general functions used in various other scripts.
 import cv2
 import numpy as np
 import SimpleITK as sitk

@@ -1,4 +1,4 @@
-# Functions to calculate segmentation parameters from segmentations.
+# This script contains functions to get segmentation parameters from the segmentations.
 import os
 import numpy as np
 from scipy.signal import find_peaks
@@ -25,7 +25,7 @@ def comp_area_from_seg(seg, label, px2cm2_factor):
     """Calculate the area of a certain label in a segmentation.
 
     Args:
-        seg (np.array): Segmentation of the echo image.
+        seg (np.ndarray): Segmentation of the echo image.
 
     Returns:
         area (float): Area of the label in cm2.

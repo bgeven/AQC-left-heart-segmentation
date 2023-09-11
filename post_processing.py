@@ -1,4 +1,4 @@
-# Functions to do post-processing
+# This script contains functions to do post-processing on the segmentations.
 import os
 import cv2
 import shutil
@@ -64,7 +64,7 @@ def get_mean_centroids(path_to_segmentations, images_of_one_person, frames_to_pr
     Returns:
         mean_centroids (dict): Dictionary with structure numbers as keys and tuples of x- and y-coordinates as values.
     """
-    # Create dictionary to store middle points of structures.
+    # Create dictionary to store centroids of structures.
     centroids = {1: ([], []), 2: ([], []), 3: ([], [])}
 
     for frame_nr, image in enumerate(images_of_one_person):
@@ -79,7 +79,7 @@ def get_mean_centroids(path_to_segmentations, images_of_one_person, frames_to_pr
         else:
             centroids = find_centroids_of_all_structures(centroids, seg)
 
-    # Compute average middle point of each structure.
+    # Compute average centroid of each structure.
     mean_centroids = {
         structure: (int(np.nanmean(coords[0])), int(np.nanmean(coords[1])))
         for structure, coords in centroids.items()

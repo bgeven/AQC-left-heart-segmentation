@@ -1,4 +1,4 @@
-# Functions to create figures.
+# This script contains functions to create figures.
 import os
 import cv2
 import numpy as np
@@ -11,11 +11,11 @@ def color_segmentation(seg, colors_for_labels):
     """Function to color a segmentation with colors for each label.
 
     Args:
-        seg (numpy array): Segmentation to be colored.
-        colors_for_labels (numpy array): Color definitions for each label.
+        seg (np.ndarray): Segmentation to be colored.
+        colors_for_labels (np.ndarray): Color definitions for each label.
 
     Returns:
-        seg_colored (numpy array): Colored segmentation.
+        seg_colored (np.ndarray): Colored segmentation.
     """
     seg_colored = colors_for_labels[seg]
 
@@ -133,15 +133,19 @@ def main_plot_area_time_curves(
     dicom_properties,
     segmentation_properties,
     colors_for_labels,
+    font_size=8,
+    dpi_value=100
 ):
     """Function to plot area-time curves for all patients.
 
     Args:
-        directory_images (string): Directory of the folder with the US images.
-        directory_segmentations (string): Directory of the folder with the segmentations.
-        dicom_properties (dictionary): Dictionary with dicom properties of all patients.
-        segmentation_properties (dictionary): Dictionary with segmentation properties of all patients.
-        colors_for_labels (numpy array): Color definitions for each label.
+        directory_images (str): Directory of the folder with the US images.
+        directory_segmentations (str): Directory of the folder with the segmentations.
+        dicom_properties (dict): Dictionary with dicom properties of all patients.
+        segmentation_properties (dict): Dictionary with segmentation properties of all patients.
+        colors_for_labels (np.ndarray): Color definitions for each label.
+        font_size (int): Font size of the figure (default: 8).
+        dpi_value (int): DPI value of the figure (default: 100).
     """
     # Get list of filenames in one folder
     all_files = os.listdir(directory_segmentations)
@@ -184,12 +188,11 @@ def main_plot_area_time_curves(
                 echo_image, seg, colors_for_labels
             )
 
-            plt.figure(dpi=300)
+            plt.figure(dpi=dpi_value)
             plt.suptitle(("Segmentation of " + patient + ", frame " + str(frame_nr)))
 
             # Format figure with subplots. 
             X = [(2, 3, 1), (2, 3, 2), (2, 3, 3), (2, 3, (4, 5))]
-            font_size = 8
 
             for nr_plot, (nrows, ncols, plot_number) in enumerate(X):
                 if nr_plot == 0:
