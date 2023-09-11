@@ -3,12 +3,7 @@ import os
 import cv2
 import numpy as np
 from collections import defaultdict
-from general_utilities import (
-    find_contours,
-    combine_segmentations,
-    get_image_array,
-    separate_segmentation,
-)
+from general_utilities import *
 
 
 def num_contours(seg):
@@ -291,37 +286,32 @@ def get_stats_single_frame_qc(overviews_all):
     return stats
 
 
-def main_single_frame_qc(path_to_segmentations):
+def main_single_frame_qc(path_to_segmentations, all_files, views):
     """Main function for single-frame quality control of segmentation.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
+        all_files (list): List of all files in the directory.
+        views (list): List of views of the segmentations.
 
     Returns:
         single_frame_qc (dict): Dictionary of the results of the single-frame quality control of segmentation.
     """
     single_frame_qc = defaultdict(dict)
 
-    # Get list of filenames in one folder containing the segmentations.
-    all_files = os.listdir(path_to_segmentations)
-    patients = sorted(set([i[:29] for i in all_files]))
-
-    for patient in patients:
-        # Get the images per patient and sort these based on frame number.
-        images_of_one_person_unsorted = [i for i in all_files if i.startswith(patient)]
-        images_of_one_person = sorted(
-            images_of_one_person_unsorted, key=lambda x: int(x[30:-7])
-        )
+    for view in views:
+        # Get all files of one view of one person.
+        files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Do single frame QC of segmentation.
         qc_scores, overview, flagged_frames = do_single_frame_qc(
-            path_to_segmentations, images_of_one_person
+            path_to_segmentations, files_of_view
         )
 
         # Save the results in a dictionary.
-        single_frame_qc["QC_Scores"][patient] = qc_scores
-        single_frame_qc["Overviews"][patient] = overview
-        single_frame_qc["Flagged_frames"][patient] = flagged_frames
+        single_frame_qc["QC_Scores"][view] = qc_scores
+        single_frame_qc["Overviews"][view] = overview
+        single_frame_qc["Flagged_frames"][view] = flagged_frames
 
     # Get statistics of the quality control of segmentation.
     qc_stats = get_stats_single_frame_qc(single_frame_qc["Overviews"])

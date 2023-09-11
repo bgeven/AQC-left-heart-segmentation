@@ -2,6 +2,7 @@
 import os
 import pydicom
 import numpy as np
+from collections import defaultdict
 
 
 def get_frame_times(dicom_data):
@@ -11,7 +12,7 @@ def get_frame_times(dicom_data):
         dicom_data (FileDataset): Pydicom object containing DICOM file data.
 
     Returns:
-        list: Cumulative times of each frame in the image sequence.
+        times_frames_added (list): Cumulative times of each frame in the image sequence.
     """
     # Retrieve list containing times (in ms) between each frame in the image sequence.
     times_spacing_frames = [float(s) for s in dicom_data.FrameTimeVector._list]
@@ -31,7 +32,7 @@ def get_pixel_spacing(dicom_data):
         dicom_data (Dataset): Pydicom object containing DICOM file data.
 
     Returns:
-        list: Pixel spacing of the image sequence for each dimension.
+        pixel_spacing (list): Pixel spacing of the image sequence for each dimension.
     """
     pixel_spacing = [float(s) for s in dicom_data.PixelSpacing._list]
 
@@ -71,13 +72,10 @@ def main_get_dicom_properties(path_to_dicom_files):
         path_to_dicom_files (str): Path to the directory containing the DICOM files.
 
     Returns:
-        dict: Dictionary containing the properties of the DICOM files.
+        dicom_properties (dict): Dictionary containing the properties of the DICOM files.
     """
     # Create dictionary to store the properties of the DICOM files.
-    dicom_properties = {}
-    dicom_properties["Times Frames"] = {}
-    dicom_properties["Pixel Spacing"] = {}
-    dicom_properties["Frames R Waves"] = {}
+    dicom_properties = defaultdict(dict)
 
     # Get the DICOM files in the directory.
     dicom_files = os.listdir(path_to_dicom_files)

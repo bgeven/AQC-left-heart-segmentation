@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-from general_utilities import get_image_array, separate_segmentation, find_contours
+from general_utilities import get_image_array, separate_segmentation, find_contours, get_list_with_files_of_view
 
 
 def color_segmentation(seg, colors_for_labels):
@@ -128,59 +128,59 @@ def color_contours_segmentation(image, seg, label_colors):
 
 
 def main_plot_area_time_curves(
-    directory_images,
-    directory_segmentations,
+    path_to_images,
+    path_to_segmentations,
+    all_files,
+    views,
     dicom_properties,
     segmentation_properties,
     colors_for_labels,
     font_size=8,
-    dpi_value=100
+    dpi_value=100,
+    length_ext=7
 ):
     """Function to plot area-time curves for all patients.
 
     Args:
-        directory_images (str): Directory of the folder with the US images.
-        directory_segmentations (str): Directory of the folder with the segmentations.
+        path_to_images (str): Directory of the folder with the echo images.
+        path_to_segmentations (str): Directory of the folder with the segmentations.
+        all_files (list): List of all files in the directory.
+        views (list): List of views of the segmentations.
         dicom_properties (dict): Dictionary with dicom properties of all patients.
         segmentation_properties (dict): Dictionary with segmentation properties of all patients.
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
+        length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
     """
-    # Get list of filenames in one folder
-    all_files = os.listdir(directory_segmentations)
-    patients = sorted(set([i[:29] for i in all_files if i.startswith("cardiohance")]))
-
-    # Loop over all files in a folder
-    for patient in patients:
+    # Define directories of images and segmentations.
+    for view in views:
         # Get dicom and segmentation properties of one patient
-        ed_points = segmentation_properties["ED Points"][patient]
-        es_points = segmentation_properties["ES Points"][patient]
-        lv_areas = segmentation_properties["LV areas"][patient]
-        myo_areas = segmentation_properties["MYO areas"][patient]
-        la_areas = segmentation_properties["LA areas"][patient]
-        frame_times = dicom_properties["Times Frames"][patient]
+        ed_points = segmentation_properties["ED Points"][view]
+        es_points = segmentation_properties["ES Points"][view]
+        lv_areas = segmentation_properties["LV areas"][view]
+        myo_areas = segmentation_properties["MYO areas"][view]
+        la_areas = segmentation_properties["LA areas"][view]
+        frame_times = dicom_properties["Times Frames"][view]
 
         # Plotting settings
         min_y_val = int(0.9 * min(min(lv_areas), min(myo_areas), min(la_areas)))
         max_y_val = int(1.1 * max(max(lv_areas), max(myo_areas), max(la_areas)))
 
-        # Find filenames for all images of one patient and sort based on frame number
-        images_of_one_person_unsorted = [i for i in all_files if i.startswith(patient)]
-        images_of_one_person = sorted(
-            images_of_one_person_unsorted, key=lambda x: int(x[30:-7])
-        )
+        # Get all files of one view of one person.
+        files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Plot area-time curves for all frames of one patient. 
-        for frame_nr, image in enumerate(images_of_one_person[0:1]):
+        # Only plot the first frame for now.
+        for frame_nr, file_name in enumerate(files_of_view[0:1]):
             # Define file location and load echo image frame. 
             file_location_image = os.path.join(
-                directory_images, (image[:33] + "_0000" + image[-7:])
+                path_to_images, (file_name[:-length_ext] + "_0000" + file_name[-length_ext:])
             )
             echo_image = get_image_array(file_location_image)
 
             # Define file location and load segmentation. 
-            file_location_seg = os.path.join(directory_segmentations, image)
+            file_location_seg = os.path.join(path_to_segmentations, file_name)
             seg = get_image_array(file_location_seg)
             seg_colored = color_segmentation(seg, colors_for_labels)
 
@@ -189,7 +189,7 @@ def main_plot_area_time_curves(
             )
 
             plt.figure(dpi=dpi_value)
-            plt.suptitle(("Segmentation of " + patient + ", frame " + str(frame_nr)))
+            plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
 
             # Format figure with subplots. 
             X = [(2, 3, 1), (2, 3, 2), (2, 3, 3), (2, 3, (4, 5))]

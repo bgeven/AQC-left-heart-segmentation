@@ -8,7 +8,7 @@ from general_utilities import *
 
 
 def find_centroid(seg):
-    """Find centroid of structures present in segmentation.
+    """ Find centroid of structures present in segmentation.
 
     Args:
         seg (np.ndarray): Segmentation of structures.
@@ -36,7 +36,7 @@ def find_centroid(seg):
 
 
 def find_centroids_of_all_structures(centroids):
-    """Find centroid of all structures present in segmentation and add to dictionary.
+    """ Find centroid of all structures present in segmentation and add to dictionary.
 
     Args:
         centroids (dict): Initial dictionary with structure numbers as keys and lists of x- and y-coordinates as values.
@@ -54,7 +54,7 @@ def find_centroids_of_all_structures(centroids):
 
 
 def get_mean_centroids(path_to_segmentations, images_of_one_person, frames_to_process):
-    """Get the mean middle point of each structure in all segmentations of one person.
+    """ Get the mean middle point of each structure in all segmentations of one person.
 
     Args:
         path_to_segmentations (str): Path to folder with segmentations.
@@ -89,7 +89,7 @@ def get_mean_centroids(path_to_segmentations, images_of_one_person, frames_to_pr
 
 
 def get_main_contour_lv_la(seg, mean_centroid):
-    """Extract the main contour in LV and LA segmentations.
+    """ Extract the main contour in LV and LA segmentations.
 
     The main contour is the contour that contains the mean centroid of the structure based on all frames in the image sequence.
     The contours that were not selected as main contour are removed from the segmentation.
@@ -142,7 +142,7 @@ def get_main_contour_lv_la(seg, mean_centroid):
 
 
 def get_main_contour_myo(seg_1, seg_2, threshold_distance=5):
-    """Extract the contours of the myocardium that neighbour the LV.
+    """ Extract the contours of the myocardium that neighbour the LV.
 
     Args:
         seg_1 (np.ndarray): Segmentation of LV.
@@ -192,7 +192,7 @@ def get_main_contour_myo(seg_1, seg_2, threshold_distance=5):
 
 
 def fill_holes_within_structure(seg, label):
-    """Fill the holes within a structure.
+    """ Fill the holes within a structure.
 
     Args:
         seg (np.ndarray): Segmentation of structures.
@@ -230,7 +230,7 @@ def find_coordinates_of_structure(seg, label):
 
 
 def fill_holes_between_lv_la(segmentation):
-    """Fill the holes between LV and LA segmentations.
+    """ Fill the holes between LV and LA segmentations.
 
     Args:
         segmentation (np.ndarray): Segmentation of structures.
@@ -277,7 +277,7 @@ def fill_holes_between_lv_la(segmentation):
 
 
 def fill_holes_between_myo_la(seg_total):
-    """Fill the holes between MYO and LA segmentations.
+    """ Fill the holes between MYO and LA segmentations.
 
     Args:
         segmentation (np.ndarray): Segmentation of structures.
@@ -325,7 +325,7 @@ def fill_holes_between_myo_la(seg_total):
 
 
 def find_border_pixels_holes(distances):
-    """Find the start and end indices of the holes between the structures.
+    """ Find the start and end indices of the holes between the structures.
 
     Args:
         distances (list): List of distances between the contours of the structures.
@@ -352,7 +352,7 @@ def find_border_pixels_holes(distances):
 
 
 def fill_holes_between_lv_myo(seg_total):
-    """Fill the holes between LV and MYO segmentations.
+    """ Fill the holes between LV and MYO segmentations.
 
     Args:
         segmentation (np.ndarray): Segmentation of structures.
@@ -455,7 +455,7 @@ def fill_holes_between_lv_myo(seg_total):
 
 
 def post_process_segmentation(segmentation, centroids):
-    """Post-process segmentation.
+    """ Post-process segmentation.
 
     Post-processing consists of the following steps:
         1. Select main contours of each structure, if multiple present.
@@ -527,9 +527,9 @@ def post_process_segmentation(segmentation, centroids):
 
 
 def main_post_processing(
-    path_to_segmentations, path_to_final_segmentations, single_frame_qc
+    path_to_segmentations, path_to_final_segmentations, single_frame_qc, all_files, views
 ):
-    """Main function to do post-processing of all segmentations.
+    """ Main function to do post-processing of all segmentations.
 
     The post-processed segmentations will be saved in the folder specified by path_to_final_segmentations.
 
@@ -537,31 +537,26 @@ def main_post_processing(
         path_to_segmentations (str): Path to folder with segmentations.
         path_to_final_segmentations (str): Path to folder where post-processed segmentations should be saved.
         single_frame_QC (dict): Dictionary with patient IDs as keys and lists of frames that are detected as erroneous as values.
+        all_files (list): List of all files in the directory.
+        views (list): List of views of the segmentations.
     """
-    # Get list of filenames in one folder containing the segmentations.
-    all_files = os.listdir(path_to_segmentations)
-    patients = sorted(set([i[:29] for i in all_files]))
-
-    for patient in patients:
-        # Get the images per patient and sort these based on frame number.
-        images_of_one_person_unsorted = [i for i in all_files if i.startswith(patient)]
-        images_of_one_person = sorted(
-            images_of_one_person_unsorted, key=lambda x: int(x[30:-7])
-        )
+    for view in views:
+        # Get all files of one view of one person.
+        files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Get the frames that need to be processed.
-        frames_to_process = single_frame_qc["Flagged_Frames"][patient]
+        frames_to_process = single_frame_qc["Flagged_Frames"][view]
 
         # Get the mean centroids of all structures from all segmentations of one person.
         centroids = get_mean_centroids(
-            path_to_segmentations, images_of_one_person, frames_to_process
+            path_to_segmentations, files_of_view, frames_to_process
         )
 
-        for frame_nr, image in enumerate(images_of_one_person):
+        for frame_nr, filename in enumerate(files_of_view):
             # In case post-processing is needed, do post-processing and save segmentation in final folder.
             if frame_nr in frames_to_process:
                 # Define file location and load segmentation.
-                file_location_seg = os.path.join(path_to_segmentations, image)
+                file_location_seg = os.path.join(path_to_segmentations, filename)
                 initial_segmentation = get_image_array(file_location_seg)
 
                 # Post-process segmentation.
@@ -569,10 +564,10 @@ def main_post_processing(
 
                 # Save post-processed segmentation.
                 itk_seg_after_pp = sitk.GetImageFromArray(seg_total)
-                save_path = os.path.join(path_to_final_segmentations, image)
+                save_path = os.path.join(path_to_final_segmentations, filename)
                 sitk.WriteImage(itk_seg_after_pp, save_path)
 
             # In case no post-processing needed, copy segmentation to final folder.
             else:
-                segmentation_location = os.path.join(path_to_segmentations, image)
+                segmentation_location = os.path.join(path_to_segmentations, filename)
                 shutil.copy(segmentation_location, path_to_final_segmentations)

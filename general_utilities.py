@@ -1,7 +1,41 @@
 # This script contains general functions used in various other scripts.
+import os
 import cv2
 import numpy as np
 import SimpleITK as sitk
+
+
+def get_list_with_views(all_files, length_view_identifier=29):
+    """ Get list of the views of the segmentations present in one folder.
+
+    Args:
+        all_files (list): List of all the files in the folder.
+        length_view_identifier (int): Length of the view identifier (default: 29).
+
+    Returns:
+        views (list): List of the views of the segmentations present in one folder.
+    """
+    # Get list of the views in one folder containing the segmentations of one patient. 
+    views = sorted(set([i[:length_view_identifier] for i in all_files]))
+
+    return views
+
+
+def get_list_with_files_of_view(all_files, view_identifier, length_ext=7):   
+    """ Get list of the files belonging to a specific view.
+
+    Args:
+        all_files (list): List of all the files in the folder.
+        view_identifier (str): Identifier of the view.
+        length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
+
+    Returns:
+        images_of_one_view (list): List of the files belonging to a specific view.
+    """
+    images_of_one_view_unsrt = [i for i in all_files if i.startswith(view_identifier)]
+    images_of_one_view = sorted(images_of_one_view_unsrt, key=lambda x: int(x[len(view_identifier)+1:-length_ext]))
+
+    return images_of_one_view
 
 
 def get_image_array(file_location):
