@@ -22,41 +22,42 @@ def color_segmentation(seg, colors_for_labels):
     return seg_colored
 
 
-def remove_neighboring_pixels(contours1, contours2):
+def remove_neighboring_pixels(contours_1, contours_2, threshold_distance=3):
     """Function to remove points on the contours that neighbor the LV contour.
 
     Args:
-        contours1 (list): List of contours of the LV.
-        contours2 (list): List of contours of the MYO or LA.
+        contours_1 (list): List of contours of the LV.
+        contours_2 (list): List of contours of the MYO or LA.
+        threshold_distance (int): Threshold distance between the LV and MYO or LA contour to remove points on the MYO or LA contour (default: 3).
 
     Returns:
         contour_adapted (list): List of contours of the MYO or LA with points removed.
     """
-    if len(contours1) > 0 and len(contours2) > 0:
+    if len(contours_1) > 0 and len(contours_2) > 0:
         contour_adapted = []
 
         # Loop over all points on the contours of the MYO or LA to check if they neighbor the LV contour.
-        for contour2 in contours2:
-            for j in range(len(contour2)):
-                x_coor2 = int(contour2[j][0][0])
-                y_coor2 = int(contour2[j][0][1])
+        for contour_2 in contours_2:
+            for j in range(len(contour_2)):
+                x_coordinate_2 = int(contour_2[j][0][0])
+                y_coordinate_2 = int(contour_2[j][0][1])
 
-                coor2 = tuple([x_coor2, y_coor2])
+                coordinates_2 = tuple([x_coordinate_2, y_coordinate_2])
 
-                min_distance = cv2.pointPolygonTest(contours1[0], coor2, True)
+                min_distance = cv2.pointPolygonTest(contours_1[0], coordinates_2, True)
 
-                # If the distance between the point on the MYO or LA contour and the LV contour is larger than 3 pixels, add the point to the list of points.
-                if abs(min_distance) > 3.0:
-                    contour_adapted.append([x_coor2, y_coor2])
+                # If the distance between the point on the MYO or LA contour and the LV contour is larger than x pixels, add the point to the list of points.
+                if abs(min_distance) > threshold_distance:
+                    contour_adapted.append([x_coordinate_2, y_coordinate_2])
 
-        # Convert list of points to a numpy array and reshape to the correct format.
+        # Convert list of points to a numpy array and reshape to format of original contours.
         contour_adapted = np.array(contour_adapted)
         contour_adapted = tuple(
             contour_adapted.reshape((contour_adapted.shape[0], 1, 2))[np.newaxis, :]
         )
 
     else:
-        contour_adapted = contours2
+        contour_adapted = contours_2
 
     return contour_adapted
 
@@ -65,51 +66,51 @@ def color_contours_segmentation(image, seg, label_colors):
     """Function to project contours of a segmentation on an image.
 
     Args:
-        image (numpy array): Image to project contours on.
-        seg (numpy array): Segmentation to project contours of.
-        label_colors (numpy array): Color definitions for each label.
+        image (np.ndarray): Image to project contours on.
+        seg (np.ndarray): Segmentation to project contours of.
+        label_colors (np.ndarray): Color definitions for each label.
 
     Returns:
-        image_with_contours (numpy array): Image with projected contours.
+        image_with_contours (np.ndarray): Image with projected contours.
     """
     image_with_contours = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
-    # Map each label value to a specific color
+    # Map each label value to a specific color. 
     colored_labels = color_segmentation(seg, label_colors)
 
-    # Convert the colored labels back to an image
-    image_for_blend = Image.fromarray(image_with_contours)  # .convert('RGB')
+    # Convert the colored labels back to an image. 
+    image_for_blend = Image.fromarray(image_with_contours)
     color_labels = Image.fromarray(colored_labels.astype("uint8"))
 
-    # Create blended image
+    # Create blended image. 
     overlay_image = Image.blend(image_for_blend, color_labels, 0.1)
     image_with_contours = np.array(overlay_image)
 
-    # Separate contours for each label
-    _, seg1, seg2, seg3 = separate_segmentation(seg)
+    # Separate contours for each label. 
+    _, seg_1, seg_2, seg_3 = separate_segmentation(seg)
 
-    contours1 = find_contours(seg1, "all")
-    contours2 = find_contours(seg2, "all")
-    contours3 = find_contours(seg3, "all")
+    contours_1 = find_contours(seg_1, "all")
+    contours_2 = find_contours(seg_2, "all")
+    contours_3 = find_contours(seg_3, "all")
 
-    # Remove points on the contours that neighbor the LV contour
-    contours2 = remove_neighboring_pixels(contours1, contours2)
-    contours3 = remove_neighboring_pixels(contours1, contours3)
+    # Remove points on the contours that neighbor the LV contour. 
+    contours_2 = remove_neighboring_pixels(contours_1, contours_2)
+    contours_3 = remove_neighboring_pixels(contours_1, contours_3)
 
     # Draw all contours on the image
-    for contour2 in contours2:
+    for contour_2 in contours_2:
         cv2.drawContours(
             image_with_contours,
-            contour2,
+            contour_2,
             -1,
             (int(label_colors[2][0]), int(label_colors[2][1]), int(label_colors[2][2])),
             4,
         )
 
-    for contour3 in contours3:
+    for contour_3 in contours_3:
         cv2.drawContours(
             image_with_contours,
-            contour3,
+            contour_3,
             -1,
             (int(label_colors[3][0]), int(label_colors[3][1]), int(label_colors[3][2])),
             4,
@@ -117,7 +118,7 @@ def color_contours_segmentation(image, seg, label_colors):
 
     cv2.drawContours(
         image_with_contours,
-        contours1,
+        contours_1,
         -1,
         (int(label_colors[1][0]), int(label_colors[1][1]), int(label_colors[1][2])),
         4,
@@ -149,16 +150,16 @@ def main_plot_area_time_curves(
     # Loop over all files in a folder
     for patient in patients:
         # Get dicom and segmentation properties of one patient
-        ED_points = segmentation_properties["ED Points"][patient]
-        ES_points = segmentation_properties["ES Points"][patient]
-        LV_areas = segmentation_properties["LV areas"][patient]
-        MYO_areas = segmentation_properties["MYO areas"][patient]
-        LA_areas = segmentation_properties["LA areas"][patient]
+        ed_points = segmentation_properties["ED Points"][patient]
+        es_points = segmentation_properties["ES Points"][patient]
+        lv_areas = segmentation_properties["LV areas"][patient]
+        myo_areas = segmentation_properties["MYO areas"][patient]
+        la_areas = segmentation_properties["LA areas"][patient]
         frame_times = dicom_properties["Times Frames"][patient]
 
         # Plotting settings
-        min_y_val = int(0.9 * min(min(LV_areas), min(MYO_areas), min(LA_areas)))
-        max_y_val = int(1.1 * max(max(LV_areas), max(MYO_areas), max(LA_areas)))
+        min_y_val = int(0.9 * min(min(lv_areas), min(myo_areas), min(la_areas)))
+        max_y_val = int(1.1 * max(max(lv_areas), max(myo_areas), max(la_areas)))
 
         # Find filenames for all images of one patient and sort based on frame number
         images_of_one_person_unsorted = [i for i in all_files if i.startswith(patient)]
@@ -166,40 +167,40 @@ def main_plot_area_time_curves(
             images_of_one_person_unsorted, key=lambda x: int(x[30:-7])
         )
 
-        # Loop over all images of one person
+        # Plot area-time curves for all frames of one patient. 
         for frame_nr, image in enumerate(images_of_one_person[0:1]):
-            # Define file location and load US image frame
+            # Define file location and load echo image frame. 
             file_location_image = os.path.join(
                 directory_images, (image[:33] + "_0000" + image[-7:])
             )
-            US_image = get_image_array(file_location_image)
+            echo_image = get_image_array(file_location_image)
 
-            # Define file location and load segmentation
+            # Define file location and load segmentation. 
             file_location_seg = os.path.join(directory_segmentations, image)
-            seg_uncolored = get_image_array(file_location_seg)
-            seg = color_segmentation(seg_uncolored, colors_for_labels)
+            seg = get_image_array(file_location_seg)
+            seg_colored = color_segmentation(seg, colors_for_labels)
 
             contours_seg = color_contours_segmentation(
-                US_image, seg_uncolored, colors_for_labels
+                echo_image, seg, colors_for_labels
             )
 
             plt.figure(dpi=300)
             plt.suptitle(("Segmentation of " + patient + ", frame " + str(frame_nr)))
 
-            # Format figure with subplots
+            # Format figure with subplots. 
             X = [(2, 3, 1), (2, 3, 2), (2, 3, 3), (2, 3, (4, 5))]
             font_size = 8
 
             for nr_plot, (nrows, ncols, plot_number) in enumerate(X):
                 if nr_plot == 0:
                     plt.subplot(nrows, ncols, plot_number)
-                    plt.imshow(US_image, cmap="gray")
+                    plt.imshow(echo_image, cmap="gray")
                     plt.title("Echo image", fontsize=font_size, loc="left")
                     plt.axis("off")
 
                 elif nr_plot == 1:
                     plt.subplot(nrows, ncols, plot_number)
-                    plt.imshow(seg)
+                    plt.imshow(seg_colored)
                     plt.title("Segmentation", fontsize=font_size, loc="left")
                     plt.axis("off")
 
@@ -213,10 +214,10 @@ def main_plot_area_time_curves(
                     plt.subplot(nrows, ncols, plot_number)
                     plt.title("Area-time curves", fontsize=font_size, loc="left")
                     plt.plot(
-                        frame_times, LV_areas, color="green", label="Left ventricle"
+                        frame_times, lv_areas, color="green", label="Left ventricle"
                     )
-                    plt.plot(frame_times, MYO_areas, color="red", label="Myocardium")
-                    plt.plot(frame_times, LA_areas, color="blue", label="Left atrium")
+                    plt.plot(frame_times, myo_areas, color="red", label="Myocardium")
+                    plt.plot(frame_times, la_areas, color="blue", label="Left atrium")
 
                     # Plot vertical lines for current frame, ES and ED points
                     plt.axvline(
@@ -229,29 +230,29 @@ def main_plot_area_time_curves(
 
                     # Plot vertical lines for all ED and ES points
                     plt.axvline(
-                        x=frame_times[ES_points[0]],
+                        x=frame_times[es_points[0]],
                         color="m",
                         linewidth=1,
                         linestyle="--",
                         label="ES point",
                     )
                     plt.axvline(
-                        x=frame_times[ED_points[0]],
+                        x=frame_times[ed_points[0]],
                         color="y",
                         linewidth=1,
                         linestyle="--",
                         label="ED point",
                     )
-                    for idx in range(1, len(ES_points)):
+                    for idx in range(1, len(es_points)):
                         plt.axvline(
-                            x=frame_times[ES_points[idx]],
+                            x=frame_times[es_points[idx]],
                             color="m",
                             linewidth=1,
                             linestyle="--",
                         )
-                    for idx in range(1, len(ED_points)):
+                    for idx in range(1, len(ed_points)):
                         plt.axvline(
-                            x=frame_times[ED_points[idx]],
+                            x=frame_times[ed_points[idx]],
                             color="y",
                             linewidth=1,
                             linestyle="--",

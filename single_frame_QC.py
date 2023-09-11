@@ -13,7 +13,7 @@ def num_contours(seg):
     """Find the number of external contours in a segmentation.
 
     Args:
-        seg (numpy array): Segmentation of the image.
+        seg (np.ndarray): Segmentation of the image.
 
     Returns:
         number_of_contours (int): Number of external contours in the segmentation.
@@ -52,32 +52,32 @@ def check_for_gaps(num_of_contours_ext, contours_all, min_size=[2, 2]):
     return num_of_gaps
 
 
-def check_gap_between_structures(segA, segB, num_gapsA, num_gapsB, min_size=[1, 1]):
+def check_gap_between_structures(seg_A, seg_B, num_gaps_A, num_gaps_B, min_size=[1, 1]):
     """Check if gaps are present between two structures.
 
     Args:
-        segA (numpy array): Segmentation of the first structure.
-        segB (numpy array): Segmentation of the second structure.
-        num_gapsA (int): Number of gaps in the first structure.
-        num_gapsB (int): Number of gaps in the second structure.
+        seg_A (np.ndarray): Segmentation of the first structure.
+        seg_B (np.ndarray): Segmentation of the second structure.
+        num_gaps_A (int): Number of gaps in the first structure.
+        num_gaps_B (int): Number of gaps in the second structure.
         min_size (list): Minimum size of a gap.
 
     Returns:
         num_gaps (int): Number of gaps between the two structures.
     """
     # Create total segmentation of different combinations of structures
-    total_seg = combine_segmentations([segA, segB], "no difference")
+    total_seg = combine_segmentations([seg_A, seg_B], "no difference")
 
     # Find contours within combined segmentations 1 and 2
-    contoursAB = find_contours(total_seg, "all")
+    contours_AB = find_contours(total_seg, "all")
     filtered_contours = [
         contour
-        for contour in contoursAB
+        for contour in contours_AB
         if cv2.contourArea(contour) >= (min_size[0] * min_size[1])
     ]
 
     # Find number of gaps within segmentations A and B
-    nr_of_gaps = num_gapsA + num_gapsB
+    nr_of_gaps = num_gaps_A + num_gaps_B
 
     # Define the presence of a gap between 2 structures as the number of contours seg A and B
     # minus number of gaps within seg A and B minus 1 (because of minimal number of contours A and B of 1).
@@ -87,17 +87,17 @@ def check_gap_between_structures(segA, segB, num_gapsA, num_gapsB, min_size=[1, 
 
 
 def check_for_gaps_full(
-    contours, num_gaps1, num_gaps2, num_gaps3, num_gaps12, num_gaps13, min_size=[1, 1]
+    contours, num_gaps_1, num_gaps_2, num_gaps_3, num_gaps_12, num_gaps_13, min_size=[1, 1]
 ):
     """Check if gaps are present in a segmentation.
 
     Args:
         contours (list): List of all contours in the segmentation.
-        num_gaps1 (int): Number of gaps in the first structure.
-        num_gaps2 (int): Number of gaps in the second structure.
-        num_gaps3 (int): Number of gaps in the third structure.
-        num_gaps12 (int): Number of gaps between the first and second structure.
-        num_gaps13 (int): Number of gaps between the first and third structure.
+        num_gaps_1 (int): Number of gaps in the first structure.
+        num_gaps_2 (int): Number of gaps in the second structure.
+        num_gaps_3 (int): Number of gaps in the third structure.
+        num_gaps_12 (int): Number of gaps between the first and second structure.
+        num_gaps_13 (int): Number of gaps between the first and third structure.
         min_size (list): Minimum size of a gap.
 
     Returns:
@@ -114,18 +114,18 @@ def check_for_gaps_full(
     # minimum value, minus 1 added for correction of inclusion of the full contour as 1.
     num_other_gaps = (
         len(filtered_contours)
-        - num_gaps1
-        - num_gaps2
-        - num_gaps3
-        - num_gaps12
-        - num_gaps13
+        - num_gaps_1
+        - num_gaps_2
+        - num_gaps_3
+        - num_gaps_12
+        - num_gaps_13
         - 1
     )
 
     return num_other_gaps
 
 
-def do_single_frame_QC(directory_segmentations, images_of_one_person):
+def do_single_frame_qc(directory_segmentations, images_of_one_person):
     """Do single-frame quality control of segmentation.
 
     This quality control is based on the following criteria:
@@ -138,11 +138,11 @@ def do_single_frame_QC(directory_segmentations, images_of_one_person):
         min_gap_size (list): Minimum size of a gap.
 
     Returns:
-        QC_scores (list): List of QC scores per image.
+        qc_scores (list): List of QC scores per image.
         overviews (dict): Dictionary of all interim results per image.
         flagged_frames (list): List of frames with a QC score > 0.
     """
-    QC_scores, overviews = [], {}
+    qc_scores, overviews = [], {}
 
     # Loop over all images of one person
     for image in images_of_one_person:
@@ -154,85 +154,85 @@ def do_single_frame_QC(directory_segmentations, images_of_one_person):
         min_gap_size = [2, 2]
 
         # Separate segmentation in 4 different segmentations.
-        seg0, seg1, seg2, seg3 = separate_segmentation(segmentation)
+        seg_0, seg_1, seg_2, seg_3 = separate_segmentation(segmentation)
 
         # Find the contours in each separate segmentation.
-        contours0_all = find_contours(seg0, "all")
-        contours1_all = find_contours(seg1, "all")
-        contours2_all = find_contours(seg2, "all")
-        contours3_all = find_contours(seg3, "all")
+        contours_0_all = find_contours(seg_0, "all")
+        contours_1_all = find_contours(seg_1, "all")
+        contours_2_all = find_contours(seg_2, "all")
+        contours_3_all = find_contours(seg_3, "all")
 
-        num_contours1 = num_contours(seg1)
-        num_contours2 = num_contours(seg2)
-        num_contours3 = num_contours(seg3)
+        num_contours_1 = num_contours(seg_1)
+        num_contours_2 = num_contours(seg_2)
+        num_contours_3 = num_contours(seg_3)
 
-        num_gaps1 = check_for_gaps(num_contours1, contours1_all, min_gap_size)
-        num_gaps2 = check_for_gaps(num_contours2, contours2_all, min_gap_size)
-        num_gaps3 = check_for_gaps(num_contours3, contours3_all, min_gap_size)
+        num_gaps_1 = check_for_gaps(num_contours_1, contours_1_all, min_gap_size)
+        num_gaps_2 = check_for_gaps(num_contours_2, contours_2_all, min_gap_size)
+        num_gaps_3 = check_for_gaps(num_contours_3, contours_3_all, min_gap_size)
 
-        num_gaps12 = check_gap_between_structures(
-            seg1, seg2, num_gaps1, num_gaps2, min_gap_size
+        num_gaps_12 = check_gap_between_structures(
+            seg_1, seg_2, num_gaps_1, num_gaps_2, min_gap_size
         )
-        num_gaps13 = check_gap_between_structures(
-            seg1, seg3, num_gaps1, num_gaps3, min_gap_size
+        num_gaps_13 = check_gap_between_structures(
+            seg_1, seg_3, num_gaps_1, num_gaps_3, min_gap_size
         )
-        num_gaps23 = check_for_gaps_full(
-            contours0_all,
-            num_gaps1,
-            num_gaps2,
-            num_gaps3,
-            num_gaps12,
-            num_gaps13,
+        num_gaps_23 = check_for_gaps_full(
+            contours_0_all,
+            num_gaps_1,
+            num_gaps_2,
+            num_gaps_3,
+            num_gaps_12,
+            num_gaps_13,
             min_gap_size,
         )
 
         # Check if only one structure of each label is present in segmentation:
         # Check for missing structure.
-        total_score += 1 if num_contours1 == 0 else 0
-        total_score += 1 if num_contours2 == 0 else 0
-        total_score += 1 if num_contours3 == 0 else 0
+        total_score += 1 if num_contours_1 == 0 else 0
+        total_score += 1 if num_contours_2 == 0 else 0
+        total_score += 1 if num_contours_3 == 0 else 0
 
         # Check for presence of multiple structures.
-        total_score += 1 if num_contours1 > 1 else 0
-        total_score += 1 if num_contours2 > 1 else 0
-        total_score += 1 if num_contours3 > 1 else 0
+        total_score += 1 if num_contours_1 > 1 else 0
+        total_score += 1 if num_contours_2 > 1 else 0
+        total_score += 1 if num_contours_3 > 1 else 0
 
         # Check for gaps within structures.
-        total_score += 1 if num_gaps1 > 0 else 0
-        total_score += 1 if num_gaps2 > 0 else 0
-        total_score += 1 if num_gaps3 > 0 else 0
+        total_score += 1 if num_gaps_1 > 0 else 0
+        total_score += 1 if num_gaps_2 > 0 else 0
+        total_score += 1 if num_gaps_3 > 0 else 0
 
         # Check for gap between LV and MYO, LV and LA, and MYO and LA.
-        total_score += 1 if num_gaps12 > 0 else 0
-        total_score += 1 if num_gaps13 > 0 else 0
-        total_score += 1 if num_gaps23 > 0 else 0
+        total_score += 1 if num_gaps_12 > 0 else 0
+        total_score += 1 if num_gaps_13 > 0 else 0
+        total_score += 1 if num_gaps_23 > 0 else 0
 
         # Extend the overview dictionary with interim results, can be used for analysation. True is good, False is bad.
         overview = [
-            num_contours1 == 0,
-            num_contours2 == 0,
-            num_contours3 == 0,
-            num_contours1 > 1,
-            num_contours2 > 1,
-            num_contours3 > 1,
-            num_gaps1 > 0,
-            num_gaps2 > 0,
-            num_gaps3 > 0,
-            num_gaps12 > 0,
-            num_gaps13 > 0,
-            num_gaps23 > 0,
+            num_contours_1 == 0,
+            num_contours_2 == 0,
+            num_contours_3 == 0,
+            num_contours_1 > 1,
+            num_contours_2 > 1,
+            num_contours_3 > 1,
+            num_gaps_1 > 0,
+            num_gaps_2 > 0,
+            num_gaps_3 > 0,
+            num_gaps_12 > 0,
+            num_gaps_13 > 0,
+            num_gaps_23 > 0,
         ]
 
-        QC_scores.append(total_score)
+        qc_scores.append(total_score)
         overviews[image] = overview
 
     # Find the frames with a score > 0, these are flagged (for post-processing).
-    flagged_frames = sorted([i for i, num in enumerate(QC_scores) if num > 0])
+    flagged_frames = sorted([i for i, num in enumerate(qc_scores) if num > 0])
 
-    return QC_scores, overviews, flagged_frames
+    return qc_scores, overviews, flagged_frames
 
 
-def get_stats_QC1(overviews_all):
+def get_stats_single_frame_qc(overviews_all):
     """Get statistics of the quality control of segmentation.
 
     Args:
@@ -289,19 +289,19 @@ def get_stats_QC1(overviews_all):
     return stats
 
 
-def main_single_frame_QC(path_to_segmentations):
+def main_single_frame_qc(path_to_segmentations):
     """Main function for single-frame quality control of segmentation.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
 
     Returns:
-        single_frame_QC (dict): Dictionary of the results of the single-frame quality control of segmentation.
+        single_frame_qc (dict): Dictionary of the results of the single-frame quality control of segmentation.
     """
-    single_frame_QC = {}
-    single_frame_QC["QC_Scores"] = {}
-    single_frame_QC["Overviews"] = {}
-    single_frame_QC["Flagged_Frames"] = {}
+    single_frame_qc = {}
+    single_frame_qc["QC_Scores"] = {}
+    single_frame_qc["Overviews"] = {}
+    single_frame_qc["Flagged_Frames"] = {}
 
     # Get list of filenames in one folder containing the segmentations.
     all_files = os.listdir(path_to_segmentations)
@@ -315,17 +315,17 @@ def main_single_frame_QC(path_to_segmentations):
         )
 
         # Do single frame QC of segmentation.
-        QC_scores, overview, flagged_frames = do_single_frame_QC(
+        qc_scores, overview, flagged_frames = do_single_frame_qc(
             path_to_segmentations, images_of_one_person
         )
 
         # Save the results in a dictionary.
-        single_frame_QC["QC_Scores"][patient] = QC_scores
-        single_frame_QC["Overviews"][patient] = overview
-        single_frame_QC["Flagged_Frames"][patient] = flagged_frames
+        single_frame_qc["QC_Scores"][patient] = qc_scores
+        single_frame_qc["Overviews"][patient] = overview
+        single_frame_qc["Flagged_Frames"][patient] = flagged_frames
 
     # Get statistics of the quality control of segmentation.
-    QC_stats = get_stats_QC1(single_frame_QC["Overviews"])
-    single_frame_QC["QC_Stats"] = QC_stats
+    qc_stats = get_stats_single_frame_qc(single_frame_qc["Overviews"])
+    single_frame_qc["QC_Stats"] = qc_stats
 
-    return single_frame_QC
+    return single_frame_qc

@@ -1,7 +1,8 @@
 # Functions to select most appropriate cardiac cycle.
 import os
+import cv2
 import numpy as np
-from general_utilities import convert_image
+from general_utilities import convert_image, separate_segmentation, find_contours
 
 
 def calculate_cnr(roi, background):
@@ -127,18 +128,134 @@ def find_es_in_cycle(ES_points, ED_points_cycle, LV_areas):
     return ES_point_cycle
 
 
-def nr_outliers_in_cycle(outlier_frames, first_frame, last_frame):
-    """Function to count the number of outliers in the cardiac cycle.
+def check_for_surrounded_lv(seg_1, seg_2, seg_3, threshold_surrounded_lv=1.0):
+    """ Function to check if the left ventricle is fully surrounded by the myocardium and left atrium.
 
     Args:
-        outlier_frames (list): List of outlier frames in the image sequence.
+        seg_1 (np.ndarray): Segmentation of the image with only label 1, LV.
+        seg_2 (np.ndarray): Segmentation of the image with only label 2, MYO.
+        seg_3 (np.ndarray): Segmentation of the image with only label 3, LA.
+        threshold_surrounded_lv (float): Threshold to adjust robustness of the check (default: 1.0).
+
+    Returns:
+        fully_surrounded (bool): Boolean indicating if the left ventricle is fully surrounded by the myocardium and left atrium.   
+    """
+    # Find the contours of the segmentations. 
+    contour_1 = find_contours(seg_1, 'external')
+    contour_2 = find_contours(seg_2, 'external')
+    contour_3 = find_contours(seg_3, 'external')
+    
+    # Create lists to store minimum distances between LV and MYO, and MYO and LA. 
+    distances_12, distances_13 = [], []
+    
+    # Check if contours are present for all structures. 
+    if len(contour_1) > 0 and len(contour_2) > 0 and len(contour_3) > 0:
+        
+        for j in range(len(contour_1[0])):
+            # Get the coordinates of the left ventricular contour. 
+            coordinates_1 = tuple([int(contour_1[0][j][0][0]), int(contour_1[0][j][0][1])])
+
+            # Get the distance between the left ventricular contour and the other contours.
+            distance_12 = cv2.pointPolygonTest(contour_2[0], coordinates_1, True)
+            distances_12.append(abs(distance_12))
+
+            distance_13 = cv2.pointPolygonTest(contour_3[0], coordinates_1, True)
+            distances_13.append(abs(distance_13))
+        
+        # Check if both structures neighbour the left ventricle. 
+        if min(distances_12) <= 1.0 and min(distances_13) <= 1.0:
+            # Find the minimum distance between the border of contour 1 and both other contours. 
+            distances = [min(pair) for pair in zip(distances_12, distances_13)]
+            
+            # Check if the maximum distance is smaller than or equal to the threshold. 
+            fully_surrounded = max(distances) <= threshold_surrounded_lv
+            
+        else:
+            fully_surrounded = False
+            
+    else:
+        fully_surrounded = False
+    
+    return fully_surrounded
+
+
+def check_cut_off_la(seg, contour, rows_to_exclude=5, threshold_cut_off_LA=10):
+    """ Function to check if the left atrium is cut off.
+
+    Args:
+        seg (np.ndarray): Segmentation of the image.
+        contour (list): List of contours of the left atrium.
+        rows_to_exclude (int): Number of rows to exclude from the bottom of the segmentation (default: 5).
+        threshold_cut_off_LA (int): Threshold to adjust robustness of the check (default: 10).
+
+    Returns:
+        no_cut_off_LA (bool): Boolean indicating if the left atrium is cut off.    
+    """
+    # Get the number of rows in the segmentation, excluding the x bottom rows. 
+    vert_boundary_seg = seg.shape[0] - rows_to_exclude
+
+    # Get the vertical coordinates of the LA. 
+    coordinates_la_vert = [int(contour[0][j][0][1]) for j in range(len(contour[0]))]
+    
+    # Get the bottom row of the LA structure.
+    maximum_la_row = max(coordinates_la_vert)
+    
+    # Check if the LA extends beyond the vertical boundary of the segmentation.
+    if maximum_la_row > vert_boundary_seg:
+        # Count the number of times the bottom row of the LA is present in the segmentation.
+        count = sum(1 for value in coordinates_la_vert if value == maximum_la_row)
+
+        # Check if there are less than x bottom rows of the LA present in the segmentation.
+        no_cut_off_LA = count < threshold_cut_off_LA
+    else:
+        no_cut_off_LA = True
+    
+    return no_cut_off_LA
+
+
+def find_frames_to_flag(directory_segmentations, images_of_one_person, threshold_surrounded_lv=3.0):      
+    # Create lists to store frames that do not meet the QC criteria. 
+    flagged_frames_lv, flagged_frames_la = [], []
+    
+    # Loop over all images of one person
+    for frame_nr, image in enumerate(images_of_one_person):
+        # Define file location and load segmentation
+        file_location = os.path.join(directory_segmentations, image)
+        seg = convert_image(file_location)
+
+        # Separate segmentation in 3 different segmentations. 
+        _, seg_1, seg_2, seg_3 = separate_segmentation(seg)
+
+        # Find the contours in each separate segmentation
+        contours3 = find_contours(seg_3, 'external')      
+                                
+        # Check if LV is fully surrounded. 
+        if not check_LV_fully_surrounded(seg_1, seg_2, seg_3, threshold_surrounded_lv):
+            frames_LV_not_surrounded.append(frame_nr)
+                 
+        # LA cut off check
+        if (len(contours3) == 1) and (not check_cut_off_LA(seg3, contours3)):
+            frames_LA_cut_off.append(frame_nr)
+ 
+    overview = {}
+    overview['Frames NQ LV'] = frames_LV_not_surrounded
+    overview['Frames NQ LA'] = frames_LA_cut_off
+        
+    return overview
+
+
+def nr_flagged_frames_in_cycle(flagged_frames, first_frame, last_frame):
+    """Function to count the number of flagged frames in the cardiac cycle.
+
+    Args:
+        flagged_frames (list): List of flagged frames in the image sequence.
         first_frame (int): First frame of the cardiac cycle.
         last_frame (int): Last frame of the cardiac cycle.
 
     Returns:
-        nr_outliers (int): Number of outliers in the cardiac cycle.
+        nr_outliers (int): Number of flagged frames in the cardiac cycle.
     """
-    nr_outliers = sum([first_frame < number < last_frame for number in outlier_frames])
+    nr_outliers = sum([first_frame < number < last_frame for number in flagged_frames])
 
     return nr_outliers
 
@@ -248,7 +365,7 @@ def get_main_cycle(
         es_points_cycles.append(es_point[0])
 
         # Count number of outliers single-frame QC.
-        count_outliers_sf_qc = nr_outliers_in_cycle(
+        count_outliers_sf_qc = nr_flagged_frames_in_cycle(
             frames_to_exclude_sf_qc, ed_points[idx], ed_points[idx + 1]
         )
         nr_outliers_sf_qc_cycles.append(count_outliers_sf_qc)
@@ -274,3 +391,49 @@ def get_main_cycle(
     es_selected = find_es_in_cycle(es_points_cycles, ed_selected, lv_areas)
 
     return cnr_best_cycle, ed_selected, es_selected, score
+
+
+def main_cycle_selection(path_to_segmentations, segmentation_properties, QC1, QC2, directory_images, directory_segmentations):
+    # Get list of filenames in one folder containing the segmentations.
+    all_files = os.listdir(path_to_segmentations)
+    patients = sorted(set([i[:29] for i in all_files]))
+
+    cycle_information = {}
+
+
+    for patient in patients:
+        # Get all images of one person.
+        images_of_one_person_unsorted = [i for i in all_files if i.startswith(patient)]
+        images_of_one_person = sorted(
+            images_of_one_person_unsorted, key=lambda x: int(x[30:-7])
+        )
+
+    # Get the ED and ES points as well as LV areas for a certain patient
+    ED_points = segmentation_properties['ED Points'][patient]
+    ES_points = segmentation_properties['ES Points'][patient]
+    LV_areas = segmentation_properties['LV areas'][patient]
+    
+    # Get frames for exclusion QC1
+    frames_to_exclude_all_QC1 = QC1['Frames NQ'][patient]
+    
+    # Get frames for exclusion QC2
+    overview_outliers_QC2 = find_outliers_QC2(directory_segmentations, images_of_one_person, threshold_surrounded=3.0)
+    frames_to_exclude_LV_QC2 = overview_outliers_QC2['Frames NQ LV']
+    frames_to_exclude_LA_QC2 = overview_outliers_QC2['Frames NQ LA']
+    
+    # Combine frames for exclusion QC1 and QC2
+    frames_to_exclude_QC1_QC2 = list(set(frames_to_exclude_all_QC1) | set(frames_to_exclude_LV_QC2) | set(frames_to_exclude_LA_QC2))
+    
+    # Calculate the CNR for every frame in an image
+    CNR_frames = get_cnr_all_frames(directory_images, directory_segmentations, images_of_one_person, frames_to_exclude_QC1_QC2)
+    CNR_cycle, ED_selected, ES_selected, score = get_main_cycle(CNR_frames, ED_points, ES_points, LV_areas, frames_to_exclude_all_QC1, frames_to_exclude_LV_QC2, frames_to_exclude_LA_QC2)
+    
+    CNR_cycles[patient] = CNR_cycle   
+    selected_ED[patient] = ED_selected                  
+    selected_ES[patient] = ES_selected
+    outliers_QC1_all[patient] = frames_to_exclude_all_QC1 
+    outliers_QC2_LV[patient] = frames_to_exclude_LV_QC2
+    outliers_QC2_LA[patient] = frames_to_exclude_LA_QC2
+    scores[patient] = score
+
+    return cycle_information

@@ -29,30 +29,30 @@ def get_image_array(file_location):
 
 
 def separate_segmentation(seg):
-    """Separate the LV, MYO and LA from the segmentation into separate segmentations.
+    """Separate the LV, MYO and LA from the full segmentation into separate segmentations.
 
     Args:
-        seg (np.ndarray): Segmentation of the image.
+        seg (np.ndarray): Segmentation of the echo image.
 
     Returns:
-        seg_0 (np.ndarray): Segmentation of the image with only label 0 (background).
-        seg_1 (np.ndarray): Segmentation of the image with only label 1 (LV).
-        seg_2 (np.ndarray): Segmentation of the image with only label 2 (MYO).
-        seg_3 (np.ndarray): Segmentation of the image with only label 3 (LA).
+        seg_bg (np.ndarray): Segmentation with label 0 (background).
+        seg_lv (np.ndarray): Segmentation with label 1 (LV).
+        seg_myo (np.ndarray): Segmentation with label 2 (MYO).
+        seg_la (np.ndarray): Segmentation with label 3 (LA).
     """
-    seg_0 = np.where(seg == 0, seg, 1).astype(np.uint8)
-    seg_1 = np.where(seg == 1, seg, 0)
-    seg_2 = np.where(seg == 2, seg, 0)
-    seg_3 = np.where(seg == 3, seg, 0)
+    seg_bg = np.where(seg == 0, seg, 1).astype(np.uint8)
+    seg_lv = np.where(seg == 1, seg, 0)
+    seg_myo = np.where(seg == 2, seg, 0)
+    seg_la = np.where(seg == 3, seg, 0)
 
-    return seg_0, seg_1, seg_2, seg_3
+    return seg_bg, seg_lv, seg_myo, seg_la
 
 
 def find_contours(seg, spec="all"):
     """Find the contours within the segmentation.
 
     Args:
-        seg (np.ndarray): Segmentation of the image.
+        seg (np.ndarray): Segmentation of the echo image.
         spec (str): Specification of the contours to find.
 
     Returns:
@@ -98,7 +98,7 @@ def combine_segmentations(
     - no difference: all structures get same value.
 
     Args:
-        segmentations (list): List of segmentations of the image.
+        segmentations (list): List of segmentations of the echo image.
         typeOfCombination (str): Type of combination of the segmentations.
         labels (list): List of labels of the segmentations.
 
@@ -146,7 +146,7 @@ def find_coordinates_of_holes(seg):
     """Find the coordinates of the holes in a segmentation.
 
     Args:
-        seg (np.ndarray): Segmentation of the image.
+        seg (np.ndarray): Segmentation of the echo image.
 
     Returns:
         coordinates_holes (tuple): Coordinates of the holes in the segmentation.

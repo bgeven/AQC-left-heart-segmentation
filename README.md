@@ -27,3 +27,6 @@ DatasetName/Patient_0001/
 └── segmentations_post_processed
 
 ```
+
+## Segmentations
+The code in this repository was written to analyse segmentations of apical two-chamber and apical four-chamber views with a focus on the left side of the heart. These segmentations must contain labels for the left ventricular cavity (LV), myocardium (MYO) and left atrium (LA), each with a unique label value. The LV has label value 1, the MYO has label value 2 and the LA has label value 3. The segmentations can be provided in any format that is supported by [SimpleITK](https://simpleitk.org/).
