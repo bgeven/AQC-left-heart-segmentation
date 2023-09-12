@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from collections import defaultdict
-from general_utilities import convert_image, get_list_with_files_of_view, get_path_to_images
+from general_utilities import get_image_array, get_list_with_files_of_view, get_path_to_images
 
 
 def calculate_cnr(roi, background):
@@ -68,11 +68,11 @@ def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, fla
         if frame_nr not in flagged_frames:
             # Define file location and load echo image frame. 
             file_location_image = get_path_to_images(path_to_images, filename)
-            echo_image = convert_image(file_location_image)
+            echo_image = get_image_array(file_location_image)
 
             # Define file location and load segmentation.
             file_location_seg = os.path.join(path_to_segmentations, filename)
-            seg = convert_image(file_location_seg)
+            seg = get_image_array(file_location_seg)
 
             # Create masks for ROI and background.
             mask_roi = create_mask(echo_image, seg, [1, 3])  # label specific
@@ -326,7 +326,7 @@ def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_pro
             cnr_frames = [0] * len(files_of_view)
 
         # Get the ED and ES points of most appropriate cardiac cycle.
-        ed_selected, es_selected = get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la)
+        ed_selected, es_selected = get_properties_best_cycle(cnr_frames, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la)
     
         # Store the information in a dictionary.
         cycle_info["ed_points_selected"][view] = ed_selected
