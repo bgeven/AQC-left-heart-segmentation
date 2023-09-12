@@ -158,7 +158,7 @@ def get_main_contour_myo(seg_1, seg_2, threshold_distance=5):
     """
     # Find the contours of the structures in LV and MYO segmentation.
     contour_1 = find_contours(seg_1, "external")
-    contours_2 = find_contours(seg_2, "external")   
+    contours_2 = find_contours(seg_2, "external")
 
     neighboring_contours = []
 
@@ -532,7 +532,11 @@ def post_process_segmentation(segmentation, centroids):
 
 
 def main_post_processing(
-    path_to_segmentations, path_to_final_segmentations, single_frame_qc, all_files, views
+    path_to_segmentations,
+    path_to_final_segmentations,
+    single_frame_qc,
+    all_files,
+    views,
 ):
     """Main function to do post-processing of all segmentations.
 

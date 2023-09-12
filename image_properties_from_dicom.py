@@ -99,11 +99,23 @@ def main_get_dicom_properties(path_to_dicom_files):
     return dicom_properties
 
 
-def default_dicom_properties(views, default_pixel_spacing=0.01, default_frames_r_waves=[]):
+def default_dicom_properties(
+    views, default_pixel_spacing=[0.1, 0.1], default_frames_r_waves=[]
+):
+    """Function to create a dictionary with default DICOM properties.
 
+    Args:
+        views (list): List of views of the segmentations.
+        default_pixel_spacing (list): Default pixel spacing of the image sequence for each dimension (default: [0.1, 0.1]).
+        default_frames_r_waves (list): Default frame numbers corresponding to the R-wave(s) in the image sequence (default: []).
+
+    Returns:
+        dicom_properties (dict): Dictionary containing the properties of the DICOM files.
+    """
     # Create dictionary to store the properties of the DICOM files.
     dicom_properties = defaultdict(dict)
 
+    # Save the default properties of the DICOM file in a dictionary.
     for view in views:
         dicom_properties["pixel_spacing"][view] = default_pixel_spacing
         dicom_properties["frames_r_waves"][view] = default_frames_r_waves

@@ -15,13 +15,13 @@ def get_list_with_views(all_files, length_view_identifier=29):
     Returns:
         views (list): List of the views of the segmentations present in one folder.
     """
-    # Get list of the views in one folder containing the segmentations of one patient. 
+    # Get list of the views in one folder containing the segmentations of one patient.
     views = sorted(set([i[:length_view_identifier] for i in all_files]))
 
     return views
 
 
-def get_list_with_files_of_view(all_files, view_identifier, length_ext=7):   
+def get_list_with_files_of_view(all_files, view_identifier, length_ext=7):
     """Get list of the files belonging to a specific view.
 
     Args:
@@ -33,7 +33,10 @@ def get_list_with_files_of_view(all_files, view_identifier, length_ext=7):
         images_of_one_view (list): List of the files belonging to a specific view.
     """
     images_of_one_view_unsrt = [i for i in all_files if i.startswith(view_identifier)]
-    images_of_one_view = sorted(images_of_one_view_unsrt, key=lambda x: int(x[len(view_identifier)+1:-length_ext]))
+    images_of_one_view = sorted(
+        images_of_one_view_unsrt,
+        key=lambda x: int(x[len(view_identifier) + 1 : -length_ext]),
+    )
 
     return images_of_one_view
 
@@ -230,10 +233,13 @@ def get_path_to_images(path_to_images, filename, length_ext=7, input_channel="00
         filename (str): Name of the image.
         length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
         input_channel (str): Input channel of the image (default: 0000).
-    
+
     Returns:
         file_location_image (str): Path to the image.
     """
-    file_location_image = os.path.join(path_to_images, (filename[:-length_ext] + "_" + input_channel + filename[-length_ext:]))
+    file_location_image = os.path.join(
+        path_to_images,
+        (filename[:-length_ext] + "_" + input_channel + filename[-length_ext:]),
+    )
 
     return file_location_image

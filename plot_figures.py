@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-from general_utilities import get_image_array, separate_segmentation, find_contours, get_list_with_files_of_view, get_path_to_images
+from general_utilities import *
 
 
 def color_segmentation(seg, colors_for_labels):
@@ -75,25 +75,25 @@ def color_contours_segmentation(image, seg, label_colors):
     """
     image_with_contours = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
-    # Map each label value to a specific color. 
+    # Map each label value to a specific color.
     colored_labels = color_segmentation(seg, label_colors)
 
-    # Convert the colored labels back to an image. 
+    # Convert the colored labels back to an image.
     image_for_blend = Image.fromarray(image_with_contours)
     color_labels = Image.fromarray(colored_labels.astype("uint8"))
 
-    # Create blended image. 
+    # Create blended image.
     overlay_image = Image.blend(image_for_blend, color_labels, 0.1)
     image_with_contours = np.array(overlay_image)
 
-    # Separate contours for each label. 
+    # Separate contours for each label.
     _, seg_1, seg_2, seg_3 = separate_segmentation(seg)
 
     contours_1 = find_contours(seg_1, "all")
     contours_2 = find_contours(seg_2, "all")
     contours_3 = find_contours(seg_3, "all")
 
-    # Remove points on the contours that neighbor the LV contour. 
+    # Remove points on the contours that neighbor the LV contour.
     contours_2 = remove_neighboring_pixels(contours_1, contours_2)
     contours_3 = remove_neighboring_pixels(contours_1, contours_3)
 
@@ -168,14 +168,14 @@ def main_plot_area_time_curves(
         # Get all files of one view of one person.
         files_of_view = get_list_with_files_of_view(all_files, view)
 
-        # Plot area-time curves for all frames of one patient. 
+        # Plot area-time curves for all frames of one patient.
         # Only plot the first frame for now.
         for frame_nr, filename in enumerate(files_of_view[0:1]):
-            # Define file location and load echo image frame. 
+            # Define file location and load echo image frame.
             file_location_image = get_path_to_images(path_to_images, filename)
             echo_image = get_image_array(file_location_image)
 
-            # Define file location and load segmentation. 
+            # Define file location and load segmentation.
             file_location_seg = os.path.join(path_to_segmentations, filename)
             seg = get_image_array(file_location_seg)
             seg_colored = color_segmentation(seg, colors_for_labels)
@@ -187,7 +187,7 @@ def main_plot_area_time_curves(
             plt.figure(dpi=dpi_value)
             plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
 
-            # Format figure with subplots. 
+            # Format figure with subplots.
             X = [(2, 3, 1), (2, 3, 2), (2, 3, 3), (2, 3, (4, 5))]
 
             for nr_plot, (nrows, ncols, plot_number) in enumerate(X):

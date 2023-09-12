@@ -84,7 +84,13 @@ def check_gap_between_structures(seg_A, seg_B, num_gaps_A, num_gaps_B, min_size=
 
 
 def check_for_gaps_full(
-    contours, num_gaps_1, num_gaps_2, num_gaps_3, num_gaps_12, num_gaps_13, min_size=[1, 1]
+    contours,
+    num_gaps_1,
+    num_gaps_2,
+    num_gaps_3,
+    num_gaps_12,
+    num_gaps_13,
+    min_size=[1, 1],
 ):
     """Check if gaps are present in a segmentation.
 
@@ -122,7 +128,7 @@ def check_for_gaps_full(
     return num_other_gaps
 
 
-def do_single_frame_qc(directory_segmentations, images_of_one_person, min_gap_size=[2, 2]):
+def do_single_frame_qc(path_to_segmentations, files_of_view, min_gap_size=[2, 2]):
     """Do single-frame quality control of segmentation.
 
     This quality control is based on the following criteria:
@@ -130,8 +136,8 @@ def do_single_frame_qc(directory_segmentations, images_of_one_person, min_gap_si
     2. No gaps within and between structures.
 
     Args:
-        directory_segmentations (str): Directory of the segmentations.
-        images_of_one_person (list): List of all images of one person.
+        path_to_segmentations (str): Path to folder with segmentations.
+        files_of_view (list): List of all images of one person.
         min_gap_size (list): Minimum size of a gap (default: [2, 2]).
 
     Returns:
@@ -141,14 +147,13 @@ def do_single_frame_qc(directory_segmentations, images_of_one_person, min_gap_si
     """
     qc_scores, overviews = [], {}
 
-    # Loop over all images of one person
-    for image in images_of_one_person:
+    for filename in files_of_view:
         # Define file location and load segmentation.
-        file_location = os.path.join(directory_segmentations, image)
+        file_location = os.path.join(path_to_segmentations, filename)
         segmentation = get_image_array(file_location)
 
         total_score = 0
-        
+
         # Separate segmentation in 4 different segmentations.
         seg_0, seg_1, seg_2, seg_3 = separate_segmentation(segmentation)
 
@@ -220,7 +225,7 @@ def do_single_frame_qc(directory_segmentations, images_of_one_person, min_gap_si
         ]
 
         qc_scores.append(total_score)
-        overviews[image] = overview
+        overviews[filename] = overview
 
     # Find the frames with a score > 0, these are flagged (for post-processing).
     flagged_frames = sorted([i for i, num in enumerate(qc_scores) if num > 0])

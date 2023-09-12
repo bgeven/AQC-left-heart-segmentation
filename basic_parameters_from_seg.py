@@ -54,7 +54,9 @@ def comp_areas_in_sequence(path_to_segmentation, frames, label, px2cm2_factor):
     """
     areas = [
         comp_area_from_seg(
-            get_image_array(os.path.join(path_to_segmentation, frame)), label, px2cm2_factor
+            get_image_array(os.path.join(path_to_segmentation, frame)),
+            label,
+            px2cm2_factor,
         )
         for frame in frames
     ]
@@ -68,7 +70,7 @@ def find_nr_of_ed_points(frames_r_wave, nr_of_frames, threshold_peak=10):
     Args:
         frames_r_wave (list): Frame numbers with R-wave peaks.
         nr_of_frames (int): Number of frames in the sequence.
-        threshold_peak (int): Threshold to account for the last peak if not detected by the find_peaks function (default: 10). 
+        threshold_peak (int): Threshold to account for the last peak if not detected by the find_peaks function (default: 10).
 
     Returns:
         nr_ed_points (int): number of end-diastolic points.
@@ -76,7 +78,9 @@ def find_nr_of_ed_points(frames_r_wave, nr_of_frames, threshold_peak=10):
     nr_of_ed_points = len(frames_r_wave)
 
     # This is to account for the last peak if not detected by the find_peaks function.
-    nr_of_ed_points += 1 if abs(frames_r_wave[-1] - nr_of_frames) > threshold_peak else 0
+    nr_of_ed_points += (
+        1 if abs(frames_r_wave[-1] - nr_of_frames) > threshold_peak else 0
+    )
 
     return nr_of_ed_points
 
@@ -110,22 +114,22 @@ def find_es_points(areas, frames_r_wave=[]):
     Returns:
         es_points (list): End-systole (ES) points.
     """
-    # Find number of ED points and subtract 1 to find number of ES peaks. 
+    # Find number of ED points and subtract 1 to find number of ES peaks.
     if len(frames_r_wave) > 0:
         nr_peaks = find_nr_of_ed_points(frames_r_wave, len(areas)) - 1
     else:
         nr_peaks = 3  # Set default number of ES points to 3
 
-    # Define the estimated frame difference between the peaks. 
+    # Define the estimated frame difference between the peaks.
     frame_difference = len(areas) / (nr_peaks + 1)
 
-    # Find indices of peaks. 
+    # Find indices of peaks.
     peak_indices, _ = find_peaks(-np.array(areas), distance=frame_difference)
 
-    # Find the areas that correspond with the indices. 
+    # Find the areas that correspond with the indices.
     minimal_values = sorted([areas[i] for i in peak_indices], key=float)
 
-    # Only take the bottom x (= nr_peaks) minimum values into account and find corresponding frames. 
+    # Only take the bottom x (= nr_peaks) minimum values into account and find corresponding frames.
     es_points = sorted([areas.index(j) for j in minimal_values[:nr_peaks]])
 
     return es_points
@@ -188,9 +192,7 @@ def main_get_parameters(path_to_segmentations, all_files, views, dicom_propertie
         files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Get pixel spacing and ED peaks from ECG R-wave from dicom properties dictionary.
-        pixel_spacing = comp_factor_px2_to_cm2(
-            dicom_properties["pixel_spacing"][view]
-        )
+        pixel_spacing = comp_factor_px2_to_cm2(dicom_properties["pixel_spacing"][view])
         frames_r_waves = dicom_properties["frames_r_waves"][view]
 
         # Compute the areas per frame for each of the labels.
