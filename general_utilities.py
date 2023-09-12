@@ -6,7 +6,7 @@ import SimpleITK as sitk
 
 
 def get_list_with_views(all_files, length_view_identifier=29):
-    """ Get list of the views of the segmentations present in one folder.
+    """Get list of the views of the segmentations present in one folder.
 
     Args:
         all_files (list): List of all the files in the folder.
@@ -22,7 +22,7 @@ def get_list_with_views(all_files, length_view_identifier=29):
 
 
 def get_list_with_files_of_view(all_files, view_identifier, length_ext=7):   
-    """ Get list of the files belonging to a specific view.
+    """Get list of the files belonging to a specific view.
 
     Args:
         all_files (list): List of all the files in the folder.
@@ -155,7 +155,7 @@ def combine_segmentations(
                 total_seg += seg * labels[nr + 1]
 
     # Each structure gets other value, but overlap is accounted for.
-    if typeOfCombination == "difference with overlap":
+    if typeOfCombination == "difference_with_overlap":
         for nr, seg in enumerate(segmentations[1:]):
             if seg.max() == labels[nr + 1]:
                 total_seg += seg
@@ -168,7 +168,7 @@ def combine_segmentations(
                 total_seg[total_seg > labels[nr + 1]] = labels[nr + 1]
 
     # All structures get same value.
-    elif typeOfCombination == "no difference":
+    elif typeOfCombination == "no_difference":
         for seg in segmentations[1:]:
             total_seg += seg
 

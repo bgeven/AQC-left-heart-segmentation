@@ -156,12 +156,12 @@ def main_plot_area_time_curves(
     # Define directories of images and segmentations.
     for view in views:
         # Get dicom and segmentation properties of one patient
-        ed_points = segmentation_properties["ED Points"][view]
-        es_points = segmentation_properties["ES Points"][view]
-        lv_areas = segmentation_properties["LV areas"][view]
-        myo_areas = segmentation_properties["MYO areas"][view]
-        la_areas = segmentation_properties["LA areas"][view]
-        frame_times = dicom_properties["Times Frames"][view]
+        ed_points = segmentation_properties["ed_points"][view]
+        es_points = segmentation_properties["es_points"][view]
+        lv_areas = segmentation_properties["lv_areas"][view]
+        myo_areas = segmentation_properties["myo_areas"][view]
+        la_areas = segmentation_properties["la_areas"][view]
+        frame_times = dicom_properties["times_frames"][view]
 
         # Plotting settings
         min_y_val = int(0.9 * min(min(lv_areas), min(myo_areas), min(la_areas)))
@@ -217,10 +217,10 @@ def main_plot_area_time_curves(
                     plt.subplot(nrows, ncols, plot_number)
                     plt.title("Area-time curves", fontsize=font_size, loc="left")
                     plt.plot(
-                        frame_times, lv_areas, color="green", label="Left ventricle"
+                        frame_times, lv_areas, color="green", label="Left Ventricle"
                     )
                     plt.plot(frame_times, myo_areas, color="red", label="Myocardium")
-                    plt.plot(frame_times, la_areas, color="blue", label="Left atrium")
+                    plt.plot(frame_times, la_areas, color="blue", label="Left Atrium")
 
                     # Plot vertical lines for current frame, ES and ED points
                     plt.axvline(

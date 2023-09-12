@@ -63,7 +63,7 @@ def check_gap_between_structures(seg_A, seg_B, num_gaps_A, num_gaps_B, min_size=
         num_gaps (int): Number of gaps between the two structures.
     """
     # Create total segmentation of different combinations of structures
-    total_seg = combine_segmentations([seg_A, seg_B], "no difference")
+    total_seg = combine_segmentations([seg_A, seg_B], "no_difference")
 
     # Find contours within combined segmentations 1 and 2
     contours_AB = find_contours(total_seg, "all")
@@ -95,7 +95,7 @@ def check_for_gaps_full(
         num_gaps_3 (int): Number of gaps in the third structure.
         num_gaps_12 (int): Number of gaps between the first and second structure.
         num_gaps_13 (int): Number of gaps between the first and third structure.
-        min_size (list): Minimum size of a gap.
+        min_size (list): Minimum size of a gap (default: [1, 1]).
 
     Returns:
         num_other_gaps (int): Number of gaps in the segmentation not belonging to the structures.
@@ -122,7 +122,7 @@ def check_for_gaps_full(
     return num_other_gaps
 
 
-def do_single_frame_qc(directory_segmentations, images_of_one_person):
+def do_single_frame_qc(directory_segmentations, images_of_one_person, min_gap_size=[2, 2]):
     """Do single-frame quality control of segmentation.
 
     This quality control is based on the following criteria:
@@ -132,7 +132,7 @@ def do_single_frame_qc(directory_segmentations, images_of_one_person):
     Args:
         directory_segmentations (str): Directory of the segmentations.
         images_of_one_person (list): List of all images of one person.
-        min_gap_size (list): Minimum size of a gap.
+        min_gap_size (list): Minimum size of a gap (default: [2, 2]).
 
     Returns:
         qc_scores (list): List of QC scores per image.
@@ -148,8 +148,7 @@ def do_single_frame_qc(directory_segmentations, images_of_one_person):
         segmentation = get_image_array(file_location)
 
         total_score = 0
-        min_gap_size = [2, 2]
-
+        
         # Separate segmentation in 4 different segmentations.
         seg_0, seg_1, seg_2, seg_3 = separate_segmentation(segmentation)
 
@@ -270,24 +269,24 @@ def get_stats_single_frame_qc(overviews_all):
 
     # Save the statistics in a dictionary.
     stats = {}
-    stats["Missing structure LV"] = cnt_no_LV
-    stats["Missing structure MYO"] = cnt_no_MYO
-    stats["Missing structure LA"] = cnt_no_LA
-    stats["Duplicate structures LV"] = cnt_multiple_LV
-    stats["Duplicate structures MYO"] = cnt_multiple_MYO
-    stats["Duplicate structures LA"] = cnt_multiple_LA
-    stats["Holes within LV"] = cnt_holes_LV
-    stats["Holes within MYO"] = cnt_holes_MYO
-    stats["Holes within LA"] = cnt_holes_LA
-    stats["Holes between LV and MYO"] = cnt_holes_LV_MYO
-    stats["Holes between LV and LA"] = cnt_holes_LV_LA
-    stats["Holes between MYO and LA"] = cnt_holes_MYO_LA
+    stats["missing_structure_lv"] = cnt_no_LV
+    stats["missing_structure_myo"] = cnt_no_MYO
+    stats["missing_structure_la"] = cnt_no_LA
+    stats["duplicate_structures_lv"] = cnt_multiple_LV
+    stats["duplicate_structures_myo"] = cnt_multiple_MYO
+    stats["duplicate_structures_la"] = cnt_multiple_LA
+    stats["holes_within_lv"] = cnt_holes_LV
+    stats["holes_within_myo"] = cnt_holes_MYO
+    stats["holes_within_la"] = cnt_holes_LA
+    stats["holes_between_lv_and_myo"] = cnt_holes_LV_MYO
+    stats["holes_between_lv_and_la"] = cnt_holes_LV_LA
+    stats["holes_between_myo_and_la"] = cnt_holes_MYO_LA
 
     return stats
 
 
 def main_single_frame_qc(path_to_segmentations, all_files, views):
-    """Main function for single-frame quality control of segmentation.
+    """ Main function for single-frame quality control of segmentation.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
@@ -309,12 +308,12 @@ def main_single_frame_qc(path_to_segmentations, all_files, views):
         )
 
         # Save the results in a dictionary.
-        single_frame_qc["QC_Scores"][view] = qc_scores
-        single_frame_qc["Overviews"][view] = overview
-        single_frame_qc["Flagged_frames"][view] = flagged_frames
+        single_frame_qc["qc_scores"][view] = qc_scores
+        single_frame_qc["overview"][view] = overview
+        single_frame_qc["flagged_frames"][view] = flagged_frames
 
     # Get statistics of the quality control of segmentation.
-    qc_stats = get_stats_single_frame_qc(single_frame_qc["Overviews"])
-    single_frame_qc["QC_Stats"] = qc_stats
+    qc_stats = get_stats_single_frame_qc(single_frame_qc["overview"])
+    single_frame_qc["stats"] = qc_stats
 
     return single_frame_qc

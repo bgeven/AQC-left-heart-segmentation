@@ -50,7 +50,7 @@ def create_mask(echo_image, seg, desired_labels):
     return masked_image
 
 
-def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, flagged_frames, length_ext=7):
+def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, flagged_frames, length_ext=7, input_channel="0000"):
     """Function to calculate the contrast-to-noise ratio (CNR) of all frames in the image sequence.
 
     Args:
@@ -59,6 +59,7 @@ def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, fla
         files_of_view (list): List of image names of one view.
         frames_to_exclude (list): List of frames to be excluded from the CNR calculation.
         length_ext (int): Length of the file extension (default: 7).
+        input_channel (str): Input channel of the echo image (default: "0000").
 
     Returns:
         cnr_frames (list): List of CNR values for all frames in the image sequence.
@@ -69,7 +70,7 @@ def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, fla
         if frame_nr not in flagged_frames:
             # Define file location and load echo image frame. 
             file_location_image = os.path.join(
-                path_to_images, (name[:-length_ext] + "_0000" + name[-length_ext:])
+                path_to_images, (name[:-length_ext] + "_" + input_channel + name[-length_ext:])
             )
             echo_image = convert_image(file_location_image)
 
@@ -144,7 +145,7 @@ def nr_flagged_frames_in_cycle(flagged_frames, first_frame, last_frame):
 
 
 def give_score_per_criterion(my_list, method="max all"):
-    """ Function to score the values in a list based on the method.
+    """Function to score the values in a list based on the method.
 
     Scoring is based on the CNR ("max all") and the number of frames flagged by single-frame QC and multi-frame QC ("min all").
 
@@ -213,7 +214,7 @@ def get_cnr_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc, nr_flagged_frames_mf
     return cnr_best_cycle
 
 
-def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagged_frames_sf_qc, flagged_frames_lv_mf_qc, flagged_frames_la_mf_qc):
+def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la):
     """Function to get the end-diastolic (ED) and end-systolic (ES) points of the most appropriate cardiac cycle.
 
     Args:
@@ -260,10 +261,10 @@ def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagge
 
         # Count number of flagged frames multi-frame QC.
         count_flagged_frames_lv_mf_qc = nr_flagged_frames_in_cycle(
-            flagged_frames_lv_mf_qc, ed_idx1, ed_idx2
+            flagged_frames_mf_qc_lv, ed_idx1, ed_idx2
         )
         count_flagged_frames_la_mf_qc = nr_flagged_frames_in_cycle(
-            flagged_frames_la_mf_qc, ed_idx1, ed_idx2
+            flagged_frames_mf_qc_la, ed_idx1, ed_idx2
         )
         nr_flagged_frames_mf_qc_cycles.append(
             (count_flagged_frames_lv_mf_qc + count_flagged_frames_la_mf_qc)
@@ -280,7 +281,7 @@ def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagge
 
 
 def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_properties, single_frame_qc, multi_frame_qc, all_files, views):
-    """ Main function to select the most appropriate cardiac cycle from an image sequence containing multiple cycles.
+    """Main function to select the most appropriate cardiac cycle from an image sequence containing multiple cycles.
 
     Args:
         path_to_images (str): Path to the directory containing the echo images.
@@ -301,16 +302,16 @@ def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_pro
         files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Get the ED and ES points as well as LV areas for a certain patient. 
-        ed_points = segmentation_properties['ED Points'][view]
-        es_points = segmentation_properties['ES Points'][view]
-        lv_areas = segmentation_properties['LV areas'][view]
+        ed_points = segmentation_properties["ed_points"][view]
+        es_points = segmentation_properties["es_points"][view]
+        lv_areas = segmentation_properties["lv_areas"][view]
     
         # Find frames flagged by single-frame QC.
-        flagged_frames_sf_qc = single_frame_qc['Flagged_frames'][view]
+        flagged_frames_sf_qc = single_frame_qc["flagged_frames"][view]
     
         # Find frames flagged by multi-frame QC.
-        flagged_frames_mf_qc_lv = multi_frame_qc['Flagged_frames_lv'][view]
-        flagged_frames_mf_qc_la = multi_frame_qc['Flagged_frames_la'][view]
+        flagged_frames_mf_qc_lv = multi_frame_qc["flagged_frames_lv"][view]
+        flagged_frames_mf_qc_la = multi_frame_qc["flagged_frames_la"][view]
     
         # Combine all flagged frames in one list.
         flagged_frames_combined = list(set(flagged_frames_sf_qc) | set(flagged_frames_mf_qc_lv) | set(flagged_frames_mf_qc_la))
@@ -322,7 +323,7 @@ def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_pro
         ed_selected, es_selected = get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la)
     
         # Store the information in a dictionary.
-        cycle_info['ED_points_selected'][view] = ed_selected
-        cycle_info['ES_point_selected'][view] = es_selected
+        cycle_info["ed_points_selected"][view] = ed_selected
+        cycle_info["es_point_selected"][view] = es_selected
         
     return cycle_info

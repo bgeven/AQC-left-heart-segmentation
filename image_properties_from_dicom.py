@@ -92,8 +92,8 @@ def main_get_dicom_properties(path_to_dicom_files):
         frames_r_waves = get_R_wave_frames(dicom_data)
 
         # Save the properties of the DICOM file in a dictionary.
-        dicom_properties["Times Frames"][dicom_file] = times_frames
-        dicom_properties["Pixel Spacing"][dicom_file] = pixel_spacing
-        dicom_properties["Frames R Waves"][dicom_file] = frames_r_waves
+        dicom_properties["times_frames"][dicom_file] = times_frames
+        dicom_properties["pixel_spacing"][dicom_file] = pixel_spacing
+        dicom_properties["frames_r_waves"][dicom_file] = frames_r_waves
 
     return dicom_properties
