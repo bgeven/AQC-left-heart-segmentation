@@ -35,15 +35,19 @@ def find_centroid(seg):
     return centroid_x, centroid_y
 
 
-def find_centroids_of_all_structures(centroids):
+def find_centroids_of_all_structures(centroids, seg):
     """Find centroid of all structures present in segmentation and add to dictionary.
 
     Args:
         centroids (dict): Initial dictionary with structure numbers as keys and lists of x- and y-coordinates as values.
+        seg (numpy array): Segmentation of structures.
 
     Returns:
         centroids (dict): Extended dictionary with structure numbers as keys and lists of x- and y-coordinates as values.
     """
+    # Separate the segmentations, each with its own structures.
+    seg_0, seg_1, seg_2, seg_3 = separate_segmentation(seg)
+
     # Get middle coordinate of each separate segmentation and add to dictionary.
     for structure in centroids:
         centroid_x, centroid_y = find_centroid(locals()[f"seg_{structure}"])
@@ -53,12 +57,12 @@ def find_centroids_of_all_structures(centroids):
     return centroids
 
 
-def get_mean_centroids(path_to_segmentations, images_of_one_person, frames_to_process):
+def get_mean_centroids(path_to_segmentations, files_of_view, frames_to_process):
     """Get the mean middle point of each structure in all segmentations of one person.
 
     Args:
         path_to_segmentations (str): Path to folder with segmentations.
-        images_of_one_person (list): List of all images of one person.
+        files_of_view (list): List of all images of one person.
         frames_to_process (list): List of frames that are detected as erroneous.
 
     Returns:
@@ -67,13 +71,13 @@ def get_mean_centroids(path_to_segmentations, images_of_one_person, frames_to_pr
     # Create dictionary to store centroids of structures.
     centroids = {1: ([], []), 2: ([], []), 3: ([], [])}
 
-    for frame_nr, image in enumerate(images_of_one_person):
+    for frame_nr, filename in enumerate(files_of_view):
         # Define file location and load segmentation.
-        file_location_seg = os.path.join(path_to_segmentations, image)
+        file_location_seg = os.path.join(path_to_segmentations, filename)
         seg = get_image_array(file_location_seg)
 
         # Prevent from not selecting a centroid at all when all frames are detected as erroneous.
-        if len(frames_to_process) < round(0.95 * len(images_of_one_person)):
+        if len(frames_to_process) < round(0.95 * len(files_of_view)):
             if frame_nr not in frames_to_process:
                 centroids = find_centroids_of_all_structures(centroids)
         else:
