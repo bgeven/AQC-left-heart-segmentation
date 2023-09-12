@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from collections import defaultdict
-from general_utilities import convert_image, get_list_with_files_of_view
+from general_utilities import convert_image, get_list_with_files_of_view, get_path_to_images
 
 
 def calculate_cnr(roi, background):
@@ -50,7 +50,7 @@ def create_mask(echo_image, seg, desired_labels):
     return masked_image
 
 
-def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, flagged_frames, length_ext=7, input_channel="0000"):
+def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, flagged_frames):
     """Function to calculate the contrast-to-noise ratio (CNR) of all frames in the image sequence.
 
     Args:
@@ -58,24 +58,20 @@ def get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, fla
         path_to_segmentations (str): Path to the directory containing the segmentations.
         files_of_view (list): List of image names of one view.
         frames_to_exclude (list): List of frames to be excluded from the CNR calculation.
-        length_ext (int): Length of the file extension (default: 7).
-        input_channel (str): Input channel of the echo image (default: "0000").
 
     Returns:
         cnr_frames (list): List of CNR values for all frames in the image sequence.
     """
     cnr_frames = []
 
-    for frame_nr, name in enumerate(files_of_view):
+    for frame_nr, filename in enumerate(files_of_view):
         if frame_nr not in flagged_frames:
             # Define file location and load echo image frame. 
-            file_location_image = os.path.join(
-                path_to_images, (name[:-length_ext] + "_" + input_channel + name[-length_ext:])
-            )
+            file_location_image = get_path_to_images(path_to_images, filename)
             echo_image = convert_image(file_location_image)
 
             # Define file location and load segmentation.
-            file_location_seg = os.path.join(path_to_segmentations, name)
+            file_location_seg = os.path.join(path_to_segmentations, filename)
             seg = convert_image(file_location_seg)
 
             # Create masks for ROI and background.
@@ -156,7 +152,7 @@ def give_score_per_criterion(my_list, method="max all"):
     Returns:
         scores (list): List of scores for all cardiac cycles.
     """
-    # Round values in list to 1 decimal.
+    # Round values in list to 1 decimals.
     my_list_rounded = [round(item, 1) for item in my_list]
 
     # Find the minimum and maximum value in the list.
@@ -167,7 +163,7 @@ def give_score_per_criterion(my_list, method="max all"):
     # 4 points if equal to best reference value, 0 point if equal to worst ref value, 2 points for other values.
     if method == "max all":
         scores = [
-            4 if item == max_value else 0 if item == min_value else 2
+            0 if item == min_value else 4 if item == max_value else 2
             for item in my_list_rounded
         ]
     elif method == "min all":
@@ -179,16 +175,16 @@ def give_score_per_criterion(my_list, method="max all"):
     return scores
 
 
-def get_cnr_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc, nr_flagged_frames_mf_qc):
+def find_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc, nr_flagged_frames_mf_qc):
     """Function to select the most appropriate cardiac cycle based on the CNR and the number of flagged frames.
 
     Args:
         cnr_cycles (list): List of CNR values for all cardiac cycles.
-        nr_flagged_frames_sf_qc (list): List of number of outliers, selected by single-frame QC, for all cardiac cycles.
-        nr_flagged_frames_mf_qc (list): List of number of outliers, selected by multi-frame QC, for all cardiac cycles.
+        nr_flagged_frames_sf_qc (list): List of number of flagged frames, selected by single-frame QC, for all cardiac cycles.
+        nr_flagged_frames_mf_qc (list): List of number of flagged frames, selected by multi-frame QC, for all cardiac cycles.
 
     Returns:
-        cnr_best_cycle (float): CNR of the most appropriate cardiac cycle.
+        idx_best_cycle (int): Index of the most appropriate cardiac cycle.
     """
     # Calculate scores for each criterion.
     scores_cnr = give_score_per_criterion(cnr_cycles, "max all")
@@ -204,14 +200,21 @@ def get_cnr_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc, nr_flagged_frames_mf
 
     # If more than 1 cycle has the highest score, add 1 to score of cycle with highest cnr.
     if len(max_score_indices) > 1:
-        idx_max_cnr = max(max_score_indices, key=lambda idx: cnr_cycles[idx])
-        scores_tot[idx_max_cnr] += 1
+        
+        # Check if there is at least 1 cycle with a positive CNR.
+        if np.nanmean(cnr_cycles) > 0:
+            idx_max_cnr = max(max_score_indices, key=lambda idx: cnr_cycles[idx])
+            scores_tot[idx_max_cnr] += 1
+
+        else:
+            # If no cycle has a positive CNR, select the cycle with the lowest number of flagged frames.
+            idx_min_flagged_frames = min(max_score_indices, key=lambda idx: nr_flagged_frames_sf_qc[idx] + nr_flagged_frames_mf_qc[idx])
+            scores_tot[idx_min_flagged_frames] += 1
 
     # Select the cycle with the highest total score.
     idx_best_cycle = scores_tot.index(max(scores_tot))
-    cnr_best_cycle = cnr_cycles[idx_best_cycle]
 
-    return cnr_best_cycle
+    return idx_best_cycle
 
 
 def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la):
@@ -246,18 +249,17 @@ def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagge
         cnr_cycles.append(cnr_all)
 
         # Find ED points in cycle.
-        ed_points_idx = [ed_idx1, ed_idx2]
-        ed_points_cycles.append(ed_points_idx)
+        ed_points_cycles.append([ed_idx1, ed_idx2])
 
         # Find ES point in cycle.
-        es_point = find_es_in_cycle(es_points, ed_points_idx, lv_areas)
+        es_point = find_es_in_cycle(es_points, [ed_idx1, ed_idx2], lv_areas)
         es_points_cycles.append(es_point[0])
 
         # Count number of flagged frames single-frame QC.
-        count_outliers_sf_qc = nr_flagged_frames_in_cycle(
+        count_flagged_frames_sf_qc = nr_flagged_frames_in_cycle(
             flagged_frames_sf_qc, ed_idx1, ed_idx2
         )
-        nr_flagged_frames_sf_qc_cycles.append(count_outliers_sf_qc)
+        nr_flagged_frames_sf_qc_cycles.append(count_flagged_frames_sf_qc)
 
         # Count number of flagged frames multi-frame QC.
         count_flagged_frames_lv_mf_qc = nr_flagged_frames_in_cycle(
@@ -270,11 +272,10 @@ def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagge
             (count_flagged_frames_lv_mf_qc + count_flagged_frames_la_mf_qc)
         )
 
-    # Get CNR of best cycle and corresponding ED and ES points.
-    cnr_best_cycle = get_cnr_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc_cycles, nr_flagged_frames_mf_qc_cycles)
-    selection = cnr_cycles.index(cnr_best_cycle)
+    # Find the ED and ES points of the most appropriate cardiac cycle.
+    idx_best_cycle = find_best_cycle(cnr_cycles, ed_points_cycles, es_points_cycles, lv_areas, nr_flagged_frames_sf_qc_cycles, nr_flagged_frames_mf_qc_cycles)
 
-    ed_selected = ed_points_cycles[selection]
+    ed_selected = ed_points_cycles[idx_best_cycle]
     es_selected = find_es_in_cycle(es_points_cycles, ed_selected, lv_areas)
 
     return ed_selected, es_selected
@@ -294,7 +295,7 @@ def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_pro
         
     Returns:
         cycle_info (dict): Dictionary containing the ED and ES points of the most appropriate cardiac cycle.
-    """    
+    """
     cycle_info = defaultdict(dict)
 
     for view in views:
@@ -316,8 +317,13 @@ def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_pro
         # Combine all flagged frames in one list.
         flagged_frames_combined = list(set(flagged_frames_sf_qc) | set(flagged_frames_mf_qc_lv) | set(flagged_frames_mf_qc_la))
     
-        # Calculate the CNR for every frame in an image
-        cnr_frames = get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, flagged_frames_combined)
+        # Calculate the CNR for every frame in an image, if images are present.
+        dicom_files_present = len(os.listdir(path_to_images)) > 0
+
+        if dicom_files_present:
+            cnr_frames = get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, flagged_frames_combined)
+        else:
+            cnr_frames = [0] * len(files_of_view)
 
         # Get the ED and ES points of most appropriate cardiac cycle.
         ed_selected, es_selected = get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la)

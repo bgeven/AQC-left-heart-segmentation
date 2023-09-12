@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-from general_utilities import get_image_array, separate_segmentation, find_contours, get_list_with_files_of_view
+from general_utilities import get_image_array, separate_segmentation, find_contours, get_list_with_files_of_view, get_path_to_images
 
 
 def color_segmentation(seg, colors_for_labels):
@@ -137,7 +137,6 @@ def main_plot_area_time_curves(
     colors_for_labels,
     font_size=8,
     dpi_value=100,
-    length_ext=7
 ):
     """Function to plot area-time curves for all patients.
 
@@ -151,7 +150,6 @@ def main_plot_area_time_curves(
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
-        length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
     """
     # Define directories of images and segmentations.
     for view in views:
@@ -172,15 +170,13 @@ def main_plot_area_time_curves(
 
         # Plot area-time curves for all frames of one patient. 
         # Only plot the first frame for now.
-        for frame_nr, file_name in enumerate(files_of_view[0:1]):
+        for frame_nr, filename in enumerate(files_of_view[0:1]):
             # Define file location and load echo image frame. 
-            file_location_image = os.path.join(
-                path_to_images, (file_name[:-length_ext] + "_0000" + file_name[-length_ext:])
-            )
+            file_location_image = get_path_to_images(path_to_images, filename)
             echo_image = get_image_array(file_location_image)
 
             # Define file location and load segmentation. 
-            file_location_seg = os.path.join(path_to_segmentations, file_name)
+            file_location_seg = os.path.join(path_to_segmentations, filename)
             seg = get_image_array(file_location_seg)
             seg_colored = color_segmentation(seg, colors_for_labels)
 

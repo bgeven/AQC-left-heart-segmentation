@@ -90,8 +90,8 @@ def check_for_cut_off_la(seg, contour, rows_to_exclude=5, threshold_cut_off_LA=1
     return cut_off_LA
 
 
-def find_frames_to_flag(path_to_segmentations, files_of_view, threshold_surrounded_lv=3.0):
-    """Function to find the frames to be flagged by multi-frame QC.
+def flag_frames_structural(path_to_segmentations, files_of_view, threshold_surrounded_lv=3.0):
+    """Function to find the frames to be flagged by structural criteria as part of multi-frame QC.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
@@ -101,7 +101,7 @@ def find_frames_to_flag(path_to_segmentations, files_of_view, threshold_surround
     Returns:
         flagged_frames_lv (list): List of frames to be flagged by multi-frame QC for the left ventricle.
         flagged_frames_la (list): List of frames to be flagged by multi-frame QC for the left atrium.
-    """      
+    """
     # Create lists to store frames that do not meet the QC criteria. 
     flagged_frames_lv, flagged_frames_la = [], []
     
@@ -127,8 +127,12 @@ def find_frames_to_flag(path_to_segmentations, files_of_view, threshold_surround
     return flagged_frames_lv, flagged_frames_la
 
 
-def main_multi_frame_qc(path_to_segmentations, all_files, views, threshold_surrounded=3.0):
-    """Function to perform multi-frame QC.
+def main_multi_frame_qc_structural(path_to_segmentations, all_files, views, threshold_surrounded=3.0):
+    """Function to perform multi-frame QC based on structural criteria.
+
+    Structural criteria:
+        - Left ventricle is fully surrounded by the myocardium and left atrium.
+        - Left atrium is not cut off by image plane. 
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
@@ -146,7 +150,7 @@ def main_multi_frame_qc(path_to_segmentations, all_files, views, threshold_surro
         files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Find frames flagged by multi-frame QC.
-        flagged_frames_lv, flagged_frames_la = find_frames_to_flag(path_to_segmentations, files_of_view, threshold_surrounded)
+        flagged_frames_lv, flagged_frames_la = flag_frames_structural(path_to_segmentations, files_of_view, threshold_surrounded)
 
         # Save the results in a dictionary.
         multi_frame_qc["flagged_frames_lv"][view] = flagged_frames_lv

@@ -286,7 +286,7 @@ def get_stats_single_frame_qc(overviews_all):
 
 
 def main_single_frame_qc(path_to_segmentations, all_files, views):
-    """ Main function for single-frame quality control of segmentation.
+    """Main function for single-frame quality control of segmentation.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
@@ -308,7 +308,7 @@ def main_single_frame_qc(path_to_segmentations, all_files, views):
         )
 
         # Save the results in a dictionary.
-        single_frame_qc["qc_scores"][view] = qc_scores
+        single_frame_qc["scores"][view] = qc_scores
         single_frame_qc["overview"][view] = overview
         single_frame_qc["flagged_frames"][view] = flagged_frames
 

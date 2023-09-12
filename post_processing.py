@@ -142,7 +142,7 @@ def get_main_contour_lv_la(seg, mean_centroid):
 
 
 def get_main_contour_myo(seg_1, seg_2, threshold_distance=5):
-    """ Extract the contours of the myocardium that neighbour the LV.
+    """Extract the contours of the myocardium that neighbour the LV.
 
     Args:
         seg_1 (np.ndarray): Segmentation of LV.

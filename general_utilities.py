@@ -220,3 +220,20 @@ def find_coordinates_of_holes(seg):
     )
 
     return coordinates_holes
+
+
+def get_path_to_images(path_to_images, filename, length_ext=7, input_channel="0000"):
+    """Get the path to the image.
+
+    Args:
+        path_to_images (str): Path to the folder containing the images.
+        filename (str): Name of the image.
+        length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
+        input_channel (str): Input channel of the image (default: 0000).
+    
+    Returns:
+        file_location_image (str): Path to the image.
+    """
+    file_location_image = os.path.join(path_to_images, (filename[:-length_ext] + "_" + input_channel + filename[-length_ext:]))
+
+    return file_location_image
