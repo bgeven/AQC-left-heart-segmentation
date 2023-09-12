@@ -2,7 +2,7 @@
 import os
 import cv2
 from collections import defaultdict
-from general_utilities import convert_image, separate_segmentation, find_contours, get_list_with_files_of_view
+from general_utilities import get_image_array, separate_segmentation, find_contours, get_list_with_files_of_view
 
 
 def check_for_surrounded_lv(seg_1, seg_2, seg_3, threshold_surrounded_lv=1.0):
@@ -108,7 +108,7 @@ def flag_frames_structural(path_to_segmentations, files_of_view, threshold_surro
     for frame_nr, filename in enumerate(files_of_view):
         # Define file location and load segmentation
         file_location = os.path.join(path_to_segmentations, filename)
-        seg = convert_image(file_location)
+        seg = get_image_array(file_location)
 
         # Separate segmentation in 3 different segmentations. 
         _, seg_1, seg_2, seg_3 = separate_segmentation(seg)
