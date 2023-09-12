@@ -79,9 +79,9 @@ def get_mean_centroids(path_to_segmentations, files_of_view, frames_to_process):
         # Prevent from not selecting a centroid at all when all frames are detected as erroneous.
         if len(frames_to_process) < round(0.95 * len(files_of_view)):
             if frame_nr not in frames_to_process:
-                centroids = find_centroids_of_all_structures(centroids)
+                centroids = find_centroids_of_all_structures(centroids, seg)
         else:
-            centroids = find_centroids_of_all_structures(centroids)
+            centroids = find_centroids_of_all_structures(centroids, seg)
 
     # Compute average centroid of each structure.
     mean_centroids = {

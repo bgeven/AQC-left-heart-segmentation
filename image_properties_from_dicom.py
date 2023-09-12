@@ -97,3 +97,15 @@ def main_get_dicom_properties(path_to_dicom_files):
         dicom_properties["frames_r_waves"][dicom_file] = frames_r_waves
 
     return dicom_properties
+
+
+def default_dicom_properties(views, default_pixel_spacing=0.01, default_frames_r_waves=[]):
+
+    # Create dictionary to store the properties of the DICOM files.
+    dicom_properties = defaultdict(dict)
+
+    for view in views:
+        dicom_properties["pixel_spacing"][view] = default_pixel_spacing
+        dicom_properties["frames_r_waves"][view] = default_frames_r_waves
+
+    return dicom_properties

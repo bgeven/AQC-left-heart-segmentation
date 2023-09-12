@@ -318,9 +318,9 @@ def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_pro
         flagged_frames_combined = list(set(flagged_frames_sf_qc) | set(flagged_frames_mf_qc_lv) | set(flagged_frames_mf_qc_la))
     
         # Calculate the CNR for every frame in an image, if images are present.
-        dicom_files_present = len(os.listdir(path_to_images)) > 0
+        images_present = len(os.listdir(path_to_images)) > 0
 
-        if dicom_files_present:
+        if images_present:
             cnr_frames = get_cnr_all_frames(path_to_images, path_to_segmentations, files_of_view, flagged_frames_combined)
         else:
             cnr_frames = [0] * len(files_of_view)
