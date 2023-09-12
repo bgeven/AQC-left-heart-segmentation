@@ -273,7 +273,7 @@ def get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagge
         )
 
     # Find the ED and ES points of the most appropriate cardiac cycle.
-    idx_best_cycle = find_best_cycle(cnr_cycles, ed_points_cycles, es_points_cycles, lv_areas, nr_flagged_frames_sf_qc_cycles, nr_flagged_frames_mf_qc_cycles)
+    idx_best_cycle = find_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc_cycles, nr_flagged_frames_mf_qc_cycles)
 
     ed_selected = ed_points_cycles[idx_best_cycle]
     es_selected = find_es_in_cycle(es_points_cycles, ed_selected, lv_areas)
@@ -326,7 +326,7 @@ def main_cycle_selection(path_to_images, path_to_segmentations, segmentation_pro
             cnr_frames = [0] * len(files_of_view)
 
         # Get the ED and ES points of most appropriate cardiac cycle.
-        ed_selected, es_selected = get_properties_best_cycle(cnr_frames, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la)
+        ed_selected, es_selected = get_properties_best_cycle(cnr_frames, ed_points, es_points, lv_areas, flagged_frames_sf_qc, flagged_frames_mf_qc_lv, flagged_frames_mf_qc_la)
     
         # Store the information in a dictionary.
         cycle_info["ed_points_selected"][view] = ed_selected

@@ -46,7 +46,7 @@ def find_centroids_of_all_structures(centroids):
     """
     # Get middle coordinate of each separate segmentation and add to dictionary.
     for structure in centroids:
-        centroid_x, centroid_y = find_centroid(locals()[f"seg{structure}"])
+        centroid_x, centroid_y = find_centroid(locals()[f"seg_{structure}"])
         centroids[structure][0].append(centroid_x)
         centroids[structure][1].append(centroid_y)
 
