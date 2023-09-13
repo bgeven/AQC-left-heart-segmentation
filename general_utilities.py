@@ -1,6 +1,7 @@
 # This script contains general functions used in various other scripts.
 import os
 import cv2
+import json
 import numpy as np
 import SimpleITK as sitk
 
@@ -243,3 +244,48 @@ def get_path_to_images(path_to_images, filename, length_ext=7, input_channel="00
     )
 
     return file_location_image
+
+
+def load_atlases(path_to_atlases):
+    """Load the atlases.
+
+    Args:
+        path_to_atlases (str): Path to the atlases.
+    
+    Returns:
+        atlas_lv (list): List containing the LV atlas.
+        atlas_la (list): List containing the LA atlas.
+    """
+    if os.listdir(path_to_atlases) >= 2:
+        with open(os.path.join(path_to_atlases, "atlas_lv.json"), "r") as file:
+            atlas_lv = json.load(file)
+
+        with open(os.path.join(path_to_atlases, "atlas_la.json"), "r") as file:
+            atlas_la = json.load(file)
+    
+    else:
+        raise ValueError("No atlases found. Please check the path to the atlases.")
+
+    return atlas_lv, atlas_la
+
+
+def normalise_list(list_to_normalise):
+    """Normalise a list of values to a range of 0 to 1.
+
+    Args:
+        list_to_normalise (list): List of values to normalise.
+
+    Returns:
+        normalised_list (list): Normalised list of values.
+    """
+    # Find the minimum and maximum values in the list.
+    min_value = min(list_to_normalise)
+    max_value = max(list_to_normalise)
+
+    # Find the range of values in the list.
+    value_range = max_value - min_value
+
+    # Normalise the list of values.
+    normalised_list = [(value - min_value) / value_range for value in list_to_normalise]
+
+    return normalised_list

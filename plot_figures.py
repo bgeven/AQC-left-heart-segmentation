@@ -262,3 +262,19 @@ def main_plot_area_time_curves(
                     plt.xlim(frame_times[0] - 40, frame_times[-1] + 40)
                     plt.ylim(min_y_val, max_y_val)
                     plt.legend(bbox_to_anchor=(1, 0.5), loc="center left")
+
+
+def show_atlases(atlas_lv, atlas_la):
+    """Function to plot the atlases (population priors) for the LV and LA.
+
+    Args:
+        atlas_lv (list): Atlas of the LV.
+        atlas_la (list): Atlas of the LA.   
+    """
+    plt.figure(dpi=100)
+    plt.title("Atlases LV and LA area-time curves")
+    plt.plot(atlas_lv, color=(0, 1, 0))
+    plt.plot(atlas_la, color=(0, 0, 1))
+    plt.legend(["LV", "LA"])
+    plt.xlabel("% of a cardiac cycle")
+    plt.ylabel("Normalised area [-]")
