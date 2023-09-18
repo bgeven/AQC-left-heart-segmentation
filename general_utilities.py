@@ -289,3 +289,18 @@ def normalise_list(list_to_normalise):
     normalised_list = [(value - min_value) / value_range for value in list_to_normalise]
 
     return normalised_list
+
+
+# Calculate factor to convert pixel to pixel distance to cm
+def conv_pixel_spacing_to_cm(pixel_spacing):  
+    """Calculate the factor to convert pixel to pixel distance to cm.
+    
+    Args:
+        pixel_spacing (list): List of the pixel spacing in mm.
+    
+    Returns:
+        pixel_spacing_cm (float): Average pixel spacing in cm.
+    """
+    pixel_spacing_cm = (pixel_spacing[0] + pixel_spacing[1]) / 20 
+    
+    return pixel_spacing_cm
