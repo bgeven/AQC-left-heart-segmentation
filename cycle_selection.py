@@ -376,5 +376,6 @@ def main_cycle_selection(
         # Store the information in a dictionary.
         cycle_info["ed_points_selected"][view] = ed_selected
         cycle_info["es_point_selected"][view] = es_selected
+        cycle_info["flagged_frames_combined"][view] = flagged_frames_combined
 
     return cycle_info

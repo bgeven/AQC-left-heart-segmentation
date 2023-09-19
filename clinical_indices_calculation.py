@@ -1,7 +1,7 @@
-
+# This script contains functions to calculate clinical indices of the left ventricle.
 import numpy as np
-from scipy.signal import savgol_filter
 from scipy.ndimage import map_coordinates
+from collections import defaultdict
 from general_utilities import *
 
 
@@ -337,7 +337,7 @@ def determine_length_and_diameter(seg, pixel_spacing, nr_of_diameters=20, label=
     return length, diameters
 
 
-def volume_simpson(diameters_a2ch, diameters_a4ch, length_a2ch, length_a4ch):
+def comp_volume_simpson(diameters_a2ch, diameters_a4ch, length_a2ch, length_a4ch):
     """Calculate the volume of the structure using the Simpson's method.
 
     Args:
@@ -364,7 +364,7 @@ def volume_simpson(diameters_a2ch, diameters_a4ch, length_a2ch, length_a4ch):
 
 
 def comp_ejection_fraction(volume_ED, volume_ES):
-    """ Calculate the ejection fraction of the structure: (EDV-ESV)/EDV
+    """Calculate the ejection fraction of the structure: (EDV-ESV)/EDV
 
     Args:
         volume_ED (float): The end-diastolic volume.
@@ -398,12 +398,15 @@ def process_coordinates(coordinates, neighbor_indices):
 
 
 def comp_circumference(seg_A, seg_B, threshold_distance=1.5):
-    """ Calculate the circumference of the structure, without including pixels neighboring a specific structure.
+    """Calculate the circumference of the structure, without including pixels neighboring a specific structure.
 
     Args:
         seg_A (np.ndarray): The segmentation of the structure.
         seg_B (np.ndarray): The segmentation of the neighboring structure, used to find pixels to exclude. 
         threshold_distance (float): The threshold distance between two points (default: 1.5).
+
+    Returns:
+        circumference (float): The circumference of the structure.
     """
     # Find the contours of the structures.
     contours_A = find_contours(seg_A, "external")
@@ -447,13 +450,13 @@ def comp_circumference(seg_A, seg_B, threshold_distance=1.5):
 
 
 def comp_global_longitudinal_strain(length_circumference_over_time):
-    """ Calculate the global longitudinal strain (GLS) of the structure for every time frame.
+    """Calculate the global longitudinal strain (GLS) of the structure for every time frame.
 
     Args:
         length_circumference_over_time (list): The length of the circumference of the structure for every time frame.
 
     Returns:
-        gls_over_time (list): The global longitudinal strain of the structure for every time frame.
+        gls (float): The global longitudinal strain, maximum strain with regards to reference length.
 
     """
     # Check if the input list is empty or contains only NaN values.
@@ -465,252 +468,203 @@ def comp_global_longitudinal_strain(length_circumference_over_time):
 
     # Calculate gls over time using list comprehension.
     gls_over_time = [((distance - ref_distance) / ref_distance) * 100 if not np.isnan(distance) else np.nan for distance in length_circumference_over_time]
+
+    # Find the maximum absolute value of the gls over time.
+    max_gls = max([abs(item) for item in gls_over_time])
     
-    return gls_over_time
+    return max_gls
 
 
-def main_diameter_length_determination(patient, views, path_to_segmentations, cycle_information, segmentation_properties, dicom_properties, all_files, enlarge_factor=4):
-    # Initialize dictionary to store lengths and diameters
-    diameters_ES_LV, length_ES_LV = {}, {}
-    diameters_ED_LV, length_ED_LV = {}, {}
+def resize_segmentation(seg, enlarge_factor=4):
+    """Resize the segmentation.
+
+    Args:
+        seg (np.ndarray): The segmentation of the structure.
+        enlarge_factor (int): The factor by which the segmentation is enlarged (default: 4).
+    
+    Returns:
+        resized_segmentation (np.ndarray): The resized segmentation.
+    """
+    resized_segmentation = cv2.resize(seg, (seg.shape[1] * enlarge_factor, seg.shape[0] * enlarge_factor), interpolation=cv2.INTER_NEAREST)
+
+    return resized_segmentation
+
+
+def main_diameter_length_determination(path_to_segmentations, views, all_files, cycle_information, dicom_properties, enlarge_factor=4):
+    """Determine the diameters and length of the structure for every view.
+
+    Args:
+        path_to_segmentations (str): The path to the folder containing the segmentations.
+        views (list): The views of the structure.
+        all_files (list): The list of all files in the folder.
+        cycle_information (dict): The dictionary containing the information of the cardiac cycle.
+        dicom_properties (dict): The dictionary containing the DICOM properties.
+        enlarge_factor (int): The factor by which the segmentation is enlarged (default: 4).
+
+    Returns:
+        diameters_and_lengths (dict): The dictionary containing the diameters and length of the structure for every view.
+    """
+    diameters_and_lengths = defaultdict(dict)
 
     for view in views:
-            
-        # Initialize lists to store diameters and lengths
-        diameters_ED_LV_list, length_ED_LV_list = [], []
+        # Initialise lists to store diameters and lengths of both ED frames. 
+        diameters_ed_both_frames, length_ed_both_frames = [], []
         
-        # Get pixel spacing specific for each patient
+        # Get pixel spacing specific for each image. 
         pixel_spacing = conv_pixel_spacing_to_cm(dicom_properties["pixel_spacing"][view]) / enlarge_factor
         
-        # Get ED and ES points for each patient
-        ED_points = cycle_information['ed_points_selected'][view]
-        ES_point = cycle_information['es_point_selected'][view]
+        # Get ED and ES points for each image cycle per view. 
+        ed_points = cycle_information["ed_points_selected"][view]
+        es_point = cycle_information["es_point_selected"][view]
          
-        # Get frames to exclude from analysis
-        frames_to_exclude = [] #cycles_and_outliers['Outliers QC1 all'][patient]
-        # frames_to_exclude = list(set(cycles_and_outliers['Outliers QC1 all'][patient]) | set(cycles_and_outliers['Outliers QC2 all'][patient]))
-        
-        # Find the images for a specific patient and sort these based on frame number
-        images_of_one_person_unsorted = [i for i in all_files if i.startswith(patient)]
-        images_of_one_person = sorted(images_of_one_person_unsorted, key=lambda x: int(x[30:-7]))
-        
-        # Loop over all frames of one person
-        for idx, image in enumerate(images_of_one_person): 
-            
-            if ((idx in ES_point) or (idx in ED_points)) and (idx not in frames_to_exclude):
-                # Define file location and load segmentation
-                file_location_seg = os.path.join(directory_segmentations, image)
-                seg = convert_image(file_location_seg)
-
-                seg_resized = cv2.resize(seg, (seg.shape[1] * enlarge_factor, seg.shape[0] * enlarge_factor), interpolation=cv2.INTER_NEAREST)
-    
-                L_LV, diameters_LV = main_diameter_length_determination(seg_resized, pixel_spacing, image, idx, mode='LV')
+        # Get frames to exclude from analysis. 
+        frames_to_exclude = cycle_information["flagged_frames_combined"][view]
                 
-                if idx in ES_point:
-                    diameters_ES_LV_loop = diameters_LV
-                    length_ES_LV_loop = L_LV
-                    
-                elif idx in ED_points:
-                    diameters_ED_LV_list.append([diameters_LV])
-                    length_ED_LV_list.append(L_LV)
-                    
-            elif ((idx in ES_point) or (idx in ED_points)) and (idx in frames_to_exclude):
-                if idx in ES_point:
-                    diameters_ES_LV_loop = [np.nan] * 20
-                    length_ES_LV_loop = 0
-                    
-                elif idx in ED_points:
-                    diameters_ED_LV_list.append([np.nan] * 20)
-                    length_ED_LV_list.append(0)
-            
-        diameters_ES_LV[patient] = diameters_ES_LV_loop
-        length_ES_LV[patient] = length_ES_LV_loop
-                            
-        diameters_ED_LV[patient] = diameters_ED_LV_list
-        length_ED_LV[patient] = length_ED_LV_list
+        # Get list of all files of one view of one person.
+        files_of_view = get_list_with_files_of_view(all_files, view)
+        
+        for idx, filename in enumerate(files_of_view): 
+            # Check if the frame is an ED or ES frame and if it is not flagged.
+            if idx in ed_points or idx in es_point:
+                if idx not in frames_to_exclude:
+                    # Get segmentation of specific frame.
+                    file_location_seg = os.path.join(path_to_segmentations, filename)
+                    seg = get_image_array(file_location_seg)
 
-# %%
-measurements = {}
-vol_ES_LV_dict, vol_ED_LV_dict, vol_ES_LA_dict, vol_ED_LA_dict, EF_LV_dict,  = {}, {}, {}, {}, {}
-GLS_LV_2ch_over_time_dict, GLS_LV_4ch_over_time_dict, GLS_LV_2ch_dict, GLS_LV_4ch_dict = {}, {}, {}, {}
-GLS_LA_2ch_over_time_dict, GLS_LA_4ch_over_time_dict, GLS_LA_2ch_dict, GLS_LA_4ch_dict = {}, {}, {}, {}
-L_2ch_4ch_ED_LV_dict, L_2ch_4ch_ES_LV_dict, L_2ch_4ch_ED_LA_dict, L_2ch_4ch_ES_LA_dict = {}, {}, {}, {}
-area_ED_2ch_LA_dict, area_ED_4ch_LA_dict, area_ES_2ch_LA_dict, area_ES_4ch_LA_dict = {}, {}, {}, {}
+                    # Resize segmentation to increase accuracy of length and diameter determination.
+                    seg_resized = resize_segmentation(seg, enlarge_factor)
 
-# Get list of filenames in one folder
-all_files = os.listdir(directory_segmentations)
-patients = sorted(set([i[:15] for i in all_files if i.startswith('cardiohance')]))
+                    # Determine length and diameters of the structure.
+                    length, diameters = determine_length_and_diameter(seg_resized, pixel_spacing)
 
-for patient in patients:
-    print(patient)    
-    views_of_one_person_unsrt = list(set([i[:29] for i in all_files if i.startswith(patient)]))
-    views_of_one_person = sorted(views_of_one_person_unsrt, key=lambda x: x[25:29])
+                # If the frame is flagged, set length to 0 and diameters to NaN values.
+                else:
+                    length, diameters = 0, [np.nan] * 20
 
-    # ED LV
-    L_ED_2ch_LV_list = length_ED_LV[views_of_one_person[0]]
-    L_ED_4ch_LV_list = length_ED_LV[views_of_one_person[1]]
-    
-    diameters_ED_2ch_LV_list = diameters_ED_LV[views_of_one_person[0]]
-    diameters_ED_4ch_LV_list = diameters_ED_LV[views_of_one_person[1]]
-    
-    if sum(L_ED_2ch_LV_list) > 0 and sum(L_ED_4ch_LV_list) > 0:
-        L_ED_2ch_LV = max(L_ED_2ch_LV_list) 
-        L_ED_4ch_LV = max(L_ED_4ch_LV_list)
-        
-        L_ratio = L_ED_2ch_LV / L_ED_4ch_LV
-        
-        diameters_ED_2ch_LV = diameters_ED_2ch_LV_list[np.argmax(L_ED_2ch_LV_list)][0]
-        diameters_ED_4ch_LV = diameters_ED_4ch_LV_list[np.argmax(L_ED_4ch_LV_list)][0]
-        
-        volume_simpson_ED_LV = volume_simpson(diameters_ED_2ch_LV, diameters_ED_4ch_LV, L_ED_2ch_LV, L_ED_4ch_LV)
-    else:
-        volume_simpson_ED_LV = np.nan
-        L_ratio = np.nan
-    
-    vol_ED_LV_dict[patient] = volume_simpson_ED_LV
-    L_2ch_4ch_ED_LV_dict[patient] = L_ratio
-    
-    # ES LV
-    L_ES_2ch_LV = length_ES_LV[views_of_one_person[0]]
-    L_ES_4ch_LV = length_ES_LV[views_of_one_person[1]]
-    
-    diameters_ES_2ch_LV = diameters_ES_LV[views_of_one_person[0]]
-    diameters_ES_4ch_LV = diameters_ES_LV[views_of_one_person[1]]
-    
-    if L_ES_2ch_LV != 0 and L_ES_4ch_LV != 0:          
-        L_ratio = L_ES_2ch_LV / L_ES_4ch_LV
-        
-        volume_simpson_ES_LV = volume_simpson(diameters_ES_2ch_LV, diameters_ES_4ch_LV, L_ES_2ch_LV, L_ES_4ch_LV)
-        vol_ES_LV_dict[patient] = volume_simpson_ES_LV
-    else:
-        volume_simpson_ES_LV = np.nan
-        L_ratio = np.nan
-    
-    vol_ES_LV_dict[patient] = volume_simpson_ES_LV
-    L_2ch_4ch_ES_LV_dict[patient] = L_ratio
+                # Store length and diameters in dictionary.
+                if idx in ed_points:
+                    diameters_ed_both_frames.append([diameters])
+                    length_ed_both_frames.append(length)
 
-    # ED LA
-    L_ED_2ch_LA_list = length_ED_LA[views_of_one_person[0]]
-    L_ED_4ch_LA_list = length_ED_LA[views_of_one_person[1]]
-    
-    areas_ED_2ch_LA_list = areas_ED_LA[views_of_one_person[0]]
-    areas_ED_4ch_LA_list = areas_ED_LA[views_of_one_person[1]]
+                elif idx in es_point:
+                    diameters_and_lengths["diameters_es"][view] = diameters
+                    diameters_and_lengths["length_es"][view] = length
 
-    if sum(L_ED_2ch_LA_list) > 0 and sum(L_ED_4ch_LA_list) > 0:    
-        L_ED_2ch_LA = max(L_ED_2ch_LA_list) 
-        L_ED_4ch_LA = max(L_ED_4ch_LA_list)
-        
-        L_2ch_4ch_ED_LA_dict[patient] = L_ED_2ch_LA / L_ED_4ch_LA
-        
-        area_ED_2ch_LA = areas_ED_2ch_LA_list[np.argmax(L_ED_2ch_LA_list)]
-        area_ED_4ch_LA = areas_ED_4ch_LA_list[np.argmax(L_ED_4ch_LA_list)]
-        
-        area_ED_2ch_LA_dict[patient] = area_ED_2ch_LA
-        area_ED_4ch_LA_dict[patient] = area_ED_4ch_LA
-        
-        vol_area_length_ED_LA = volume_area_length(area_ED_2ch_LA, area_ED_4ch_LA, L_ED_2ch_LA, L_ED_4ch_LA)
-        vol_ED_LA_dict[patient] = vol_area_length_ED_LA
-    else:
-        vol_ED_LA_dict[patient] = np.nan
-        L_2ch_4ch_ED_LA_dict[patient] = np.nan
-        area_ES_2ch_LA_dict[patient] = np.nan
-        area_ES_4ch_LA_dict[patient] = np.nan
+        # Determine the index of the largest length and get the corresponding diameters.
+        max_length_idx = np.argmax(length_ed_both_frames)
+        diameters_and_lengths["diameters_ed"][view] = diameters_ed_both_frames[max_length_idx][0]
+        diameters_and_lengths["length_ed"][view] = length_ed_both_frames[max_length_idx]                  
 
-    # ES LA
-    L_ES_2ch_LA = length_ES_LA[views_of_one_person[0]]
-    L_ES_4ch_LA = length_ES_LA[views_of_one_person[1]]
-    
-    area_ES_2ch_LA = areas_ES_LA[views_of_one_person[0]]
-    area_ES_4ch_LA = areas_ES_LA[views_of_one_person[1]]
-    
-    if L_ES_2ch_LA != 0 and L_ES_4ch_LA != 0:      
-        L_2ch_4ch_ES_LA_dict[patient] = L_ES_2ch_LA / L_ES_4ch_LA
-        
-        area_ES_2ch_LA_dict[patient] = area_ES_2ch_LA
-        area_ES_4ch_LA_dict[patient] = area_ES_4ch_LA
-        
-        vol_area_length_ES_LA = volume_area_length(area_ES_2ch_LA, area_ES_4ch_LA, L_ES_2ch_LA, L_ES_4ch_LA)
-        vol_ES_LA_dict[patient] = vol_area_length_ES_LA
-    else:
-        vol_ES_LA_dict[patient] = np.nan
-        L_2ch_4ch_ES_LA_dict[patient] = np.nan
-        area_ES_2ch_LA_dict[patient] = np.nan
-        area_ES_4ch_LA_dict[patient] = np.nan
-    
-    # EF
-    if volume_simpson_ED_LV != np.nan and volume_simpson_ES_LV != np.nan:
-        EF_LV = ejection_fraction(volume_simpson_ED_LV, volume_simpson_ES_LV)
-    else:
-        EF_LV = np.nan
-        
-    EF_LV_dict[patient] = EF_LV
-    
-    # GLS
-    for view in views_of_one_person:
-        tot_distances_LV, tot_distances_LA = [], []
-        
-        ED_points = cycles_and_outliers['ED_points_selected'][view]
-        ES_point = cycles_and_outliers['ES_point_selected'][view]
-        
-        # Find filenames for all images of one patient and sort based on frame number
-        images_of_one_view_unsorted = [i for i in all_files if i.startswith(view)]    
-        images_of_one_view = sorted(images_of_one_view_unsorted, key=lambda x: int(x[30:-7]))
-    
-        for frame_nr, image in enumerate(images_of_one_view):
-            if frame_nr >= ED_points[0] and frame_nr <= ED_points[1]:
-                # Define file location and load segmentation
-                file_location_seg = os.path.join(directory_segmentations, image)
-                seg = convert_image(file_location_seg)
-                
-                seg0, seg1, seg2, seg3 = separate_segmentation(seg)
-                
-                # GLS LV
-                tot_distance_LV = find_distances(seg1, seg3)   
-                tot_distances_LV.append(tot_distance_LV)
-                
-                # GLS LA
-                tot_distance_LA = find_distances(seg3, seg1) 
-                tot_distances_LA.append(tot_distance_LA)
-                
-        GLS_LV = GLS(tot_distances_LV)
-        GLS_LA = GLS(tot_distances_LA)
-    
-        if view.endswith('a2ch'):
-            GLS_LV_2ch_over_time_dict[view[:15]] = GLS_LV
-            GLS_LV_2ch_dict[view[:15]] = max([abs(item) for item in GLS_LV])  
-            
-            GLS_LA_2ch_over_time_dict[view[:15]] = GLS_LA
-            GLS_LA_2ch_dict[view[:15]] = max([abs(item) for item in GLS_LA]) 
-            
-        elif view.endswith('a4ch'):
-            GLS_LV_4ch_over_time_dict[view[:15]] = GLS_LV
-            GLS_LV_4ch_dict[view[:15]] = max([abs(item) for item in GLS_LV])  
-            
-            GLS_LA_4ch_over_time_dict[view[:15]] = GLS_LA
-            GLS_LA_4ch_dict[view[:15]] = max([abs(item) for item in GLS_LA]) 
+    return diameters_and_lengths
 
-measurements['LV volume ES'] = vol_ES_LV_dict
-measurements['LV volume ED'] = vol_ED_LV_dict
-measurements['LA volume ES'] = vol_ES_LA_dict
-measurements['LA volume ED'] = vol_ED_LA_dict
-measurements['LV EF'] = EF_LV_dict
 
-measurements['LV GLS 2ch peak'] = GLS_LV_2ch_dict
-measurements['LV GLS 4ch peak'] = GLS_LV_4ch_dict
-measurements['LV GLS Time 2ch'] = GLS_LV_2ch_over_time_dict
-measurements['LV GLS Time 4ch'] = GLS_LV_4ch_over_time_dict
+def main_volume_calculation(views, diameters_and_lengths):
+    """Calculate the volume of the structure using the Simpson's method.
 
-measurements['LA GLS 2ch peak'] = GLS_LA_2ch_dict
-measurements['LA GLS 4ch peak'] = GLS_LA_4ch_dict
-measurements['LA GLS Time 2ch'] = GLS_LA_2ch_over_time_dict
-measurements['LA GLS Time 4ch'] = GLS_LA_4ch_over_time_dict
+    Args:
+        views (list): The views of the structure.
+        diameters_and_lengths (dict): The dictionary containing the diameters and length of the structure for every view.
 
-measurements['L_2ch_4ch_ED_LV'] = L_2ch_4ch_ED_LV_dict
-measurements['L_2ch_4ch_ES_LV'] = L_2ch_4ch_ES_LV_dict
-measurements['L_2ch_4ch_ED_LA'] = L_2ch_4ch_ED_LA_dict
-measurements['L_2ch_4ch_ES_LA'] = L_2ch_4ch_ES_LA_dict
+    Returns:
+        volume_simpson_ed (float): The end-diastolic volume.
+        volume_simpson_es (float): The end-systolic volume.
+    """
+    volume_simpson_ed = np.nan
+    volume_simpson_es = np.nan
 
-measurements['LA area 2ch ED'] = area_ED_2ch_LA_dict
-measurements['LA area 4ch ED'] = area_ED_4ch_LA_dict
-measurements['LA area 2ch ES'] = area_ES_2ch_LA_dict
-measurements['LA area 4ch ES'] = area_ES_4ch_LA_dict
+    # Load diameters and lengths of the structure for every view.
+    for view in views:
+        if "a2ch" in view:
+            diameters_ed_a2ch = diameters_and_lengths["diameters_ed"][view]
+            diameters_es_a2ch = diameters_and_lengths["diameters_es"][view]
+            length_ed_a2ch = diameters_and_lengths["length_ed"][view]
+            length_es_a2ch = diameters_and_lengths["length_es"][view]
+
+        elif "a4ch" in view:
+            diameters_ed_a4ch = diameters_and_lengths["diameters_ed"][view]
+            diameters_es_a4ch = diameters_and_lengths["diameters_es"][view]
+            length_ed_a4ch = diameters_and_lengths["length_ed"][view]
+            length_es_a4ch = diameters_and_lengths["length_es"][view]
+
+        else:
+            raise ValueError("Name of view is not recognised, check this.")
+
+    # Check if the diameters and lengths are not equal to 0 and calculate the ED and ES volumes of the structure.
+    if length_ed_a2ch != 0 and length_ed_a4ch != 0:
+        volume_simpson_ed = comp_volume_simpson(diameters_ed_a2ch, diameters_ed_a4ch, length_ed_a2ch, length_ed_a4ch)
+
+    if length_es_a2ch != 0 and length_es_a4ch != 0:
+        volume_simpson_es = comp_volume_simpson(diameters_es_a2ch, diameters_es_a4ch, length_es_a2ch, length_es_a4ch)
+
+    return volume_simpson_ed, volume_simpson_es
+
+
+def main_circumference_all_frames(path_to_segmentations, view, all_files):
+    """Calculate the circumference of the structure for every time frame.
+
+    Args:
+        path_to_segmentations (str): The path to the folder containing the segmentations.
+        view (str): The view of the structure.
+        all_files (list): The list of all files in the folder.
+
+    Returns:
+        all_circumferences (list): The circumference of the structure for every time frame.
+    """
+    all_circumferences = []
+    
+    # Get all files of one view of one person.
+    files_of_view = get_list_with_files_of_view(all_files, view)
+
+    for file in files_of_view:
+        # Define file location and load segmentation. 
+        file_location_seg = os.path.join(path_to_segmentations, file)
+        seg = get_image_array(file_location_seg)
+        
+        # Separate the segmentations into different structures.
+        _, seg_1, _, seg_3 = separate_segmentation(seg)
+        
+        # Calculate the circumference of the structure and append it to the list.
+        circumference = comp_circumference(seg_1, seg_3)   
+        all_circumferences.append(circumference)
+
+    return all_circumferences
+
+
+def main_computation_clinical_indices(path_to_segmentations, patient, views, all_files, diameters_and_lengths):
+    """Calculate the clinical indices of the structure.
+
+    This includes the ED and ES volumes, the ejection fraction and the global longitudinal strain.
+
+    Args:
+        path_to_segmentations (str): The path to the folder containing the segmentations.
+        patient (str): The patient ID.
+        views (list): The views of the structure.
+        all_files (list): The list of all files in the folder.
+        diameters_and_lengths (dict): The dictionary containing the diameters and length of the structure for every view.
+
+    Returns:
+        clinical_indices (dict): The dictionary containing the clinical indices of the structure.
+    """
+    clinical_indices = defaultdict(dict)
+
+    # Calculate the volume of the structure and save it in the dictionary.
+    volume_simpson_ed, volume_simpson_es = main_volume_calculation(views, diameters_and_lengths)
+    clinical_indices["volume_ed"][patient] = volume_simpson_ed
+    clinical_indices["volume_es"][patient] = volume_simpson_es
+        
+    # Calculate the ejection fraction of the structure and save it in the dictionary.
+    ejection_fraction = comp_ejection_fraction(volume_simpson_ed, volume_simpson_es)
+    clinical_indices["ejection_fraction"][patient] = ejection_fraction
+    
+    # Calculate the global longitudinal strain of the structure for both views and save it in the dictionary.
+    for view in views:
+        circumferences = main_circumference_all_frames(path_to_segmentations, view, all_files)
+        global_longitudinal_strain = comp_global_longitudinal_strain(circumferences)
+    
+        if view.endswith("a2ch"):
+            clinical_indices["gls_a2ch"][patient] = global_longitudinal_strain
+
+        elif view.endswith("a4ch"):
+            clinical_indices["gls_a4ch"][patient] = global_longitudinal_strain
+
+    return clinical_indices
