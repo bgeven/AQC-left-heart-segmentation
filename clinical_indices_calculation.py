@@ -630,7 +630,7 @@ def main_circumference_all_frames(path_to_segmentations, view, all_files):
     return all_circumferences
 
 
-def main_computation_clinical_indices(path_to_segmentations, patient, views, all_files, diameters_and_lengths):
+def main_computation_clinical_indices(path_to_segmentations, patient, views, all_files, cycle_information, dicom_properties):
     """Calculate the clinical indices of the structure.
 
     This includes the ED and ES volumes, the ejection fraction and the global longitudinal strain.
@@ -646,6 +646,9 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
         clinical_indices (dict): The dictionary containing the clinical indices of the structure.
     """
     clinical_indices = defaultdict(dict)
+
+    # Determine the diameters and length of the structure for every view.
+    diameters_and_lengths = main_diameter_length_determination(path_to_segmentations, views, all_files, cycle_information, dicom_properties)
 
     # Calculate the volume of the structure and save it in the dictionary.
     volume_simpson_ed, volume_simpson_es = main_volume_calculation(views, diameters_and_lengths)
