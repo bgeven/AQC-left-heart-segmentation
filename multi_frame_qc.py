@@ -61,8 +61,8 @@ def main_multi_frame_qc(patient, views, cycle_information, multi_frame_qc_struct
         dtw_la = multi_frame_qc_temporal["dtw_la"][view]
         
         # Compute the score and label for the current view.
-        score_lv = (int(nr_flagged_frames_lv_in_cycle) >= flagged_frame_threshold) + (int(dtw_lv) > dtw_thresholds)
-        score_la = (int(nr_flagged_frames_la_in_cycle) >= flagged_frame_threshold) + (int(dtw_la) > dtw_thresholds)
+        score_lv = (int(nr_flagged_frames_lv_in_cycle) >= flagged_frame_threshold) + (dtw_lv > dtw_thresholds[0])
+        score_la = (int(nr_flagged_frames_la_in_cycle) >= flagged_frame_threshold) + (dtw_la > dtw_thresholds[1])
 
         # Save the score and label for the current view.
         label_lv = score_lv >= 1
