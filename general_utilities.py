@@ -256,7 +256,7 @@ def load_atlases(path_to_atlases):
         atlas_lv (list): List containing the LV atlas.
         atlas_la (list): List containing the LA atlas.
     """
-    if os.listdir(path_to_atlases) >= 2:
+    if len(os.listdir(path_to_atlases)) >= 2:
         with open(os.path.join(path_to_atlases, "atlas_lv.json"), "r") as file:
             atlas_lv = json.load(file)
 

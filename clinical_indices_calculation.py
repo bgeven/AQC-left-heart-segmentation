@@ -490,7 +490,7 @@ def resize_segmentation(seg, enlarge_factor=4):
     return resized_segmentation
 
 
-def main_diameter_length_determination(path_to_segmentations, views, all_files, cycle_information, dicom_properties, enlarge_factor=4):
+def main_cavity_properties(path_to_segmentations, views, all_files, cycle_information, dicom_properties, segmentation_properties, enlarge_factor=4):
     """Determine the diameters and length of the structure for every view.
 
     Args:
@@ -502,9 +502,9 @@ def main_diameter_length_determination(path_to_segmentations, views, all_files, 
         enlarge_factor (int): The factor by which the segmentation is enlarged (default: 4).
 
     Returns:
-        diameters_and_lengths (dict): The dictionary containing the diameters and length of the structure for every view.
+        cavity_properties (dict): The dictionary containing the diameters, length and area of the cavities for every view.
     """
-    diameters_and_lengths = defaultdict(dict)
+    cavity_properties = defaultdict(dict)
 
     for view in views:
         # Initialise lists to store diameters and lengths of both ED frames. 
@@ -516,6 +516,9 @@ def main_diameter_length_determination(path_to_segmentations, views, all_files, 
         # Get ED and ES points for each image cycle per view. 
         ed_points = cycle_information["ed_points_selected"][view]
         es_point = cycle_information["es_point_selected"][view]
+
+        # Get LA areas for each image cycle per view.
+        la_areas = segmentation_properties["la_areas"][view]
          
         # Get frames to exclude from analysis. 
         frames_to_exclude = cycle_information["flagged_frames_combined"][view]
@@ -537,9 +540,10 @@ def main_diameter_length_determination(path_to_segmentations, views, all_files, 
                     # Determine length and diameters of the structure.
                     length, diameters = determine_length_and_diameter(seg_resized, pixel_spacing)
 
-                # If the frame is flagged, set length to 0 and diameters to NaN values.
+                # If the frame is flagged, set length and area to 0 and diameters to NaN values.
                 else:
-                    length, diameters = 0, [np.nan] * 20
+                    length = 0 
+                    diameters = [np.nan] * 20 #CHANGE
 
                 # Store length and diameters in dictionary.
                 if idx in ed_points:
@@ -547,23 +551,26 @@ def main_diameter_length_determination(path_to_segmentations, views, all_files, 
                     length_ed_both_frames.append(length)
 
                 elif idx in es_point:
-                    diameters_and_lengths["diameters_es"][view] = diameters
-                    diameters_and_lengths["length_es"][view] = length
+                    cavity_properties["diameters_es"][view] = diameters
+                    cavity_properties["length_es"][view] = length
 
-        # Determine the index of the largest length and get the corresponding diameters.
+        # Determine the index of the largest length, get the corresponding diameters. 
         max_length_idx = np.argmax(length_ed_both_frames)
-        diameters_and_lengths["diameters_ed"][view] = diameters_ed_both_frames[max_length_idx][0]
-        diameters_and_lengths["length_ed"][view] = length_ed_both_frames[max_length_idx]                  
+        cavity_properties["diameters_ed"][view] = diameters_ed_both_frames[max_length_idx][0]
+        cavity_properties["length_ed"][view] = length_ed_both_frames[max_length_idx]    
 
-    return diameters_and_lengths
+        # Determine the maximum LA area.
+        cavity_properties["max_la_area"][view] = max(la_areas)         
+
+    return cavity_properties
 
 
-def main_volume_calculation(views, diameters_and_lengths):
+def main_volume_calculation(views, cavity_properties):
     """Calculate the volume of the structure using the Simpson's method.
 
     Args:
         views (list): The views of the structure.
-        diameters_and_lengths (dict): The dictionary containing the diameters and length of the structure for every view.
+        cavity_properties (dict): The dictionary containing the diameters and length of the structure for every view.
 
     Returns:
         volume_simpson_ed (float): The end-diastolic volume.
@@ -575,16 +582,16 @@ def main_volume_calculation(views, diameters_and_lengths):
     # Load diameters and lengths of the structure for every view.
     for view in views:
         if "a2ch" in view:
-            diameters_ed_a2ch = diameters_and_lengths["diameters_ed"][view]
-            diameters_es_a2ch = diameters_and_lengths["diameters_es"][view]
-            length_ed_a2ch = diameters_and_lengths["length_ed"][view]
-            length_es_a2ch = diameters_and_lengths["length_es"][view]
+            diameters_ed_a2ch = cavity_properties["diameters_ed"][view]
+            diameters_es_a2ch = cavity_properties["diameters_es"][view]
+            length_ed_a2ch = cavity_properties["length_ed"][view]
+            length_es_a2ch = cavity_properties["length_es"][view]
 
         elif "a4ch" in view:
-            diameters_ed_a4ch = diameters_and_lengths["diameters_ed"][view]
-            diameters_es_a4ch = diameters_and_lengths["diameters_es"][view]
-            length_ed_a4ch = diameters_and_lengths["length_ed"][view]
-            length_es_a4ch = diameters_and_lengths["length_es"][view]
+            diameters_ed_a4ch = cavity_properties["diameters_ed"][view]
+            diameters_es_a4ch = cavity_properties["diameters_es"][view]
+            length_ed_a4ch = cavity_properties["length_ed"][view]
+            length_es_a4ch = cavity_properties["length_es"][view]
 
         else:
             raise ValueError("Name of view is not recognised, check this.")
@@ -640,7 +647,8 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
         patient (str): The patient ID.
         views (list): The views of the structure.
         all_files (list): The list of all files in the folder.
-        diameters_and_lengths (dict): The dictionary containing the diameters and length of the structure for every view.
+        cycle_information (dict): The dictionary containing the information of the cardiac cycle.
+        dicom_properties (dict): The dictionary containing the DICOM properties.
 
     Returns:
         clinical_indices (dict): The dictionary containing the clinical indices of the structure.
@@ -648,10 +656,10 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
     clinical_indices = defaultdict(dict)
 
     # Determine the diameters and length of the structure for every view.
-    diameters_and_lengths = main_diameter_length_determination(path_to_segmentations, views, all_files, cycle_information, dicom_properties)
+    cavity_properties = main_cavity_properties(path_to_segmentations, views, all_files, cycle_information, dicom_properties)
 
     # Calculate the volume of the structure and save it in the dictionary.
-    volume_simpson_ed, volume_simpson_es = main_volume_calculation(views, diameters_and_lengths)
+    volume_simpson_ed, volume_simpson_es = main_volume_calculation(views, cavity_properties)
     clinical_indices["volume_ed"][patient] = volume_simpson_ed
     clinical_indices["volume_es"][patient] = volume_simpson_es
         
@@ -666,8 +674,10 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
     
         if view.endswith("a2ch"):
             clinical_indices["gls_a2ch"][patient] = global_longitudinal_strain
+            clinical_indices["max_la_area_a2ch"][patient] = cavity_properties["max_la_area"][view]
 
         elif view.endswith("a4ch"):
             clinical_indices["gls_a4ch"][patient] = global_longitudinal_strain
+            clinical_indices["max_la_area_a4ch"][patient] = cavity_properties["max_la_area"][view]
 
     return clinical_indices
