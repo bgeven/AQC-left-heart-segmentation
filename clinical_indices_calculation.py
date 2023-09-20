@@ -499,6 +499,7 @@ def main_cavity_properties(path_to_segmentations, views, all_files, cycle_inform
         all_files (list): The list of all files in the folder.
         cycle_information (dict): The dictionary containing the information of the cardiac cycle.
         dicom_properties (dict): The dictionary containing the DICOM properties.
+        segmentation_properties (dict): The dictionary containing the segmentation properties.
         enlarge_factor (int): The factor by which the segmentation is enlarged (default: 4).
 
     Returns:
@@ -557,10 +558,10 @@ def main_cavity_properties(path_to_segmentations, views, all_files, cycle_inform
         # Determine the index of the largest length, get the corresponding diameters. 
         max_length_idx = np.argmax(length_ed_both_frames)
         cavity_properties["diameters_ed"][view] = diameters_ed_both_frames[max_length_idx][0]
-        cavity_properties["length_ed"][view] = length_ed_both_frames[max_length_idx]    
+        cavity_properties["length_ed"][view] = length_ed_both_frames[max_length_idx]
 
         # Determine the maximum LA area.
-        cavity_properties["max_la_area"][view] = max(la_areas)         
+        cavity_properties["max_la_area"][view] = max(la_areas[ed_points[0]:ed_points[1]+1])
 
     return cavity_properties
 
@@ -649,6 +650,7 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
         all_files (list): The list of all files in the folder.
         cycle_information (dict): The dictionary containing the information of the cardiac cycle.
         dicom_properties (dict): The dictionary containing the DICOM properties.
+        segmentation_properties (dict): The dictionary containing the properties of the segmentations.
 
     Returns:
         clinical_indices (dict): The dictionary containing the clinical indices of the structure.
