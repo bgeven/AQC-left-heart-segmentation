@@ -263,18 +263,28 @@ def main_plot_area_time_curves(
                     plt.ylim(min_y_val, max_y_val)
                     plt.legend(bbox_to_anchor=(1, 0.5), loc="center left")
 
+from scipy.interpolate import make_interp_spline
 
-def show_atlases(atlas_lv, atlas_la):
+def show_atlases(atlas_lv, atlas_la, test1, test2, test3, test4):
     """Function to plot the atlases (population priors) for the LV and LA.
 
     Args:
         atlas_lv (list): Atlas of the LV.
         atlas_la (list): Atlas of the LA.   
     """
+    x1 = np.linspace(0, test1, len(atlas_lv))
+    x2 = np.linspace(0, test3, len(atlas_la))
+    lv_spline = make_interp_spline(x1, atlas_lv)
+    la_spline = make_interp_spline(x1, atlas_la)
+    X1_ = np.linspace(x1.min(), x1.max(), test2)
+    X2_ = np.linspace(x2.min(), x2.max(), test4)
+    atlas_lv_spline = lv_spline(X1_)
+    atlas_la_spline = la_spline(X2_)
+
     plt.figure(dpi=100)
     plt.title("Atlases LV and LA area-time curves")
-    plt.plot(atlas_lv, color=(0, 1, 0))
-    plt.plot(atlas_la, color=(0, 0, 1))
-    plt.legend(["LV", "LA"])
+    plt.plot(atlas_lv_spline, color=(0, 1, 0), linewidth=5)
+    plt.plot(atlas_la_spline, color=(0, 0, 1), linewidth=5)
+    #plt.legend(["LV", "LA"])
     plt.xlabel("% of a cardiac cycle")
     plt.ylabel("Normalised area [-]")
