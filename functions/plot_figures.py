@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def color_segmentation(seg, colors_for_labels):

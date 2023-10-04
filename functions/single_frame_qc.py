@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 from collections import defaultdict
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def num_contours(seg):

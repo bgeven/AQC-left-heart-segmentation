@@ -3,7 +3,7 @@ import os
 import numpy as np
 from scipy.signal import find_peaks
 from collections import defaultdict
-from general_utilities import get_image_array, get_list_with_files_of_view
+from functions.general_utilities import get_image_array, get_list_with_files_of_view
 
 
 def comp_factor_px2_to_cm2(pixel_spacing):

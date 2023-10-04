@@ -1,7 +1,7 @@
 # NOT FINISHED AT ALL!!!!
 import os
 from scipy.interpolate import interp1d
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def interpolate_missing_areas(timings, areas):

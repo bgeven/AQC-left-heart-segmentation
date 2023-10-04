@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.ndimage import map_coordinates
 from collections import defaultdict
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def rotate_array(array, angle, rotation_point):

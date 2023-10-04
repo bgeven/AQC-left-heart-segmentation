@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from collections import defaultdict
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def calculate_cnr(roi, background):

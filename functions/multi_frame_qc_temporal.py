@@ -1,10 +1,9 @@
 # This script contains functions to flag frames based on their temporal information.
-import os
 import numpy as np
 from collections import defaultdict
 from scipy.interpolate import interp1d
 from dtaidistance import dtw, dtw_visualisation
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def interpolate_missing_areas(timings, areas):

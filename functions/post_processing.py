@@ -4,7 +4,7 @@ import cv2
 import shutil
 import numpy as np
 import SimpleITK as sitk
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def find_centroid(seg):

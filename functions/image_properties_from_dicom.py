@@ -63,48 +63,13 @@ def get_R_wave_frames(dicom_data):
     return frames_r_waves
 
 
-def main_get_dicom_properties(path_to_dicom_files):
+def main_get_dicom_properties(path_to_dicom_files, views, default_pixel_spacing=[0.1, 0.1], default_frames_r_waves=[]):
     """Function to get the properties of the DICOM files in a directory.
 
     The times of each frame, the pixel spacing and the frame numbers corresponding to the R-wave(s) are retrieved.
 
     Args:
         path_to_dicom_files (str): Path to the directory containing the DICOM files.
-
-    Returns:
-        dicom_properties (dict): Dictionary containing the properties of the DICOM files.
-    """
-    # Create dictionary to store the properties of the DICOM files.
-    dicom_properties = defaultdict(dict)
-
-    # Get the DICOM files in the directory.
-    dicom_files = os.listdir(path_to_dicom_files)
-
-    for dicom_file in dicom_files:
-        dicom_file_location = os.path.join(path_to_dicom_files, dicom_file)
-
-        # Read the DICOM file.
-        dicom_data = pydicom.read_file(dicom_file_location, force=True)
-
-        # Get the properties of the DICOM file.
-        times_frames = get_frame_times(dicom_data)
-        pixel_spacing = get_pixel_spacing(dicom_data)
-        frames_r_waves = get_R_wave_frames(dicom_data)
-
-        # Save the properties of the DICOM file in a dictionary.
-        dicom_properties["times_frames"][dicom_file] = times_frames
-        dicom_properties["pixel_spacing"][dicom_file] = pixel_spacing
-        dicom_properties["frames_r_waves"][dicom_file] = frames_r_waves
-
-    return dicom_properties
-
-
-def default_dicom_properties(
-    views, default_pixel_spacing=[0.1, 0.1], default_frames_r_waves=[]
-):
-    """Function to create a dictionary with default DICOM properties.
-
-    Args:
         views (list): List of views of the segmentations.
         default_pixel_spacing (list): Default pixel spacing of the image sequence for each dimension (default: [0.1, 0.1]).
         default_frames_r_waves (list): Default frame numbers corresponding to the R-wave(s) in the image sequence (default: []).
@@ -115,9 +80,31 @@ def default_dicom_properties(
     # Create dictionary to store the properties of the DICOM files.
     dicom_properties = defaultdict(dict)
 
-    # Save the default properties of the DICOM file in a dictionary.
-    for view in views:
-        dicom_properties["pixel_spacing"][view] = default_pixel_spacing
-        dicom_properties["frames_r_waves"][view] = default_frames_r_waves
+    # Get the DICOM files in the directory.
+    dicom_files = os.listdir(path_to_dicom_files)
+
+    # Check if the DICOM files are in the directory.
+    if len(dicom_files) > 0: 
+        for dicom_file in dicom_files:
+            dicom_file_location = os.path.join(path_to_dicom_files, dicom_file)
+
+            # Read the DICOM file.
+            dicom_data = pydicom.read_file(dicom_file_location, force=True)
+
+            # Get the properties of the DICOM file.
+            times_frames = get_frame_times(dicom_data)
+            pixel_spacing = get_pixel_spacing(dicom_data)
+            frames_r_waves = get_R_wave_frames(dicom_data)
+
+            # Save the properties of the DICOM file in a dictionary.
+            dicom_properties["times_frames"][dicom_file] = times_frames
+            dicom_properties["pixel_spacing"][dicom_file] = pixel_spacing
+            dicom_properties["frames_r_waves"][dicom_file] = frames_r_waves
+
+    # If no DICOM files are in the directory, use default values.
+    else:
+        for view in views:
+            dicom_properties["pixel_spacing"][view] = default_pixel_spacing
+            dicom_properties["frames_r_waves"][view] = default_frames_r_waves
 
     return dicom_properties

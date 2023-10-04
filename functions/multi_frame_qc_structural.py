@@ -2,7 +2,7 @@
 import os
 import cv2
 from collections import defaultdict
-from general_utilities import *
+from functions.general_utilities import *
 
 
 def check_for_surrounded_lv(seg_1, seg_2, seg_3, threshold_surrounded_lv=1.0):
