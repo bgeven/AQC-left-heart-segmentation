@@ -662,12 +662,12 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
 
     # Calculate the volume of the structure and save it in the dictionary.
     volume_simpson_ed, volume_simpson_es = main_volume_calculation(views, cavity_properties)
-    clinical_indices[patient]["volume_ed"] = volume_simpson_ed
-    clinical_indices[patient]["volume_es"] = volume_simpson_es
+    clinical_indices[patient]["end_diastolic_volume_[ml]"] = volume_simpson_ed
+    clinical_indices[patient]["end_systolic_volume_[ml]"] = volume_simpson_es
         
     # Calculate the ejection fraction of the structure and save it in the dictionary.
     ejection_fraction = comp_ejection_fraction(volume_simpson_ed, volume_simpson_es)
-    clinical_indices[patient]["ejection_fraction"] = ejection_fraction
+    clinical_indices[patient]["ejection_fraction_[%]"] = ejection_fraction
     
     # Calculate the global longitudinal strain of the structure for both views and save it in the dictionary.
     for view in views:
@@ -675,18 +675,26 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
         global_longitudinal_strain = comp_global_longitudinal_strain(circumferences)
     
         if view.endswith("a2ch"):
-            clinical_indices[patient]["gls_a2ch"] = global_longitudinal_strain
-            clinical_indices[patient]["max_la_area_a2ch"] = cavity_properties["max_la_area"][view]
+            clinical_indices[patient]["global_long_strain_a2ch_[%]"] = global_longitudinal_strain
+            clinical_indices[patient]["maximum_la_area_a2ch_[mm2]"] = cavity_properties["max_la_area"][view]
 
         elif view.endswith("a4ch"):
-            clinical_indices[patient]["gls_a4ch"] = global_longitudinal_strain
-            clinical_indices[patient]["max_la_area_a4ch"] = cavity_properties["max_la_area"][view]
+            clinical_indices[patient]["global_long_strain_a4ch_[%]"] = global_longitudinal_strain
+            clinical_indices[patient]["maximum_la_area_a4ch_[mm2]"] = cavity_properties["max_la_area"][view]
 
     return clinical_indices
 
 
 def show_clinical_indices(clinical_indices):
+    """Print the clinical indices of the patient(s).
 
-
-    for key, value in clinical_indices.items():
-        print(key, value)
+    Args:
+        clinical_indices (dict): The dictionary containing the clinical indices of the structure.    
+    """
+    for patient, values in clinical_indices.items():
+        print("{:<30} {:<30}".format("Indices", patient))
+        print("-" * 40)
+        for index, value in values.items():
+            print("{:<30} {:6.1f}".format(index, value))
+        print("-" * 40)
+        
