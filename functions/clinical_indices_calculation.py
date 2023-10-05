@@ -662,12 +662,12 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
 
     # Calculate the volume of the structure and save it in the dictionary.
     volume_simpson_ed, volume_simpson_es = main_volume_calculation(views, cavity_properties)
-    clinical_indices["volume_ed"][patient] = volume_simpson_ed
-    clinical_indices["volume_es"][patient] = volume_simpson_es
+    clinical_indices[patient]["volume_ed"] = volume_simpson_ed
+    clinical_indices[patient]["volume_es"] = volume_simpson_es
         
     # Calculate the ejection fraction of the structure and save it in the dictionary.
     ejection_fraction = comp_ejection_fraction(volume_simpson_ed, volume_simpson_es)
-    clinical_indices["ejection_fraction"][patient] = ejection_fraction
+    clinical_indices[patient]["ejection_fraction"] = ejection_fraction
     
     # Calculate the global longitudinal strain of the structure for both views and save it in the dictionary.
     for view in views:
@@ -675,11 +675,18 @@ def main_computation_clinical_indices(path_to_segmentations, patient, views, all
         global_longitudinal_strain = comp_global_longitudinal_strain(circumferences)
     
         if view.endswith("a2ch"):
-            clinical_indices["gls_a2ch"][patient] = global_longitudinal_strain
-            clinical_indices["max_la_area_a2ch"][patient] = cavity_properties["max_la_area"][view]
+            clinical_indices[patient]["gls_a2ch"] = global_longitudinal_strain
+            clinical_indices[patient]["max_la_area_a2ch"] = cavity_properties["max_la_area"][view]
 
         elif view.endswith("a4ch"):
-            clinical_indices["gls_a4ch"][patient] = global_longitudinal_strain
-            clinical_indices["max_la_area_a4ch"][patient] = cavity_properties["max_la_area"][view]
+            clinical_indices[patient]["gls_a4ch"] = global_longitudinal_strain
+            clinical_indices[patient]["max_la_area_a4ch"] = cavity_properties["max_la_area"][view]
 
     return clinical_indices
+
+
+def show_clinical_indices(clinical_indices):
+
+
+    for key, value in clinical_indices.items():
+        print(key, value)
