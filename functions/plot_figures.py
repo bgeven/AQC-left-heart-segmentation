@@ -281,7 +281,7 @@ def show_atlases(atlas_lv, atlas_la, dpi_value=100):
     plt.ylabel("Normalised area [-]")
 
 
-def show_post_processing_results(path_to_images, path_to_segmentations, path_to_final_segmentations, all_files, views, single_frame_qc, colors_for_labels, font_size=8, dpi_value=100):
+def show_post_processing_results(path_to_images, path_to_segmentations, path_to_final_segmentations, all_files, views, single_frame_qc, colors_for_labels, font_size=8):
     """Function to plot the results of the post-processing.
 
     Args:
@@ -317,7 +317,7 @@ def show_post_processing_results(path_to_images, path_to_segmentations, path_to_
                 file_location_seg_after_pp = os.path.join(path_to_final_segmentations, filename)
                 seg_after_pp = color_segmentation(get_image_array(file_location_seg_after_pp), colors_for_labels)
         
-                plt.figure(dpi=dpi_value)
+                plt.figure()
                 plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
 
                 # Subplot 1: Echo image. 
@@ -329,11 +329,11 @@ def show_post_processing_results(path_to_images, path_to_segmentations, path_to_
                 # Subplot 2: Segmentation before post-processing. 
                 plt.subplot(1, 3, 2)
                 plt.imshow(seg_before_pp)
-                plt.title("Segmentation before post-processing", fontsize=font_size)
+                plt.title("Segmentation before post-processing", fontsize=font_size, wrap=True)
                 plt.axis("off")
 
                 # Subplot 3: Segmentation after post-processing.
                 plt.subplot(1, 3, 3)
                 plt.imshow(seg_after_pp)
-                plt.title("Segmentation after post-processing", fontsize=font_size)
+                plt.title("Segmentation after post-processing", fontsize=font_size, wrap=True)
                 plt.axis("off")

@@ -2,6 +2,7 @@
 import os
 import cv2
 import numpy as np
+import pandas as pd
 from collections import defaultdict
 from functions.general_utilities import *
 
@@ -322,3 +323,20 @@ def main_single_frame_qc(path_to_segmentations, all_files, views):
     single_frame_qc["stats"] = qc_stats
 
     return single_frame_qc
+
+
+def stats_single_frame_qc(single_frame_qc):
+    """Get statistics of the quality control of segmentation.
+
+    Args:
+        single_frame_qc (dict): Dictionary of the results of the single-frame quality control of segmentation.
+
+    Returns:
+        stats_single_frame_qc (pd.DataFrame): Statistics of the quality control of segmentation.
+    """
+    # Get the statistics of the quality control of segmentation.
+    stats_single_frame_qc = pd.DataFrame.from_dict(
+        single_frame_qc["stats"], orient="index", columns=["stats"]
+    )
+
+    return stats_single_frame_qc
