@@ -6,11 +6,11 @@ from collections import defaultdict
 from functions.general_utilities import get_image_array, get_list_with_files_of_view
 
 
-def comp_factor_px2_to_cm2(pixel_spacing):
+def comp_factor_px2_to_cm2(pixel_spacing: list[float]) -> float:
     """Calculate factor to convert pixel size to cm2.
 
     Args:
-        pixel_spacing (list): Pixel spacing in x and y direction.
+        pixel_spacing (list[float]): Pixel spacing in x and y direction.
 
     Returns:
         px2cm2_factor (float): Factor to convert pixel size to cm2.
@@ -22,11 +22,13 @@ def comp_factor_px2_to_cm2(pixel_spacing):
     return px2cm2_factor
 
 
-def comp_area_from_seg(seg, label, px2cm2_factor):
+def comp_area_from_seg(seg: np.ndarray, label: int, px2cm2_factor: float) -> float:
     """Calculate the area of a certain label in a segmentation.
 
     Args:
         seg (np.ndarray): Segmentation of the echo image.
+        label (int): The label to calculate the area for.
+        px2cm2_factor (float): Factor to convert pixel size to cm2.
 
     Returns:
         area (float): Area of the label in cm2.
@@ -40,17 +42,17 @@ def comp_area_from_seg(seg, label, px2cm2_factor):
     return area
 
 
-def comp_areas_in_sequence(path_to_segmentation, frames, label, px2cm2_factor):
+def comp_areas_in_sequence(path_to_segmentation: str, frames: list[int], label: int, px2cm2_factor: float) -> list[float]:
     """Calculate the area of a certain label in the segmentation of every frame in a sequence.
 
     Args:
         path_to_segmentation (str): Path to the segmentations.
-        frames (list): Frames in the sequence.
+        frames (list[int]): Frames in the sequence.
         label (int): Label of the segmentation.
         px2cm2_factor (float): Factor to convert pixel size to cm2.
 
     Returns:
-        areas (list): list of areas of the label in cm2.
+        areas (list[float]): list of areas of the label in cm2.
     """
     areas = [
         comp_area_from_seg(
@@ -64,11 +66,11 @@ def comp_areas_in_sequence(path_to_segmentation, frames, label, px2cm2_factor):
     return areas
 
 
-def find_nr_of_ed_points(frames_r_wave, nr_of_frames, threshold_peak=10):
+def find_nr_of_ed_points(frames_r_wave: list[int], nr_of_frames: int, threshold_peak: int = 10) -> int:
     """Determine the number of end-diastolic points based on the number of R-wave peaks.
 
     Args:
-        frames_r_wave (list): Frame numbers with R-wave peaks.
+        frames_r_wave (list[int]): Frame numbers with R-wave peaks.
         nr_of_frames (int): Number of frames in the sequence.
         threshold_peak (int): Threshold to account for the last peak if not detected by the find_peaks function (default: 10).
 
@@ -85,14 +87,14 @@ def find_nr_of_ed_points(frames_r_wave, nr_of_frames, threshold_peak=10):
     return nr_of_ed_points
 
 
-def pad_areas(areas):
+def pad_areas(areas: list[float]) -> list[float]:
     """Pad the list with minimum areas.
 
     Args:
-        areas (list): Areas of the label in cm2.
+        areas (list[float]): Areas of the label in cm2.
 
     Returns:
-        areas_padded (list): Areas of the label in cm2, padded with minimum area.
+        areas_padded (list[float]): Areas of the label in cm2, padded with minimum area.
     """
     areas_padded = areas.copy()
     min_value = min(areas)
@@ -104,15 +106,15 @@ def pad_areas(areas):
     return areas_padded
 
 
-def find_es_points(areas, frames_r_wave=[]):
+def find_es_points(areas: list[float], frames_r_wave: list[int] = []) -> list[int]:
     """Determine the end-systole points from LV areas.
 
     Args:
-        areas (list): Areas of the label in cm2.
-        frames_r_wave (list): Frame numbers with R-wave peaks.
+        areas (list[float]): Areas of the label in cm2.
+        frames_r_wave (list[int]): Frame numbers with R-wave peaks (default: []).
 
     Returns:
-        es_points (list): End-systole (ES) points.
+        es_points (list[int]): End-systole (ES) points.
     """
     # Find number of ED points and subtract 1 to find number of ES peaks.
     if len(frames_r_wave) > 0:
@@ -135,15 +137,15 @@ def find_es_points(areas, frames_r_wave=[]):
     return es_points
 
 
-def find_ed_points(areas, frames_r_wave=[]):
+def find_ed_points(areas: list[float], frames_r_wave: list[int] = []) -> list[int]:
     """Determine the end-diastole (ED) points from LV areas.
 
     Args:
-        areas (list): Areas of the label in cm2.
-        frames_r_wave (list): Frame numbers with R-wave peaks.
+        areas (list[float]): Areas of the label in cm2.
+        frames_r_wave (list[int]): Frame numbers with R-wave peaks.
 
     Returns:
-        ed_points (list): ED points.
+        ed_points (list[int]): ED points.
     """
     # Find number of ED points.
     if len(frames_r_wave) > 0:
@@ -169,7 +171,7 @@ def find_ed_points(areas, frames_r_wave=[]):
     return ed_points
 
 
-def main_get_parameters(path_to_segmentations, all_files, views, dicom_properties):
+def main_get_parameters(path_to_segmentations: str, all_files: list[str], views: list[str], dicom_properties: dict[str, dict[str, list[float]]]) -> dict[str, dict[str, list[float]]]:
     """Main function to get the segmentation parameters from the segmentations in a directory.
 
     The areas of the labels in the segmentations are calculated for each frame in the sequence.
@@ -177,12 +179,12 @@ def main_get_parameters(path_to_segmentations, all_files, views, dicom_propertie
 
     Args:
         path_to_segmentations (str): Directory containing the segmentations.
-        all_files (list): List of all files in the directory.
-        views (list): List of views of the segmentations.
-        dicom_properties (dict): Dictionary containing the properties of the DICOM files.
+        all_files (list[str]): List of all files in the directory.
+        views (list[str]): List of views of the segmentations.
+        dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
 
     Returns:
-        segmentation_properties (dict): Dictionary containing the segmentation parameters.
+        segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
     """
     # Create dictionaries to store the segmentation properties.
     segmentation_properties = defaultdict(dict)

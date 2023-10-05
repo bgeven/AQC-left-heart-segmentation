@@ -5,7 +5,7 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def calculate_cnr(roi, background):
+def calculate_cnr(roi: np.ndarray, background: np.ndarray) -> float:
     """Function to calculate the contrast-to-noise ratio (CNR) of a region of interest (ROI) and background,
     according to the ratio between the mean difference and variance in signal intensities.
 
@@ -26,13 +26,13 @@ def calculate_cnr(roi, background):
     return cnr
 
 
-def create_mask(echo_image, seg, desired_labels):
+def create_mask(echo_image: np.ndarray, seg: np.ndarray, desired_labels: list[int]) -> np.ndarray:
     """Function to create a mask of the US image with the desired labels.
 
     Args:
         echo_image (np.ndarray): echo image.
         seg (np.ndarray): Segmentation of the image.
-        desired_labels (list): List of labels to be included in the mask.
+        desired_labels (list[int]): List of labels to be included in the mask.
 
     Returns:
         masked_image (np.ndarray): Masked echo image.
@@ -51,18 +51,18 @@ def create_mask(echo_image, seg, desired_labels):
 
 
 def get_cnr_all_frames(
-    path_to_images, path_to_segmentations, files_of_view, flagged_frames
-):
+    path_to_images: str, path_to_segmentations: str, files_of_view: list[str], flagged_frames: list[int]
+) -> list[float]:
     """Function to calculate the contrast-to-noise ratio (CNR) of all frames in the image sequence.
 
     Args:
         path_to_images (str): Path to the directory containing the echo images.
         path_to_segmentations (str): Path to the directory containing the segmentations.
-        files_of_view (list): List of image names of one view.
-        frames_to_exclude (list): List of frames to be excluded from the CNR calculation.
+        files_of_view (list[str]): List of image names of one view.
+        frames_to_exclude (list[int]): List of frames to be excluded from the CNR calculation.
 
     Returns:
-        cnr_frames (list): List of CNR values for all frames in the image sequence.
+        cnr_frames (list[float]): List of CNR values for all frames in the image sequence.
     """
     cnr_frames = []
 
@@ -90,16 +90,16 @@ def get_cnr_all_frames(
     return cnr_frames
 
 
-def find_es_in_cycle(es_points, ed_points_cycle, lv_areas):
+def find_es_in_cycle(es_points: list[int], ed_points_cycle: list[int], lv_areas: list[float]) -> list[int]:
     """Function to find the end-systolic (ES) point in the cardiac cycle.
 
     Args:
-        es_points (list): List of end-systolic (ES) points in the image sequence.
-        ed_points_cycle (list): List of end-diastolic (ED) points in the cardiac cycle.
-        lv_areas (list): List of left ventricular (LV) areas in the image sequence.
+        es_points (list[int]): List of end-systolic (ES) points in the image sequence.
+        ed_points_cycle (list[int]): List of end-diastolic (ED) points in the cardiac cycle.
+        lv_areas (list[float]): List of left ventricular (LV) areas in the image sequence.
 
     Returns:
-        es_point_cycle (list): List of end-systolic (ES) points in the cardiac cycle.
+        es_point_cycle (list[int]): List of end-systolic (ES) points in the cardiac cycle.
     """
     # Find all ES points between the ED points in cycle.
     es_points_cycle = [
@@ -126,11 +126,11 @@ def find_es_in_cycle(es_points, ed_points_cycle, lv_areas):
     return es_point_cycle
 
 
-def nr_flagged_frames_in_cycle(flagged_frames, first_frame, last_frame):
+def nr_flagged_frames_in_cycle(flagged_frames: list[int], first_frame: int, last_frame: int) -> int:
     """Function to count the number of flagged frames in the cardiac cycle.
 
     Args:
-        flagged_frames (list): List of flagged frames in the image sequence.
+        flagged_frames (list[int]): List of flagged frames in the image sequence.
         first_frame (int): First frame of the cardiac cycle.
         last_frame (int): Last frame of the cardiac cycle.
 
@@ -144,17 +144,17 @@ def nr_flagged_frames_in_cycle(flagged_frames, first_frame, last_frame):
     return nr_flagged_frames
 
 
-def give_score_per_criterion(my_list, method="max all"):
+def give_score_per_criterion(my_list: list[float], method: str = "max all") -> list[int]:
     """Function to score the values in a list based on the method.
 
     Scoring is based on the CNR ("max all") and the number of frames flagged by single-frame QC and multi-frame QC ("min all").
 
     Args:
-        my_list (list): List of values to be scored.
+        my_list (list[float]): List of values to be scored.
         method (str): Method to be used for scoring (default: "max all").
 
     Returns:
-        scores (list): List of scores for all cardiac cycles.
+        scores (list[int]): List of scores for all cardiac cycles.
     """
     # Round values in list to 1 decimals.
     my_list_rounded = [round(item, 1) for item in my_list]
@@ -179,13 +179,13 @@ def give_score_per_criterion(my_list, method="max all"):
     return scores
 
 
-def find_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc, nr_flagged_frames_mf_qc):
+def find_best_cycle(cnr_cycles: list[float], nr_flagged_frames_sf_qc: list[int], nr_flagged_frames_mf_qc: list[int]) -> int:
     """Function to select the most appropriate cardiac cycle based on the CNR and the number of flagged frames.
 
     Args:
-        cnr_cycles (list): List of CNR values for all cardiac cycles.
-        nr_flagged_frames_sf_qc (list): List of number of flagged frames, selected by single-frame QC, for all cardiac cycles.
-        nr_flagged_frames_mf_qc (list): List of number of flagged frames, selected by multi-frame QC, for all cardiac cycles.
+        cnr_cycles (list[float]): List of CNR values for all cardiac cycles.
+        nr_flagged_frames_sf_qc (list[int]): List of number of flagged frames, selected by single-frame QC, for all cardiac cycles.
+        nr_flagged_frames_mf_qc (list[int]): List of number of flagged frames, selected by multi-frame QC, for all cardiac cycles.
 
     Returns:
         idx_best_cycle (int): Index of the most appropriate cardiac cycle.
@@ -228,28 +228,28 @@ def find_best_cycle(cnr_cycles, nr_flagged_frames_sf_qc, nr_flagged_frames_mf_qc
 
 
 def get_properties_best_cycle(
-    cnr_frames,
-    ed_points,
-    es_points,
-    lv_areas,
-    flagged_frames_sf_qc,
-    flagged_frames_mf_qc_lv,
-    flagged_frames_mf_qc_la,
-):
+    cnr_frames: list[float],
+    ed_points: list[int],
+    es_points: list[int],
+    lv_areas: list[float],
+    flagged_frames_sf_qc: list[int],
+    flagged_frames_mf_qc_lv: list[int],
+    flagged_frames_mf_qc_la: list[int],
+) -> tuple[list[int], list[int]]:
     """Function to get the end-diastolic (ED) and end-systolic (ES) points of the most appropriate cardiac cycle.
 
     Args:
-        cnr_frames (list): List of CNR values for all frames in the image sequence.
-        ed_points (list): List of end-diastolic (ED) points in the image sequence.
-        es_points (list): List of end-systolic (ES) points in the image sequence.
-        lv_areas (list): List of left ventricular (LV) areas in the image sequence.
-        flagged_frames_sf_qc (list): List of frames flagged by single-frame QC, to be excluded from the CNR calculation.
-        flagged_frames_lv_mf_qc (list): List of frames flagged by multi-frame QC for the LV, to be excluded from the CNR calculation.
-        flagged_frames_la_mf_qc (list): List of frames flagged by multi-frame QC for the LA, to be excluded from the CNR calculation.
+        cnr_frames (list[float]): List of CNR values for all frames in the image sequence.
+        ed_points (list[int]): List of end-diastolic (ED) points in the image sequence.
+        es_points (list[int]): List of end-systolic (ES) points in the image sequence.
+        lv_areas (list[float]): List of left ventricular (LV) areas in the image sequence.
+        flagged_frames_sf_qc (list[int]): List of frames flagged by single-frame QC, to be excluded from the CNR calculation.
+        flagged_frames_lv_mf_qc (list[int]): List of frames flagged by multi-frame QC for the LV, to be excluded from the CNR calculation.
+        flagged_frames_la_mf_qc (list[int]): List of frames flagged by multi-frame QC for the LA, to be excluded from the CNR calculation.
 
     Returns:
-        ed_selected (list): List of end-diastolic (ED) points in the most appropriate cardiac cycle.
-        es_selected (list): List of end-systolic (ES) points in the most appropriate cardiac cycle.
+        ed_selected (list[int]): List of end-diastolic (ED) points in the most appropriate cardiac cycle.
+        es_selected (list[int]): List of end-systolic (ES) points in the most appropriate cardiac cycle.
     """
     (
         cnr_cycles,
@@ -302,27 +302,27 @@ def get_properties_best_cycle(
 
 
 def main_cycle_selection(
-    path_to_images,
-    path_to_segmentations,
-    segmentation_properties,
-    single_frame_qc,
-    multi_frame_qc,
-    all_files,
-    views,
-):
+    path_to_images: str,
+    path_to_segmentations: str,
+    segmentation_properties: dict[str, dict[str, list[int]]],
+    single_frame_qc: dict[str, dict[str, list[int]]],
+    multi_frame_qc: dict[str, dict[str, list[int]]],
+    all_files: list[str],
+    views: list[str],
+) -> dict[str, dict[str, list[int]]]:
     """Main function to select the most appropriate cardiac cycle from an image sequence containing multiple cycles.
 
     Args:
         path_to_images (str): Path to the directory containing the echo images.
         path_to_segmentations (str): Path to the directory containing the segmentations.
-        segmentation_properties (dict): Dictionary containing the segmentation properties.
-        single_frame_qc (dict): Dictionary containing the results of the single-frame QC.
-        multi_frame_qc (dict): Dictionary containing the results of the multi-frame QC.
-        all_files (list): List of all files in the directory.
-        views (list): List of views of the segmentations.
+        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary containing the segmentation properties.
+        single_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the results of the single-frame QC.
+        multi_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the results of the multi-frame QC.
+        all_files (list[str]): List of all files in the directory.
+        views (list[str]): List of views of the segmentations.
 
     Returns:
-        cycle_info (dict): Dictionary containing the ED and ES points of the most appropriate cardiac cycle.
+        cycle_info (dict[str, dict[str, list[int]]]): Dictionary containing the ED and ES points of the most appropriate cardiac cycle.
     """
     cycle_info = defaultdict(dict)
 

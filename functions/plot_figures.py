@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from functions.general_utilities import *
 
 
-def color_segmentation(seg, colors_for_labels):
+def color_segmentation(seg: np.ndarray, colors_for_labels: np.ndarray) -> np.ndarray:
     """Function to color a segmentation with colors for each label.
 
     Args:
@@ -22,16 +22,16 @@ def color_segmentation(seg, colors_for_labels):
     return seg_colored
 
 
-def remove_neighboring_pixels(contours_1, contours_2, threshold_distance=3):
+def remove_neighboring_pixels(contours_1: list[np.ndarray], contours_2: list[np.ndarray], threshold_distance: int = 3) -> list[np.ndarray]:
     """Function to remove points on the contours that neighbor the LV contour.
 
     Args:
-        contours_1 (list): List of contours of the LV.
-        contours_2 (list): List of contours of the MYO or LA.
+        contours_1 (list[np.ndarray]): List of contours of the LV.
+        contours_2 (list[np.ndarray]): List of contours of the MYO or LA.
         threshold_distance (int): Threshold distance between the LV and MYO or LA contour to remove points on the MYO or LA contour (default: 3).
 
     Returns:
-        contour_adapted (list): List of contours of the MYO or LA with points removed.
+        contour_adapted (list[np.ndarray]): List of contours of the MYO or LA with points removed.
     """
     if len(contours_1) > 0 and len(contours_2) > 0:
         contour_adapted = []
@@ -62,7 +62,7 @@ def remove_neighboring_pixels(contours_1, contours_2, threshold_distance=3):
     return contour_adapted
 
 
-def color_contours_segmentation(image, seg, label_colors):
+def color_contours_segmentation(image: np.ndarray, seg: np.ndarray, label_colors: np.ndarray) -> np.ndarray:
     """Function to project contours of a segmentation on an image.
 
     Args:
@@ -128,25 +128,25 @@ def color_contours_segmentation(image, seg, label_colors):
 
 
 def main_plot_area_time_curves(
-    path_to_images,
-    path_to_segmentations,
-    all_files,
-    views,
-    dicom_properties,
-    segmentation_properties,
-    colors_for_labels,
-    font_size=8,
-    dpi_value=100,
-):
+    path_to_images: str,
+    path_to_segmentations: str,
+    all_files: list[str],
+    views: list[str],
+    dicom_properties: dict[str, dict[str, list[int]]],
+    segmentation_properties: dict[str, dict[str, list[int]]],
+    colors_for_labels: np.ndarray,
+    font_size: int = 8,
+    dpi_value: int = 100,
+) -> None:
     """Function to plot area-time curves for all patients.
 
     Args:
         path_to_images (str): Directory of the folder with the echo images.
         path_to_segmentations (str): Directory of the folder with the segmentations.
-        all_files (list): List of all files in the directory.
-        views (list): List of views of the segmentations.
-        dicom_properties (dict): Dictionary with dicom properties of all patients.
-        segmentation_properties (dict): Dictionary with segmentation properties of all patients.
+        all_files (list[str]): List of all files in the directory.
+        views (list[str]): List of views of the segmentations.
+        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary with dicom properties of all patients.
+        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary with segmentation properties of all patients.
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
@@ -264,12 +264,12 @@ def main_plot_area_time_curves(
                     plt.legend(bbox_to_anchor=(1, 0.5), loc="center left")
 
 
-def show_atlases(atlas_lv, atlas_la, dpi_value=100):
+def show_atlases(atlas_lv: list[float], atlas_la: list[float], dpi_value: int = 100) -> None:
     """Function to plot the atlases (population priors) for the LV and LA.
 
     Args:
-        atlas_lv (list): Atlas of the LV.
-        atlas_la (list): Atlas of the LA.  
+        atlas_lv (list[float]): Atlas of the LV.
+        atlas_la (list[float]): Atlas of the LA.  
         dpi_value (int): DPI value of the figure (default: 100). 
     """
     plt.figure(dpi=dpi_value)
@@ -281,16 +281,16 @@ def show_atlases(atlas_lv, atlas_la, dpi_value=100):
     plt.ylabel("Normalised area [-]")
 
 
-def show_post_processing_results(path_to_images, path_to_segmentations, path_to_final_segmentations, all_files, views, single_frame_qc, colors_for_labels, font_size=8):
+def show_post_processing_results(path_to_images: str, path_to_segmentations: str, path_to_final_segmentations: str, all_files: list[str], views: list[str], single_frame_qc: dict[str, dict[str, list[int]]], colors_for_labels: np.ndarray, font_size: int = 8) -> None:
     """Function to plot the results of the post-processing.
 
     Args:
         path_to_images (str): Directory of the folder with the echo images.
         path_to_segmentations (str): Directory of the folder with the segmentations.
         path_to_final_segmentations (str): Directory of the folder with the final segmentations.
-        all_files (list): List of all files in the directory.
-        views (list): List of views of the segmentations.
-        single_frame_qc (dict): Dictionary with the single frame QC results.
+        all_files (list[str]): List of all files in the directory.
+        views (list[str]): List of views of the segmentations.
+        single_frame_qc (dict[str, dict[str, list[int]]]): Dictionary with the single frame QC results.
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).

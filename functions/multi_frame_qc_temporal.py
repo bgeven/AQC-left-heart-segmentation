@@ -6,15 +6,15 @@ from dtaidistance import dtw, dtw_visualisation
 from functions.general_utilities import *
 
 
-def interpolate_missing_areas(timings, areas):
+def interpolate_missing_areas(timings: list[float], areas: list[float]) -> list[float]:
     """Correct for missing values in the area list by interpolating between the non-zero values.
 
     Args:
-        timings (list): List of timings of frames.
-        areas (list): List of areas over time for a specific structure.
+        timings (list[float]): List of timings of frames.
+        areas (list[float]): List of areas over time for a specific structure.
 
     Returns:
-        areas_interpolated (list): List of areas over time for a specific structure, with missing values interpolated.
+        areas_interpolated (list[float]): List of areas over time for a specific structure, with missing values interpolated.
     """
     # If there are zero values in the list of areas, interpolate between the non-zero values.
     if min(areas) == 0:
@@ -39,17 +39,17 @@ def interpolate_missing_areas(timings, areas):
     return areas_interpolated
 
 
-def prepare_area_time_curves(values, frame_times, time_points, nr_time_points=100):
+def prepare_area_time_curves(values: list[float], frame_times: list[float], time_points: list[int], nr_time_points: int = 100) -> list[float]:
     """Prepare the area-time curves for the DTW analysis.
     
     Args:
-        values (list): List of values of the area-time curve of a structure.
-        frame_times (list): List of timings of frames.
-        time_points (list): List of the first and last frame of the cycle.
+        values (list[float]): List of values of the area-time curve of a structure.
+        frame_times (list[float]): List of timings of frames.
+        time_points (list[int]): List of the first and last frame of the cycle.
         nr_time_points (int): Number of time points to interpolate to.
 
     Returns:
-        values_adjusted (list): List of values of the area-time curve of a structure, prepared for the DTW analysis.    
+        values_adjusted (list[float]): List of values of the area-time curve of a structure, prepared for the DTW analysis.    
     """
     # Find the values and timings of the previously selected cycle.
     values_cycle = values[time_points[0]:time_points[1]+1]
@@ -77,12 +77,12 @@ def prepare_area_time_curves(values, frame_times, time_points, nr_time_points=10
     return values_adjusted
 
 
-def comp_dtw_distance(cycle_values, atlas):
+def comp_dtw_distance(cycle_values: list[float], atlas: list[float]) -> float:
     """Compute the DTW distance between the area-time curve of a cycle and the atlas.
 
     Args:
-        cycle_values (list): List of values of the area-time curve of a cycle.
-        atlas (list): List of values of the area-time curve of the atlas.
+        cycle_values (list[float]): List of values of the area-time curve of a cycle.
+        atlas (list[float]): List of values of the area-time curve of the atlas.
 
     Returns:
         dtw_distance (float): DTW distance between the area-time curve of a cycle and the atlas.
@@ -99,19 +99,19 @@ def comp_dtw_distance(cycle_values, atlas):
 
     return dtw_distance
 
-def main_multi_frame_qc_temporal(views, cycle_information, segmentation_properties, dicom_properties, atlas_lv, atlas_la):
+def main_multi_frame_qc_temporal(views: list[str], cycle_information: dict[str, dict[str, list[int]]], segmentation_properties: dict[str, dict[str, list[int]]], dicom_properties: dict[str, dict[str, list[int]]], atlas_lv: list[float], atlas_la: list[float]) -> dict[str, dict[str, float]]:
     """Function to perform the area-time analysis with Dynamic Time Warping (DTW).
 
     Args:
-        views (list): List of views of the segmentations.
-        cycle_information (dict): Dictionary containing the information of the cycles.
-        segmentation_properties (dict): Dictionary containing the properties of the segmentations.
-        dicom_properties (dict): Dictionary containing the properties of the DICOM files.
-        atlas_lv (list): List of values of the area-time curve of the atlas for the LV.
-        atlas_la (list): List of values of the area-time curve of the atlas for the LA.
+        views (list[str]): List of views of the segmentations.
+        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cycles.
+        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the segmentations.
+        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the DICOM files.
+        atlas_lv (list[float]): List of values of the area-time curve of the atlas for the LV.
+        atlas_la (list[float]): List of values of the area-time curve of the atlas for the LA.
 
     Returns:
-        area_time_analysis (dict): Dictionary containing the results of the area-time analysis.
+        area_time_analysis (dict[str, dict[str, list[int]]]): Dictionary containing the results of the area-time analysis.
     """
     # Create dictionary to store the area-time analysis.
     area_time_analysis = defaultdict(dict)

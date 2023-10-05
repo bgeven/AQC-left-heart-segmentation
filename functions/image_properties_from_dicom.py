@@ -5,14 +5,14 @@ import numpy as np
 from collections import defaultdict
 
 
-def get_frame_times(dicom_data):
+def get_frame_times(dicom_data: pydicom.FileDataset) -> list[float]:
     """Function to get the times of each frame in the image sequence.
 
     Args:
-        dicom_data (FileDataset): Pydicom object containing DICOM file data.
+        dicom_data (pydicom.FileDataset): Pydicom object containing DICOM file data.
 
     Returns:
-        times_frames_added (list): Cumulative times of each frame in the image sequence.
+        times_frames_added (list[float]): Cumulative times of each frame in the image sequence.
     """
     # Retrieve list containing times (in ms) between each frame in the image sequence.
     times_spacing_frames = [float(s) for s in dicom_data.FrameTimeVector._list]
@@ -25,28 +25,28 @@ def get_frame_times(dicom_data):
     return times_frames_added
 
 
-def get_pixel_spacing(dicom_data):
+def get_pixel_spacing(dicom_data: pydicom.FileDataset) -> list[float]:
     """Function to get the pixel spacing of the image sequence.
 
     Args:
-        dicom_data (Dataset): Pydicom object containing DICOM file data.
+        dicom_data (pydicom.FileDataset): Pydicom object containing DICOM file data.
 
     Returns:
-        pixel_spacing (list): Pixel spacing of the image sequence for each dimension.
+        pixel_spacing (list[float]): Pixel spacing of the image sequence for each dimension.
     """
     pixel_spacing = [float(s) for s in dicom_data.PixelSpacing._list]
 
     return pixel_spacing
 
 
-def get_R_wave_frames(dicom_data):
+def get_R_wave_frames(dicom_data: pydicom.FileDataset) -> list[int]:
     """Function to get the frame numbers corresponding to the R-wave(s) in the image sequence.
 
     Args:
-        dicom_data (Dataset): Pydicom object containing DICOM file data.
+        dicom_data (pydicom.FileDataset): Pydicom object containing DICOM file data.
 
     Returns:
-        frames_r_waves (list): Frame numbers corresponding to the R-wave(s) in the image sequence.
+        frames_r_waves (list[int]): Frame numbers corresponding to the R-wave(s) in the image sequence.
     """
     # Create arrays with times of R-wave peaks and times of all frames.
     times_r_waves = np.array(dicom_data.RWaveTimeVector)
@@ -63,19 +63,19 @@ def get_R_wave_frames(dicom_data):
     return frames_r_waves
 
 
-def main_get_dicom_properties(path_to_dicom_files, views, default_pixel_spacing=[0.1, 0.1], default_frames_r_waves=[]):
+def main_get_dicom_properties(path_to_dicom_files: str, views: list[str], default_pixel_spacing: list[float] = [0.1, 0.1], default_frames_r_waves: list[int] = []) -> dict[str, dict[str, list[float]]]:
     """Function to get the properties of the DICOM files in a directory.
 
     The times of each frame, the pixel spacing and the frame numbers corresponding to the R-wave(s) are retrieved.
 
     Args:
         path_to_dicom_files (str): Path to the directory containing the DICOM files.
-        views (list): List of views of the segmentations.
-        default_pixel_spacing (list): Default pixel spacing of the image sequence for each dimension (default: [0.1, 0.1]).
-        default_frames_r_waves (list): Default frame numbers corresponding to the R-wave(s) in the image sequence (default: []).
+        views (list[str]): List of views of the segmentations.
+        default_pixel_spacing (list[float]): Default pixel spacing of the image sequence for each dimension (default: [0.1, 0.1]).
+        default_frames_r_waves (list[int]): Default frame numbers corresponding to the R-wave(s) in the image sequence (default: []).
 
     Returns:
-        dicom_properties (dict): Dictionary containing the properties of the DICOM files.
+        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the DICOM files.
     """
     # Create dictionary to store the properties of the DICOM files.
     dicom_properties = defaultdict(dict)
