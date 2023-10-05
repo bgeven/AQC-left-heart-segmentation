@@ -263,28 +263,77 @@ def main_plot_area_time_curves(
                     plt.ylim(min_y_val, max_y_val)
                     plt.legend(bbox_to_anchor=(1, 0.5), loc="center left")
 
-from scipy.interpolate import make_interp_spline
 
-def show_atlases(atlas_lv, atlas_la, test1, test2, test3, test4):
+def show_atlases(atlas_lv, atlas_la, dpi_value=100):
     """Function to plot the atlases (population priors) for the LV and LA.
 
     Args:
         atlas_lv (list): Atlas of the LV.
-        atlas_la (list): Atlas of the LA.   
+        atlas_la (list): Atlas of the LA.  
+        dpi_value (int): DPI value of the figure (default: 100). 
     """
-    x1 = np.linspace(0, test1, len(atlas_lv))
-    x2 = np.linspace(0, test3, len(atlas_la))
-    lv_spline = make_interp_spline(x1, atlas_lv)
-    la_spline = make_interp_spline(x1, atlas_la)
-    X1_ = np.linspace(x1.min(), x1.max(), test2)
-    X2_ = np.linspace(x2.min(), x2.max(), test4)
-    atlas_lv_spline = lv_spline(X1_)
-    atlas_la_spline = la_spline(X2_)
-
-    plt.figure(dpi=100)
+    plt.figure(dpi=dpi_value)
     plt.title("Atlases LV and LA area-time curves")
-    plt.plot(atlas_lv_spline, color=(0, 1, 0), linewidth=5)
-    plt.plot(atlas_la_spline, color=(0, 0, 1), linewidth=5)
-    #plt.legend(["LV", "LA"])
+    plt.plot(atlas_lv, color=(0, 1, 0), linewidth=5)
+    plt.plot(atlas_la, color=(0, 0, 1), linewidth=5)
+    plt.legend(["LV", "LA"])
     plt.xlabel("% of a cardiac cycle")
     plt.ylabel("Normalised area [-]")
+
+
+def show_post_processing_results(path_to_images, path_to_segmentations, path_to_final_segmentations, all_files, views, single_frame_qc, colors_for_labels, font_size=8, dpi_value=100):
+    """Function to plot the results of the post-processing.
+
+    Args:
+        path_to_images (str): Directory of the folder with the echo images.
+        path_to_segmentations (str): Directory of the folder with the segmentations.
+        path_to_final_segmentations (str): Directory of the folder with the final segmentations.
+        all_files (list): List of all files in the directory.
+        views (list): List of views of the segmentations.
+        single_frame_qc (dict): Dictionary with the single frame QC results.
+        colors_for_labels (np.ndarray): Color definitions for each label.
+        font_size (int): Font size of the figure (default: 8).
+        dpi_value (int): DPI value of the figure (default: 100).
+    """    
+    for view in views:
+        # Get the frames that need to be processed.
+        frames_to_process = single_frame_qc["flagged_frames"][view]
+
+        if len(frames_to_process) == 0:
+            print("No frames were processed for view " + view + ".")
+
+        # Get all files of one view of one person.
+        files_of_view = get_list_with_files_of_view(all_files, view)
+
+        for frame_nr, filename in enumerate(files_of_view):
+            if frame_nr in frames_to_process:
+                # Define file locations and load images and segmentations.
+                file_location_image = get_path_to_images(path_to_images, filename)
+                echo_image = get_image_array(file_location_image)
+
+                file_location_seg_before_pp = os.path.join(path_to_segmentations, filename)
+                seg_before_pp = color_segmentation(get_image_array(file_location_seg_before_pp), colors_for_labels)
+            
+                file_location_seg_after_pp = os.path.join(path_to_final_segmentations, filename)
+                seg_after_pp = color_segmentation(get_image_array(file_location_seg_after_pp), colors_for_labels)
+        
+                plt.figure(dpi=dpi_value)
+                plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
+
+                # Subplot 1: Echo image. 
+                plt.subplot(1, 3, 1)
+                plt.imshow(echo_image, cmap="gray")
+                plt.title("Echo image", fontsize=font_size)
+                plt.axis("off")
+
+                # Subplot 2: Segmentation before post-processing. 
+                plt.subplot(1, 3, 2)
+                plt.imshow(seg_before_pp)
+                plt.title("Segmentation before post-processing", fontsize=font_size)
+                plt.axis("off")
+
+                # Subplot 3: Segmentation after post-processing.
+                plt.subplot(1, 3, 3)
+                plt.imshow(seg_after_pp)
+                plt.title("Segmentation after post-processing", fontsize=font_size)
+                plt.axis("off")
