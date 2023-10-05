@@ -693,8 +693,8 @@ def show_clinical_indices(clinical_indices):
     """
     for patient, values in clinical_indices.items():
         print("{:<30} {:<30}".format("Indices", patient))
-        print("-" * 40)
+        print("-" * 45)
         for index, value in values.items():
             print("{:<30} {:6.1f}".format(index, value))
-        print("-" * 40)
+        print("-" * 45)
         
