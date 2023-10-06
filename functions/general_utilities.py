@@ -1,4 +1,4 @@
-# This script contains general functions used in various other scripts.
+# This script contains general functions used in multiple scripts or main workflow.
 import os
 import cv2
 import json
@@ -42,7 +42,7 @@ def get_list_with_files_of_view(all_files: list[str], view_identifier: str, leng
     return images_of_one_view
 
 
-def get_image_array(file_location: str) -> np.ndarray:
+def convert_image_to_array(file_location: str) -> np.ndarray:
     """Convert nifti or dicom file to 2D array.
 
     Args:
@@ -112,20 +112,6 @@ def find_contours(seg: np.ndarray, spec: str = "all") -> list[np.ndarray]:
     return contours
 
 
-def find_largest_contour(contours: list[np.ndarray]) -> list[np.ndarray]:
-    """Find the largest contour within a list of contours, based on area.
-
-    Args:
-        contours (list[np.ndarray]): List of contours.
-
-    Returns:
-        largest_contour (list[np.ndarray]): Largest contour.
-    """
-    largest_contour = max(contours, key=cv2.contourArea)
-
-    return largest_contour
-
-
 def combine_segmentations(
     segmentations: list[np.ndarray], typeOfCombination: str = "difference", labels: list[int] = [1, 2, 3]
 ) -> np.ndarray:
@@ -181,53 +167,8 @@ def combine_segmentations(
     return total_seg
 
 
-def find_coordinates_of_holes(seg: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Find the coordinates of the holes in a segmentation.
-
-    Args:
-        seg (np.ndarray): Segmentation of the echo image.
-
-    Returns:
-        coordinates_holes (tuple[np.ndarray, np.ndarray]): Coordinates of the holes in the segmentation.
-    """
-    # Set all values larger than 0 to 1.
-    seg_same_val = seg.copy()
-    seg_same_val[seg_same_val > 0] = 1
-
-    # Find the contours of the structures in full segmentation.
-    contours = find_contours(seg_same_val, "external")
-
-    coordinates_holes_x_all, coordinates_holes_y_all = np.array([]), np.array([])
-
-    for contour in contours:
-        # Create a mask from the contour.
-        mask = cv2.drawContours(np.zeros_like(seg_same_val), [contour], 0, 255, -1)
-
-        # Find the positions of all the zero pixels within the contour.
-        coordinates_holes_contour = np.where((mask == 255) & (seg_same_val == 0))
-
-        coordinates_holes_x, coordinates_holes_y = (
-            coordinates_holes_contour[0],
-            coordinates_holes_contour[1],
-        )
-
-        coordinates_holes_x_all = np.append(
-            coordinates_holes_x_all, coordinates_holes_x
-        )
-        coordinates_holes_y_all = np.append(
-            coordinates_holes_y_all, coordinates_holes_y
-        )
-
-    coordinates_holes = (
-        coordinates_holes_x_all.astype("int64"),
-        coordinates_holes_y_all.astype("int64"),
-    )
-
-    return coordinates_holes
-
-
-def get_path_to_images(path_to_images: str, filename: str, length_ext: int = 7, input_channel: str = "0000") -> str:
-    """Get the path to the image.
+def define_path_to_images(path_to_images: str, filename: str, length_ext: int = 7, input_channel: str = "0000") -> str:
+    """Define the path to the image.
 
     Args:
         path_to_images (str): Path to the folder containing the images.
@@ -289,18 +230,3 @@ def normalise_list(list_to_normalise: list[float]) -> list[float]:
     normalised_list = [(value - min_value) / value_range for value in list_to_normalise]
 
     return normalised_list
-
-
-# Calculate factor to convert pixel to pixel distance to cm
-def conv_pixel_spacing_to_cm(pixel_spacing: list[float]):  
-    """Calculate the factor to convert pixel to pixel distance to cm.
-    
-    Args:
-        pixel_spacing (list[float]): List of the pixel spacing in mm.
-    
-    Returns:
-        pixel_spacing_cm (float): Average pixel spacing in cm.
-    """
-    pixel_spacing_cm = (pixel_spacing[0] + pixel_spacing[1]) / 20 
-    
-    return pixel_spacing_cm

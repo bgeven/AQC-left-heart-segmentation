@@ -5,8 +5,8 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def check_for_surrounded_lv(seg_1: np.ndarray, seg_2: np.ndarray, seg_3: np.ndarray, threshold_surrounded_lv: int = 1) -> bool:
-    """Function to check if the left ventricle is fully surrounded by the myocardium and left atrium.
+def _check_for_surrounded_lv(seg_1: np.ndarray, seg_2: np.ndarray, seg_3: np.ndarray, threshold_surrounded_lv: int = 1) -> bool:
+    """Check if the left ventricle is fully surrounded by the myocardium and left atrium.
 
     Args:
         seg_1 (np.ndarray): Segmentation of the image with only label 1, LV.
@@ -58,8 +58,8 @@ def check_for_surrounded_lv(seg_1: np.ndarray, seg_2: np.ndarray, seg_3: np.ndar
     return not_fully_surrounded
 
 
-def check_for_cut_off_la(seg: np.ndarray, contour: list[np.ndarray], rows_to_exclude: int = 5, threshold_cut_off_LA: int = 10) -> bool:
-    """Function to check if the left atrium is cut off.
+def _check_for_cut_off_la(seg: np.ndarray, contour: list[np.ndarray], rows_to_exclude: int = 5, threshold_cut_off_LA: int = 10) -> bool:
+    """Check if the left atrium is cut off.
 
     Args:
         seg (np.ndarray): Segmentation of the image.
@@ -92,10 +92,10 @@ def check_for_cut_off_la(seg: np.ndarray, contour: list[np.ndarray], rows_to_exc
     return cut_off_LA
 
 
-def flag_frames_structural(
+def _flag_frames_structural(
     path_to_segmentations: str, files_of_view: list[str], threshold_surrounded_lv: int = 3.0
 ) -> tuple[list[int], list[int]]:
-    """Function to find the frames to be flagged by structural criteria as part of multi-frame QC.
+    """Flag the frames with structural faults, this is a part of multi-frame QC.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
@@ -112,7 +112,7 @@ def flag_frames_structural(
     for frame_nr, filename in enumerate(files_of_view):
         # Define file location and load segmentation
         file_location = os.path.join(path_to_segmentations, filename)
-        seg = get_image_array(file_location)
+        seg = convert_image_to_array(file_location)
 
         # Separate segmentation in 3 different segmentations.
         _, seg_1, seg_2, seg_3 = separate_segmentation(seg)
@@ -121,11 +121,11 @@ def flag_frames_structural(
         contours_3 = find_contours(seg_3, "external")
 
         # Check if LV is fully surrounded.
-        if check_for_surrounded_lv(seg_1, seg_2, seg_3, threshold_surrounded_lv):
+        if _check_for_surrounded_lv(seg_1, seg_2, seg_3, threshold_surrounded_lv):
             flagged_frames_lv.append(frame_nr)
 
         # Check if LA is cut off.
-        if (len(contours_3) == 1) and check_for_cut_off_la(seg_3, contours_3):
+        if (len(contours_3) == 1) and _check_for_cut_off_la(seg_3, contours_3):
             flagged_frames_la.append(frame_nr)
 
     return flagged_frames_lv, flagged_frames_la
@@ -134,7 +134,7 @@ def flag_frames_structural(
 def main_multi_frame_qc_structural(
     path_to_segmentations: str, all_files: list[str], views: list[str], threshold_surrounded: int = 3
 ) -> dict[str, dict[str, list[int]]]:
-    """Function to perform multi-frame QC based on structural criteria.
+    """MAIN: Do multi-frame QC assessment based on structural criteria.
 
     Structural criteria:
         - Left ventricle is fully surrounded by the myocardium and left atrium.
@@ -156,7 +156,7 @@ def main_multi_frame_qc_structural(
         files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Find frames flagged by multi-frame QC.
-        flagged_frames_lv, flagged_frames_la = flag_frames_structural(
+        flagged_frames_lv, flagged_frames_la = _flag_frames_structural(
             path_to_segmentations, files_of_view, threshold_surrounded
         )
 

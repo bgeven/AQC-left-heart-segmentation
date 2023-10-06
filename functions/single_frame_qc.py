@@ -7,7 +7,7 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def num_contours(seg: np.ndarray) -> int:
+def _find_num_contours(seg: np.ndarray) -> int:
     """Find the number of external contours in a segmentation.
 
     Args:
@@ -25,7 +25,7 @@ def num_contours(seg: np.ndarray) -> int:
     return number_of_contours
 
 
-def check_for_gaps(num_of_contours_ext: int, contours_all: list[np.ndarray], min_size: list[int] = [2, 2]) -> int:
+def _check_seg_for_gaps(num_of_contours_ext: int, contours_all: list[np.ndarray], min_size: list[int] = [2, 2]) -> int:
     """Check if gaps are present in a segmentation.
 
     Args:
@@ -50,8 +50,8 @@ def check_for_gaps(num_of_contours_ext: int, contours_all: list[np.ndarray], min
     return num_of_gaps
 
 
-def check_gap_between_structures(seg_A: np.ndarray, seg_B: np.ndarray, num_gaps_A: int, num_gaps_B: int, min_size: list[int] = [1, 1]) -> int:
-    """Check if gaps are present between two structures.
+def _check_for_gap_between_structures(seg_A: np.ndarray, seg_B: np.ndarray, num_gaps_A: int, num_gaps_B: int, min_size: list[int] = [1, 1]) -> int:
+    """Check if segmentation contains gaps between two structures.
 
     Args:
         seg_A (np.ndarray): Segmentation of the first structure.
@@ -84,7 +84,7 @@ def check_gap_between_structures(seg_A: np.ndarray, seg_B: np.ndarray, num_gaps_
     return num_gaps
 
 
-def check_for_gaps_full(
+def _check_for_gaps_full(
     contours: list[np.ndarray],
     num_gaps_1: int,
     num_gaps_2: int,
@@ -129,7 +129,7 @@ def check_for_gaps_full(
     return num_other_gaps
 
 
-def do_single_frame_qc(path_to_segmentations: str, files_of_view: list[str], min_gap_size: list[int] = [2, 2]) -> tuple[list[int], dict[str, list[float]], list[int]]:
+def _do_single_frame_qc(path_to_segmentations: str, files_of_view: list[str], min_gap_size: list[int] = [2, 2]) -> tuple[list[int], dict[str, list[float]], list[int]]:
     """Do single-frame quality control of segmentation.
 
     This quality control is based on the following criteria:
@@ -151,7 +151,7 @@ def do_single_frame_qc(path_to_segmentations: str, files_of_view: list[str], min
     for filename in files_of_view:
         # Define file location and load segmentation.
         file_location = os.path.join(path_to_segmentations, filename)
-        segmentation = get_image_array(file_location)
+        segmentation = convert_image_to_array(file_location)
 
         total_score = 0
 
@@ -164,21 +164,21 @@ def do_single_frame_qc(path_to_segmentations: str, files_of_view: list[str], min
         contours_2_all = find_contours(seg_2, "all")
         contours_3_all = find_contours(seg_3, "all")
 
-        num_contours_1 = num_contours(seg_1)
-        num_contours_2 = num_contours(seg_2)
-        num_contours_3 = num_contours(seg_3)
+        num_contours_1 = _find_num_contours(seg_1)
+        num_contours_2 = _find_num_contours(seg_2)
+        num_contours_3 = _find_num_contours(seg_3)
 
-        num_gaps_1 = check_for_gaps(num_contours_1, contours_1_all, min_gap_size)
-        num_gaps_2 = check_for_gaps(num_contours_2, contours_2_all, min_gap_size)
-        num_gaps_3 = check_for_gaps(num_contours_3, contours_3_all, min_gap_size)
+        num_gaps_1 = _check_seg_for_gaps(num_contours_1, contours_1_all, min_gap_size)
+        num_gaps_2 = _check_seg_for_gaps(num_contours_2, contours_2_all, min_gap_size)
+        num_gaps_3 = _check_seg_for_gaps(num_contours_3, contours_3_all, min_gap_size)
 
-        num_gaps_12 = check_gap_between_structures(
+        num_gaps_12 = _check_for_gap_between_structures(
             seg_1, seg_2, num_gaps_1, num_gaps_2, min_gap_size
         )
-        num_gaps_13 = check_gap_between_structures(
+        num_gaps_13 = _check_for_gap_between_structures(
             seg_1, seg_3, num_gaps_1, num_gaps_3, min_gap_size
         )
-        num_gaps_23 = check_for_gaps_full(
+        num_gaps_23 = _check_for_gaps_full(
             contours_0_all,
             num_gaps_1,
             num_gaps_2,
@@ -234,7 +234,7 @@ def do_single_frame_qc(path_to_segmentations: str, files_of_view: list[str], min
     return qc_scores, overviews, flagged_frames
 
 
-def get_stats_single_frame_qc(overviews_all: dict[str, list[float]]) -> dict[str, int]:
+def _get_stats_single_frame_qc(overviews_all: dict[str, list[float]]) -> dict[str, int]:
     """Get statistics of the quality control of segmentation.
 
     Args:
@@ -292,7 +292,7 @@ def get_stats_single_frame_qc(overviews_all: dict[str, list[float]]) -> dict[str
 
 
 def main_single_frame_qc(path_to_segmentations: str, all_files: list[str], views: list[str]) -> dict[str, dict[str, list]]:
-    """Main function for single-frame quality control of segmentation.
+    """MAIN: Do single-frame quality control (QC) assessment of segmentation.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
@@ -309,7 +309,7 @@ def main_single_frame_qc(path_to_segmentations: str, all_files: list[str], views
         files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Do single frame QC of segmentation.
-        qc_scores, overview, flagged_frames = do_single_frame_qc(
+        qc_scores, overview, flagged_frames = _do_single_frame_qc(
             path_to_segmentations, files_of_view
         )
 
@@ -319,7 +319,7 @@ def main_single_frame_qc(path_to_segmentations: str, all_files: list[str], views
         single_frame_qc["flagged_frames"][view] = flagged_frames
 
     # Get statistics of the quality control of segmentation.
-    qc_stats = get_stats_single_frame_qc(single_frame_qc["overview"])
+    qc_stats = _get_stats_single_frame_qc(single_frame_qc["overview"])
     single_frame_qc["stats"] = qc_stats
 
     return single_frame_qc

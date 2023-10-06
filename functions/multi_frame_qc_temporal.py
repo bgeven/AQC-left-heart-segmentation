@@ -6,8 +6,8 @@ from dtaidistance import dtw, dtw_visualisation
 from functions.general_utilities import *
 
 
-def interpolate_missing_areas(timings: list[float], areas: list[float]) -> list[float]:
-    """Correct for missing values in the area list by interpolating between the non-zero values.
+def _interpolate_missing_areas(timings: list[float], areas: list[float]) -> list[float]:
+    """Interpolate between the non-zero values in the area list to correct for missing values.  
 
     Args:
         timings (list[float]): List of timings of frames.
@@ -39,7 +39,7 @@ def interpolate_missing_areas(timings: list[float], areas: list[float]) -> list[
     return areas_interpolated
 
 
-def prepare_area_time_curves(values: list[float], frame_times: list[float], time_points: list[int], nr_time_points: int = 100) -> list[float]:
+def _prepare_area_time_curves(values: list[float], frame_times: list[float], time_points: list[int], nr_time_points: int = 100) -> list[float]:
     """Prepare the area-time curves for the DTW analysis.
     
     Args:
@@ -60,7 +60,7 @@ def prepare_area_time_curves(values: list[float], frame_times: list[float], time
     total_time = timings_adjusted[-1] - timings_adjusted[0]
     
     # Interpolate between the non-zero values.
-    values_interpolated = interpolate_missing_areas(timings_cycle, values_cycle)
+    values_interpolated = _interpolate_missing_areas(timings_cycle, values_cycle)
 
     # Create a list of the timings of the cycle.
     timings_for_interpolation = list(np.linspace(0, total_time, nr_time_points, endpoint=True))
@@ -77,8 +77,8 @@ def prepare_area_time_curves(values: list[float], frame_times: list[float], time
     return values_adjusted
 
 
-def comp_dtw_distance(cycle_values: list[float], atlas: list[float]) -> float:
-    """Compute the DTW distance between the area-time curve of a cycle and the atlas.
+def _comp_dtw_distance(cycle_values: list[float], atlas: list[float]) -> float:
+    """Compute the dynamic time warping (DTW) distance between the area-time curve of a cycle and the atlas.
 
     Args:
         cycle_values (list[float]): List of values of the area-time curve of a cycle.
@@ -100,8 +100,7 @@ def comp_dtw_distance(cycle_values: list[float], atlas: list[float]) -> float:
     return dtw_distance
 
 def main_multi_frame_qc_temporal(views: list[str], cycle_information: dict[str, dict[str, list[int]]], segmentation_properties: dict[str, dict[str, list[int]]], dicom_properties: dict[str, dict[str, list[int]]], atlas_lv: list[float], atlas_la: list[float]) -> dict[str, dict[str, float]]:
-    """Function to perform the area-time analysis with Dynamic Time Warping (DTW).
-
+    """MAIN: Do multi-frame QC assessment based on temporal criteria (dynamic time warping (DTW) distance).
     Args:
         views (list[str]): List of views of the segmentations.
         cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cycles.
@@ -124,12 +123,12 @@ def main_multi_frame_qc_temporal(views: list[str], cycle_information: dict[str, 
         times_frames = dicom_properties['times_frames'][view]
         
         # Prepare the area-time curves for the DTW analysis.
-        lv_areas_cycle_prepared = prepare_area_time_curves(lv_areas, times_frames, ed_points_cycle)
-        la_areas_cycle_prepared = prepare_area_time_curves(la_areas, times_frames, ed_points_cycle)
+        lv_areas_cycle_prepared = _prepare_area_time_curves(lv_areas, times_frames, ed_points_cycle)
+        la_areas_cycle_prepared = _prepare_area_time_curves(la_areas, times_frames, ed_points_cycle)
           
         # Compute the DTW distance between the area-time curve of a cycle and the atlas.
-        lv_dtw_distance = comp_dtw_distance(lv_areas_cycle_prepared, atlas_lv)
-        la_dtw_distance = comp_dtw_distance(la_areas_cycle_prepared, atlas_la)
+        lv_dtw_distance = _comp_dtw_distance(lv_areas_cycle_prepared, atlas_lv)
+        la_dtw_distance = _comp_dtw_distance(la_areas_cycle_prepared, atlas_la)
 
         # Save the DTW distance in the dictionary.
         area_time_analysis['dtw_lv'][view] = lv_dtw_distance

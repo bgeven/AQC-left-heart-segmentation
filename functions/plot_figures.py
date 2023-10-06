@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from functions.general_utilities import *
 
 
-def color_segmentation(seg: np.ndarray, colors_for_labels: np.ndarray) -> np.ndarray:
-    """Function to color a segmentation with colors for each label.
+def _color_segmentation(seg: np.ndarray, colors_for_labels: np.ndarray) -> np.ndarray:
+    """Give each label in a segmentation a certain color.
 
     Args:
         seg (np.ndarray): Segmentation to be colored.
@@ -22,12 +22,12 @@ def color_segmentation(seg: np.ndarray, colors_for_labels: np.ndarray) -> np.nda
     return seg_colored
 
 
-def remove_neighboring_pixels(contours_1: list[np.ndarray], contours_2: list[np.ndarray], threshold_distance: int = 3) -> list[np.ndarray]:
-    """Function to remove points on the contours that neighbor the LV contour.
+def _remove_neighboring_pixels(contours_1: list[np.ndarray], contours_2: list[np.ndarray], threshold_distance: int = 3) -> list[np.ndarray]:
+    """Remove points on the contours that neighbor the left ventricular (LV) contour.
 
     Args:
         contours_1 (list[np.ndarray]): List of contours of the LV.
-        contours_2 (list[np.ndarray]): List of contours of the MYO or LA.
+        contours_2 (list[np.ndarray]): List of contours of the myocardium (MYO) or left atrium (LA).
         threshold_distance (int): Threshold distance between the LV and MYO or LA contour to remove points on the MYO or LA contour (default: 3).
 
     Returns:
@@ -62,8 +62,8 @@ def remove_neighboring_pixels(contours_1: list[np.ndarray], contours_2: list[np.
     return contour_adapted
 
 
-def color_contours_segmentation(image: np.ndarray, seg: np.ndarray, label_colors: np.ndarray) -> np.ndarray:
-    """Function to project contours of a segmentation on an image.
+def _project_segmentation_on_image(image: np.ndarray, seg: np.ndarray, label_colors: np.ndarray) -> np.ndarray:
+    """Project contours of a segmentation on the corresponding echo image.
 
     Args:
         image (np.ndarray): Image to project contours on.
@@ -76,7 +76,7 @@ def color_contours_segmentation(image: np.ndarray, seg: np.ndarray, label_colors
     image_with_contours = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
     # Map each label value to a specific color.
-    colored_labels = color_segmentation(seg, label_colors)
+    colored_labels = _color_segmentation(seg, label_colors)
 
     # Convert the colored labels back to an image.
     image_for_blend = Image.fromarray(image_with_contours)
@@ -94,8 +94,8 @@ def color_contours_segmentation(image: np.ndarray, seg: np.ndarray, label_colors
     contours_3 = find_contours(seg_3, "all")
 
     # Remove points on the contours that neighbor the LV contour.
-    contours_2 = remove_neighboring_pixels(contours_1, contours_2)
-    contours_3 = remove_neighboring_pixels(contours_1, contours_3)
+    contours_2 = _remove_neighboring_pixels(contours_1, contours_2)
+    contours_3 = _remove_neighboring_pixels(contours_1, contours_3)
 
     # Draw all contours on the image
     for contour_2 in contours_2:
@@ -138,7 +138,7 @@ def main_plot_area_time_curves(
     font_size: int = 8,
     dpi_value: int = 100,
 ) -> None:
-    """Function to plot area-time curves for all patients.
+    """Plot area-time curves for all patients.
 
     Args:
         path_to_images (str): Directory of the folder with the echo images.
@@ -172,15 +172,15 @@ def main_plot_area_time_curves(
         # Only plot the first frame for now.
         for frame_nr, filename in enumerate(files_of_view[0:1]):
             # Define file location and load echo image frame.
-            file_location_image = get_path_to_images(path_to_images, filename)
-            echo_image = get_image_array(file_location_image)
+            file_location_image = define_path_to_images(path_to_images, filename)
+            echo_image = convert_image_to_array(file_location_image)
 
             # Define file location and load segmentation.
             file_location_seg = os.path.join(path_to_segmentations, filename)
-            seg = get_image_array(file_location_seg)
-            seg_colored = color_segmentation(seg, colors_for_labels)
+            seg = convert_image_to_array(file_location_seg)
+            seg_colored = _color_segmentation(seg, colors_for_labels)
 
-            contours_seg = color_contours_segmentation(
+            contours_seg = _project_segmentation_on_image(
                 echo_image, seg, colors_for_labels
             )
 
@@ -308,14 +308,14 @@ def show_post_processing_results(path_to_images: str, path_to_segmentations: str
         for frame_nr, filename in enumerate(files_of_view):
             if frame_nr in frames_to_process:
                 # Define file locations and load images and segmentations.
-                file_location_image = get_path_to_images(path_to_images, filename)
-                echo_image = get_image_array(file_location_image)
+                file_location_image = define_path_to_images(path_to_images, filename)
+                echo_image = convert_image_to_array(file_location_image)
 
                 file_location_seg_before_pp = os.path.join(path_to_segmentations, filename)
-                seg_before_pp = color_segmentation(get_image_array(file_location_seg_before_pp), colors_for_labels)
+                seg_before_pp = _color_segmentation(convert_image_to_array(file_location_seg_before_pp), colors_for_labels)
             
                 file_location_seg_after_pp = os.path.join(path_to_final_segmentations, filename)
-                seg_after_pp = color_segmentation(get_image_array(file_location_seg_after_pp), colors_for_labels)
+                seg_after_pp = _color_segmentation(convert_image_to_array(file_location_seg_after_pp), colors_for_labels)
         
                 plt.figure()
                 plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
