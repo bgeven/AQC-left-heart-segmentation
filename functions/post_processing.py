@@ -49,7 +49,9 @@ def _find_centroid(seg: np.ndarray) -> tuple[int, int]:
     return centroid_x, centroid_y
 
 
-def _find_centroids_of_all_structures(centroids: dict[str, np.ndarray], seg: np.ndarray) -> dict[str, np.ndarray]:
+def _find_centroids_of_all_structures(
+    centroids: dict[str, np.ndarray], seg: np.ndarray
+) -> dict[str, np.ndarray]:
     """Find centroid of all structures present in segmentation and add to dictionary.
 
     Args:
@@ -71,7 +73,9 @@ def _find_centroids_of_all_structures(centroids: dict[str, np.ndarray], seg: np.
     return centroids
 
 
-def _get_mean_centroids(path_to_segmentations: str, files_of_view: list[str], frames_to_process: list[int]) -> dict[str, tuple[int, int]]:
+def _get_mean_centroids(
+    path_to_segmentations: str, files_of_view: list[str], frames_to_process: list[int]
+) -> dict[str, tuple[int, int]]:
     """Get the mean middle point of each structure in all segmentations of one person.
 
     Args:
@@ -106,7 +110,9 @@ def _get_mean_centroids(path_to_segmentations: str, files_of_view: list[str], fr
     return mean_centroids
 
 
-def _get_main_contour_lv_la(seg: np.ndarray, mean_centroid: tuple[int, int]) -> tuple[np.ndarray, int]:
+def _get_main_contour_lv_la(
+    seg: np.ndarray, mean_centroid: tuple[int, int]
+) -> tuple[np.ndarray, int]:
     """Extract the main contour in LV and LA segmentations.
 
     The main contour is the contour that contains the mean centroid of the structure based on all frames in the image sequence.
@@ -160,7 +166,9 @@ def _get_main_contour_lv_la(seg: np.ndarray, mean_centroid: tuple[int, int]) -> 
     return seg_main, num_of_contours
 
 
-def _get_main_contour_myo(seg_1: np.ndarray, seg_2: np.ndarray, threshold_distance: int = 5) -> np.ndarray:
+def _get_main_contour_myo(
+    seg_1: np.ndarray, seg_2: np.ndarray, threshold_distance: int = 5
+) -> np.ndarray:
     """Extract the contours of the myocardium that neighbour the LV.
 
     Args:
@@ -278,7 +286,9 @@ def _fill_holes_within_structure(seg: np.ndarray, label: int) -> np.ndarray:
     return seg_no_holes
 
 
-def _find_coordinates_of_structure(seg: np.ndarray, label: int) -> list[tuple[int, int]]:
+def _find_coordinates_of_structure(
+    seg: np.ndarray, label: int
+) -> list[tuple[int, int]]:
     """Find the coordinates of all pixels in a structure.
 
     Args:
@@ -366,7 +376,6 @@ def _fill_holes_between_myo_la(seg_total: np.ndarray) -> np.ndarray:
 
     # Fill holes between MYO and LA.
     for row, col in zip(coordinates_holes_23[0], coordinates_holes_23[1]):
-
         if (col, row) not in coordinates_seg_1 and (row, col) not in list(
             zip(coordinates_holes_12[0], coordinates_holes_12[1])
         ):
@@ -519,7 +528,9 @@ def _fill_holes_between_lv_myo(seg_total: np.ndarray) -> np.ndarray:
     return seg_filled
 
 
-def _post_process_segmentation(seg: np.ndarray, centroids: dict[int, tuple[int, int]]) -> np.ndarray:
+def _post_process_segmentation(
+    seg: np.ndarray, centroids: dict[int, tuple[int, int]]
+) -> np.ndarray:
     """Post-process segmentation.
 
     Post-processing consists of the following steps:

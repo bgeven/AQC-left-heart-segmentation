@@ -5,7 +5,12 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def _check_for_surrounded_lv(seg_1: np.ndarray, seg_2: np.ndarray, seg_3: np.ndarray, threshold_surrounded_lv: int = 1) -> bool:
+def _check_for_surrounded_lv(
+    seg_1: np.ndarray,
+    seg_2: np.ndarray,
+    seg_3: np.ndarray,
+    threshold_surrounded_lv: int = 1,
+) -> bool:
     """Check if the left ventricle is fully surrounded by the myocardium and left atrium.
 
     Args:
@@ -27,7 +32,6 @@ def _check_for_surrounded_lv(seg_1: np.ndarray, seg_2: np.ndarray, seg_3: np.nda
 
     # Check if contours are present for all structures.
     if len(contour_1) > 0 and len(contour_2) > 0 and len(contour_3) > 0:
-
         for j in range(len(contour_1[0])):
             # Get the coordinates of the left ventricular contour.
             coordinates_1 = tuple(
@@ -58,7 +62,12 @@ def _check_for_surrounded_lv(seg_1: np.ndarray, seg_2: np.ndarray, seg_3: np.nda
     return not_fully_surrounded
 
 
-def _check_for_cut_off_la(seg: np.ndarray, contour: list[np.ndarray], rows_to_exclude: int = 5, threshold_cut_off_LA: int = 10) -> bool:
+def _check_for_cut_off_la(
+    seg: np.ndarray,
+    contour: list[np.ndarray],
+    rows_to_exclude: int = 5,
+    threshold_cut_off_LA: int = 10,
+) -> bool:
     """Check if the left atrium is cut off.
 
     Args:
@@ -93,7 +102,9 @@ def _check_for_cut_off_la(seg: np.ndarray, contour: list[np.ndarray], rows_to_ex
 
 
 def _flag_frames_structural(
-    path_to_segmentations: str, files_of_view: list[str], threshold_surrounded_lv: int = 3.0
+    path_to_segmentations: str,
+    files_of_view: list[str],
+    threshold_surrounded_lv: int = 3.0,
 ) -> tuple[list[int], list[int]]:
     """Flag the frames with structural faults, this is a part of multi-frame QC.
 
@@ -132,7 +143,10 @@ def _flag_frames_structural(
 
 
 def main_multi_frame_qc_structural(
-    path_to_segmentations: str, all_files: list[str], views: list[str], threshold_surrounded: int = 3
+    path_to_segmentations: str,
+    all_files: list[str],
+    views: list[str],
+    threshold_surrounded: int = 3,
 ) -> dict[str, dict[str, list[int]]]:
     """MAIN: Do multi-frame QC assessment based on structural criteria.
 

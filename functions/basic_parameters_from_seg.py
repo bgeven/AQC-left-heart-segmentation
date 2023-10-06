@@ -7,7 +7,7 @@ from functions.general_utilities import *
 
 
 def _comp_factor_px2_to_cm2(pixel_spacing: list[float]) -> float:
-    """Compute pixel size to cm2 conversion factor. 
+    """Compute pixel size to cm2 conversion factor.
 
     Args:
         pixel_spacing (list[float]): Pixel spacing in x and y direction.
@@ -42,7 +42,9 @@ def _comp_area_from_seg(seg: np.ndarray, label: int, px2cm2_factor: float) -> fl
     return area
 
 
-def _comp_areas_in_sequence(path_to_segmentation: str, frames: list[int], label: int, px2cm2_factor: float) -> list[float]:
+def _comp_areas_in_sequence(
+    path_to_segmentation: str, frames: list[int], label: int, px2cm2_factor: float
+) -> list[float]:
     """Compute the area of a certain label in the segmentation of every frame in a sequence.
 
     Args:
@@ -66,7 +68,9 @@ def _comp_areas_in_sequence(path_to_segmentation: str, frames: list[int], label:
     return areas
 
 
-def _find_nr_of_ed_points(frames_r_wave: list[int], nr_of_frames: int, threshold_peak: int = 10) -> int:
+def _find_nr_of_ed_points(
+    frames_r_wave: list[int], nr_of_frames: int, threshold_peak: int = 10
+) -> int:
     """Determine the number of end-diastolic (ED) points based on the number of R-wave peaks.
 
     Args:
@@ -171,7 +175,12 @@ def _find_ed_points(areas: list[float], frames_r_wave: list[int] = []) -> list[i
     return ed_points
 
 
-def main_derive_parameters(path_to_segmentations: str, all_files: list[str], views: list[str], dicom_properties: dict[str, dict[str, list[float]]]) -> dict[str, dict[str, list[float]]]:
+def main_derive_parameters(
+    path_to_segmentations: str,
+    all_files: list[str],
+    views: list[str],
+    dicom_properties: dict[str, dict[str, list[float]]],
+) -> dict[str, dict[str, list[float]]]:
     """MAIN: Derive basic parameters/properties from the segmentations in a directory.
 
     The areas of the labels in the segmentations are calculated for each frame in the sequence.

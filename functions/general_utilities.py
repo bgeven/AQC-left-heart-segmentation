@@ -6,7 +6,9 @@ import numpy as np
 import SimpleITK as sitk
 
 
-def get_list_with_views(all_files: list[str], length_view_identifier: int = 29) -> list[str]:
+def get_list_with_views(
+    all_files: list[str], length_view_identifier: int = 29
+) -> list[str]:
     """Get list of the views of the segmentations present in one folder.
 
     Args:
@@ -22,7 +24,9 @@ def get_list_with_views(all_files: list[str], length_view_identifier: int = 29) 
     return views
 
 
-def get_list_with_files_of_view(all_files: list[str], view_identifier: str, length_ext: int = 7) -> list[str]:
+def get_list_with_files_of_view(
+    all_files: list[str], view_identifier: str, length_ext: int = 7
+) -> list[str]:
     """Get list of the files belonging to a specific view.
 
     Args:
@@ -67,7 +71,9 @@ def convert_image_to_array(file_location: str) -> np.ndarray:
     return image
 
 
-def separate_segmentation(seg: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def separate_segmentation(
+    seg: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Separate the LV, MYO and LA from the full segmentation into separate segmentations.
 
     Args:
@@ -113,7 +119,9 @@ def find_contours(seg: np.ndarray, spec: str = "all") -> list[np.ndarray]:
 
 
 def combine_segmentations(
-    segmentations: list[np.ndarray], typeOfCombination: str = "difference", labels: list[int] = [1, 2, 3]
+    segmentations: list[np.ndarray],
+    typeOfCombination: str = "difference",
+    labels: list[int] = [1, 2, 3],
 ) -> np.ndarray:
     """Combine the segmentations of the LV, MYO and LA into one segmentation.
 
@@ -167,7 +175,9 @@ def combine_segmentations(
     return total_seg
 
 
-def define_path_to_images(path_to_images: str, filename: str, length_ext: int = 7, input_channel: str = "0000") -> str:
+def define_path_to_images(
+    path_to_images: str, filename: str, length_ext: int = 7, input_channel: str = "0000"
+) -> str:
     """Define the path to the image.
 
     Args:
@@ -192,7 +202,7 @@ def load_atlases(path_to_atlases: str) -> tuple[list[float], list[float]]:
 
     Args:
         path_to_atlases (str): Path to the atlases.
-    
+
     Returns:
         atlas_lv (list[float]): List containing the LV atlas.
         atlas_la (list[float]): List containing the LA atlas.
@@ -203,7 +213,7 @@ def load_atlases(path_to_atlases: str) -> tuple[list[float], list[float]]:
 
         with open(os.path.join(path_to_atlases, "atlas_la.json"), "r") as file:
             atlas_la = json.load(file)
-    
+
     else:
         raise ValueError("No atlases found. Please check the path to the atlases.")
 

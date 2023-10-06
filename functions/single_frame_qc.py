@@ -25,7 +25,11 @@ def _find_num_contours(seg: np.ndarray) -> int:
     return number_of_contours
 
 
-def _check_seg_for_gaps(num_of_contours_ext: int, contours_all: list[np.ndarray], min_size: list[int] = [2, 2]) -> int:
+def _check_seg_for_gaps(
+    num_of_contours_ext: int,
+    contours_all: list[np.ndarray],
+    min_size: list[int] = [2, 2],
+) -> int:
     """Check if gaps are present in a segmentation.
 
     Args:
@@ -50,7 +54,13 @@ def _check_seg_for_gaps(num_of_contours_ext: int, contours_all: list[np.ndarray]
     return num_of_gaps
 
 
-def _check_for_gap_between_structures(seg_A: np.ndarray, seg_B: np.ndarray, num_gaps_A: int, num_gaps_B: int, min_size: list[int] = [1, 1]) -> int:
+def _check_for_gap_between_structures(
+    seg_A: np.ndarray,
+    seg_B: np.ndarray,
+    num_gaps_A: int,
+    num_gaps_B: int,
+    min_size: list[int] = [1, 1],
+) -> int:
     """Check if segmentation contains gaps between two structures.
 
     Args:
@@ -129,7 +139,11 @@ def _check_for_gaps_full(
     return num_other_gaps
 
 
-def _do_single_frame_qc(path_to_segmentations: str, files_of_view: list[str], min_gap_size: list[int] = [2, 2]) -> tuple[list[int], dict[str, list[float]], list[int]]:
+def _do_single_frame_qc(
+    path_to_segmentations: str,
+    files_of_view: list[str],
+    min_gap_size: list[int] = [2, 2],
+) -> tuple[list[int], dict[str, list[float]], list[int]]:
     """Do single-frame quality control of segmentation.
 
     This quality control is based on the following criteria:
@@ -291,7 +305,9 @@ def _get_stats_single_frame_qc(overviews_all: dict[str, list[float]]) -> dict[st
     return stats
 
 
-def main_single_frame_qc(path_to_segmentations: str, all_files: list[str], views: list[str]) -> dict[str, dict[str, list]]:
+def main_single_frame_qc(
+    path_to_segmentations: str, all_files: list[str], views: list[str]
+) -> dict[str, dict[str, list]]:
     """MAIN: Do single-frame quality control (QC) assessment of segmentation.
 
     Args:
@@ -325,7 +341,9 @@ def main_single_frame_qc(path_to_segmentations: str, all_files: list[str], views
     return single_frame_qc
 
 
-def stats_single_frame_qc(single_frame_qc: dict[str, dict[str, list]]) -> pd.DataFrame(list[float]):
+def stats_single_frame_qc(
+    single_frame_qc: dict[str, dict[str, list]]
+) -> pd.DataFrame(list[float]):
     """Get statistics of the quality control of segmentation.
 
     Args:

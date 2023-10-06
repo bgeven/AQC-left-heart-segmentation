@@ -22,7 +22,11 @@ def _color_segmentation(seg: np.ndarray, colors_for_labels: np.ndarray) -> np.nd
     return seg_colored
 
 
-def _remove_neighboring_pixels(contours_1: list[np.ndarray], contours_2: list[np.ndarray], threshold_distance: int = 3) -> list[np.ndarray]:
+def _remove_neighboring_pixels(
+    contours_1: list[np.ndarray],
+    contours_2: list[np.ndarray],
+    threshold_distance: int = 3,
+) -> list[np.ndarray]:
     """Remove points on the contours that neighbor the left ventricular (LV) contour.
 
     Args:
@@ -62,7 +66,9 @@ def _remove_neighboring_pixels(contours_1: list[np.ndarray], contours_2: list[np
     return contour_adapted
 
 
-def _project_segmentation_on_image(image: np.ndarray, seg: np.ndarray, label_colors: np.ndarray) -> np.ndarray:
+def _project_segmentation_on_image(
+    image: np.ndarray, seg: np.ndarray, label_colors: np.ndarray
+) -> np.ndarray:
     """Project contours of a segmentation on the corresponding echo image.
 
     Args:
@@ -264,13 +270,15 @@ def main_plot_area_time_curves(
                     plt.legend(bbox_to_anchor=(1, 0.5), loc="center left")
 
 
-def show_atlases(atlas_lv: list[float], atlas_la: list[float], dpi_value: int = 100) -> None:
+def show_atlases(
+    atlas_lv: list[float], atlas_la: list[float], dpi_value: int = 100
+) -> None:
     """Function to plot the atlases (population priors) for the LV and LA.
 
     Args:
         atlas_lv (list[float]): Atlas of the LV.
-        atlas_la (list[float]): Atlas of the LA.  
-        dpi_value (int): DPI value of the figure (default: 100). 
+        atlas_la (list[float]): Atlas of the LA.
+        dpi_value (int): DPI value of the figure (default: 100).
     """
     plt.figure(dpi=dpi_value)
     plt.title("Atlases LV and LA area-time curves")
@@ -281,7 +289,16 @@ def show_atlases(atlas_lv: list[float], atlas_la: list[float], dpi_value: int = 
     plt.ylabel("Normalised area [-]")
 
 
-def show_post_processing_results(path_to_images: str, path_to_segmentations: str, path_to_final_segmentations: str, all_files: list[str], views: list[str], single_frame_qc: dict[str, dict[str, list[int]]], colors_for_labels: np.ndarray, font_size: int = 8) -> None:
+def show_post_processing_results(
+    path_to_images: str,
+    path_to_segmentations: str,
+    path_to_final_segmentations: str,
+    all_files: list[str],
+    views: list[str],
+    single_frame_qc: dict[str, dict[str, list[int]]],
+    colors_for_labels: np.ndarray,
+    font_size: int = 8,
+) -> None:
     """Function to plot the results of the post-processing.
 
     Args:
@@ -294,7 +311,7 @@ def show_post_processing_results(path_to_images: str, path_to_segmentations: str
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
-    """    
+    """
     for view in views:
         # Get the frames that need to be processed.
         frames_to_process = single_frame_qc["flagged_frames"][view]
@@ -311,29 +328,43 @@ def show_post_processing_results(path_to_images: str, path_to_segmentations: str
                 file_location_image = define_path_to_images(path_to_images, filename)
                 echo_image = convert_image_to_array(file_location_image)
 
-                file_location_seg_before_pp = os.path.join(path_to_segmentations, filename)
-                seg_before_pp = _color_segmentation(convert_image_to_array(file_location_seg_before_pp), colors_for_labels)
-            
-                file_location_seg_after_pp = os.path.join(path_to_final_segmentations, filename)
-                seg_after_pp = _color_segmentation(convert_image_to_array(file_location_seg_after_pp), colors_for_labels)
-        
+                file_location_seg_before_pp = os.path.join(
+                    path_to_segmentations, filename
+                )
+                seg_before_pp = _color_segmentation(
+                    convert_image_to_array(file_location_seg_before_pp),
+                    colors_for_labels,
+                )
+
+                file_location_seg_after_pp = os.path.join(
+                    path_to_final_segmentations, filename
+                )
+                seg_after_pp = _color_segmentation(
+                    convert_image_to_array(file_location_seg_after_pp),
+                    colors_for_labels,
+                )
+
                 plt.figure()
                 plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
 
-                # Subplot 1: Echo image. 
+                # Subplot 1: Echo image.
                 plt.subplot(1, 3, 1)
                 plt.imshow(echo_image, cmap="gray")
                 plt.title("Echo image", fontsize=font_size)
                 plt.axis("off")
 
-                # Subplot 2: Segmentation before post-processing. 
+                # Subplot 2: Segmentation before post-processing.
                 plt.subplot(1, 3, 2)
                 plt.imshow(seg_before_pp)
-                plt.title("Segmentation before post-processing", fontsize=font_size, wrap=True)
+                plt.title(
+                    "Segmentation before post-processing", fontsize=font_size, wrap=True
+                )
                 plt.axis("off")
 
                 # Subplot 3: Segmentation after post-processing.
                 plt.subplot(1, 3, 3)
                 plt.imshow(seg_after_pp)
-                plt.title("Segmentation after post-processing", fontsize=font_size, wrap=True)
+                plt.title(
+                    "Segmentation after post-processing", fontsize=font_size, wrap=True
+                )
                 plt.axis("off")

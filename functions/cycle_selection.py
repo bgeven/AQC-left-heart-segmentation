@@ -26,7 +26,9 @@ def _comp_cnr(roi: np.ndarray, background: np.ndarray) -> float:
     return cnr
 
 
-def _create_mask(echo_image: np.ndarray, seg: np.ndarray, desired_labels: list[int]) -> np.ndarray:
+def _create_mask(
+    echo_image: np.ndarray, seg: np.ndarray, desired_labels: list[int]
+) -> np.ndarray:
     """Create a mask of the echo image with the desired labels.
 
     Args:
@@ -50,7 +52,12 @@ def _create_mask(echo_image: np.ndarray, seg: np.ndarray, desired_labels: list[i
     return masked_image
 
 
-def _comp_cnr_all_frames(path_to_images: str, path_to_segmentations: str, files_of_view: list[str], flagged_frames: list[int]) -> list[float]:
+def _comp_cnr_all_frames(
+    path_to_images: str,
+    path_to_segmentations: str,
+    files_of_view: list[str],
+    flagged_frames: list[int],
+) -> list[float]:
     """Compute the contrast-to-noise ratio (CNR) of all frames in the image sequence.
 
     Args:
@@ -88,7 +95,9 @@ def _comp_cnr_all_frames(path_to_images: str, path_to_segmentations: str, files_
     return cnr_frames
 
 
-def _find_es_in_cycle(es_points: list[int], ed_points_cycle: list[int], lv_areas: list[float]) -> list[int]:
+def _find_es_in_cycle(
+    es_points: list[int], ed_points_cycle: list[int], lv_areas: list[float]
+) -> list[int]:
     """Find the end-systolic (ES) point in the cardiac cycle.
 
     Args:
@@ -124,7 +133,9 @@ def _find_es_in_cycle(es_points: list[int], ed_points_cycle: list[int], lv_areas
     return es_point_cycle
 
 
-def _count_nr_flagged_frames(flagged_frames: list[int], first_frame: int, last_frame: int) -> int:
+def _count_nr_flagged_frames(
+    flagged_frames: list[int], first_frame: int, last_frame: int
+) -> int:
     """Count the number of flagged frames in the cardiac cycle.
 
     Args:
@@ -142,8 +153,10 @@ def _count_nr_flagged_frames(flagged_frames: list[int], first_frame: int, last_f
     return nr_flagged_frames
 
 
-def _give_score_per_criterion(my_list: list[float], method: str = "max all") -> list[int]:
-    """Give a score per criterion based on the values. 
+def _give_score_per_criterion(
+    my_list: list[float], method: str = "max all"
+) -> list[int]:
+    """Give a score per criterion based on the values.
 
     Scoring is based on the CNR ("max all") and the number of frames flagged by single-frame QC and multi-frame QC ("min all").
 
@@ -177,7 +190,11 @@ def _give_score_per_criterion(my_list: list[float], method: str = "max all") -> 
     return scores
 
 
-def _find_best_cycle(cnr_cycles: list[float], nr_flagged_frames_sf_qc: list[int], nr_flagged_frames_mf_qc: list[int]) -> int:
+def _find_best_cycle(
+    cnr_cycles: list[float],
+    nr_flagged_frames_sf_qc: list[int],
+    nr_flagged_frames_mf_qc: list[int],
+) -> int:
     """Find the most appropriate cardiac cycle based on the CNR and the number of flagged frames.
 
     Args:
@@ -204,7 +221,6 @@ def _find_best_cycle(cnr_cycles: list[float], nr_flagged_frames_sf_qc: list[int]
 
     # If more than 1 cycle has the highest score, add 1 to score of cycle with highest cnr.
     if len(max_score_indices) > 1:
-
         # Check if there is at least 1 cycle with a positive CNR.
         if np.nanmean(cnr_cycles) > 0:
             idx_max_cnr = max(max_score_indices, key=lambda idx: cnr_cycles[idx])

@@ -63,7 +63,12 @@ def _get_R_wave_frames(dicom_data: pydicom.FileDataset) -> list[int]:
     return frames_r_waves
 
 
-def main_get_dicom_properties(path_to_dicom_files: str, views: list[str], default_pixel_spacing: list[float] = [0.1, 0.1], default_frames_r_waves: list[int] = []) -> dict[str, dict[str, list[float]]]:
+def main_get_dicom_properties(
+    path_to_dicom_files: str,
+    views: list[str],
+    default_pixel_spacing: list[float] = [0.1, 0.1],
+    default_frames_r_waves: list[int] = [],
+) -> dict[str, dict[str, list[float]]]:
     """MAIN: Get the properties of the DICOM files in a directory.
 
     The times of each frame, the pixel spacing and the frame numbers corresponding to the R-wave(s) are retrieved.
@@ -84,7 +89,7 @@ def main_get_dicom_properties(path_to_dicom_files: str, views: list[str], defaul
     dicom_files = os.listdir(path_to_dicom_files)
 
     # Check if the DICOM files are in the directory.
-    if len(dicom_files) > 0: 
+    if len(dicom_files) > 0:
         for dicom_file in dicom_files:
             dicom_file_location = os.path.join(path_to_dicom_files, dicom_file)
 
