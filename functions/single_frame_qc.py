@@ -7,7 +7,7 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def num_contours(seg):
+def _find_num_contours(seg: np.ndarray) -> int:
     """Find the number of external contours in a segmentation.
 
     Args:
@@ -25,13 +25,17 @@ def num_contours(seg):
     return number_of_contours
 
 
-def check_for_gaps(num_of_contours_ext, contours_all, min_size=[2, 2]):
+def _check_seg_for_gaps(
+    num_of_contours_ext: int,
+    contours_all: list[np.ndarray],
+    min_size: list[int] = [2, 2],
+) -> int:
     """Check if gaps are present in a segmentation.
 
     Args:
         num_of_contours_ext (int): Number of external contours in the segmentation.
-        contours_all (list): List of all contours in the segmentation.
-        min_size (list): Minimum size of a gap.
+        contours_all (list[np.ndarray]): List of all contours in the segmentation.
+        min_size (list[int]): Minimum size of a gap.
 
     Returns:
         num_of_gaps (int): Number of gaps in the segmentation.
@@ -50,15 +54,21 @@ def check_for_gaps(num_of_contours_ext, contours_all, min_size=[2, 2]):
     return num_of_gaps
 
 
-def check_gap_between_structures(seg_A, seg_B, num_gaps_A, num_gaps_B, min_size=[1, 1]):
-    """Check if gaps are present between two structures.
+def _check_for_gap_between_structures(
+    seg_A: np.ndarray,
+    seg_B: np.ndarray,
+    num_gaps_A: int,
+    num_gaps_B: int,
+    min_size: list[int] = [1, 1],
+) -> int:
+    """Check if segmentation contains gaps between two structures.
 
     Args:
         seg_A (np.ndarray): Segmentation of the first structure.
         seg_B (np.ndarray): Segmentation of the second structure.
         num_gaps_A (int): Number of gaps in the first structure.
         num_gaps_B (int): Number of gaps in the second structure.
-        min_size (list): Minimum size of a gap.
+        min_size (list[int]): Minimum size of a gap.
 
     Returns:
         num_gaps (int): Number of gaps between the two structures.
@@ -84,25 +94,25 @@ def check_gap_between_structures(seg_A, seg_B, num_gaps_A, num_gaps_B, min_size=
     return num_gaps
 
 
-def check_for_gaps_full(
-    contours,
-    num_gaps_1,
-    num_gaps_2,
-    num_gaps_3,
-    num_gaps_12,
-    num_gaps_13,
-    min_size=[1, 1],
-):
+def _check_for_gaps_full(
+    contours: list[np.ndarray],
+    num_gaps_1: int,
+    num_gaps_2: int,
+    num_gaps_3: int,
+    num_gaps_12: int,
+    num_gaps_13: int,
+    min_size: list[int] = [1, 1],
+) -> int:
     """Check if gaps are present in a segmentation.
 
     Args:
-        contours (list): List of all contours in the segmentation.
+        contours (list[np.ndarray]): List of all contours in the segmentation.
         num_gaps_1 (int): Number of gaps in the first structure.
         num_gaps_2 (int): Number of gaps in the second structure.
         num_gaps_3 (int): Number of gaps in the third structure.
         num_gaps_12 (int): Number of gaps between the first and second structure.
         num_gaps_13 (int): Number of gaps between the first and third structure.
-        min_size (list): Minimum size of a gap (default: [1, 1]).
+        min_size (list[int]): Minimum size of a gap (default: [1, 1]).
 
     Returns:
         num_other_gaps (int): Number of gaps in the segmentation not belonging to the structures.
@@ -129,7 +139,11 @@ def check_for_gaps_full(
     return num_other_gaps
 
 
-def do_single_frame_qc(path_to_segmentations, files_of_view, min_gap_size=[2, 2]):
+def _do_single_frame_qc(
+    path_to_segmentations: str,
+    files_of_view: list[str],
+    min_gap_size: list[int] = [2, 2],
+) -> tuple[list[int], dict[str, list[float]], list[int]]:
     """Do single-frame quality control of segmentation.
 
     This quality control is based on the following criteria:
@@ -138,20 +152,20 @@ def do_single_frame_qc(path_to_segmentations, files_of_view, min_gap_size=[2, 2]
 
     Args:
         path_to_segmentations (str): Path to folder with segmentations.
-        files_of_view (list): List of all images of one person.
-        min_gap_size (list): Minimum size of a gap (default: [2, 2]).
+        files_of_view (list[str]): List of all images of one person.
+        min_gap_size (list[str]): Minimum size of a gap (default: [2, 2]).
 
     Returns:
-        qc_scores (list): List of QC scores per image.
-        overviews (dict): Dictionary of all interim results per image.
-        flagged_frames (list): List of frames with a QC score > 0.
+        qc_scores (list[int]): List of QC scores per image.
+        overviews (dict[str, list[float]]): Dictionary of all interim results per image.
+        flagged_frames (list[int]): List of frames with a QC score > 0.
     """
     qc_scores, overviews = [], {}
 
     for filename in files_of_view:
         # Define file location and load segmentation.
         file_location = os.path.join(path_to_segmentations, filename)
-        segmentation = get_image_array(file_location)
+        segmentation = convert_image_to_array(file_location)
 
         total_score = 0
 
@@ -164,21 +178,21 @@ def do_single_frame_qc(path_to_segmentations, files_of_view, min_gap_size=[2, 2]
         contours_2_all = find_contours(seg_2, "all")
         contours_3_all = find_contours(seg_3, "all")
 
-        num_contours_1 = num_contours(seg_1)
-        num_contours_2 = num_contours(seg_2)
-        num_contours_3 = num_contours(seg_3)
+        num_contours_1 = _find_num_contours(seg_1)
+        num_contours_2 = _find_num_contours(seg_2)
+        num_contours_3 = _find_num_contours(seg_3)
 
-        num_gaps_1 = check_for_gaps(num_contours_1, contours_1_all, min_gap_size)
-        num_gaps_2 = check_for_gaps(num_contours_2, contours_2_all, min_gap_size)
-        num_gaps_3 = check_for_gaps(num_contours_3, contours_3_all, min_gap_size)
+        num_gaps_1 = _check_seg_for_gaps(num_contours_1, contours_1_all, min_gap_size)
+        num_gaps_2 = _check_seg_for_gaps(num_contours_2, contours_2_all, min_gap_size)
+        num_gaps_3 = _check_seg_for_gaps(num_contours_3, contours_3_all, min_gap_size)
 
-        num_gaps_12 = check_gap_between_structures(
+        num_gaps_12 = _check_for_gap_between_structures(
             seg_1, seg_2, num_gaps_1, num_gaps_2, min_gap_size
         )
-        num_gaps_13 = check_gap_between_structures(
+        num_gaps_13 = _check_for_gap_between_structures(
             seg_1, seg_3, num_gaps_1, num_gaps_3, min_gap_size
         )
-        num_gaps_23 = check_for_gaps_full(
+        num_gaps_23 = _check_for_gaps_full(
             contours_0_all,
             num_gaps_1,
             num_gaps_2,
@@ -234,14 +248,14 @@ def do_single_frame_qc(path_to_segmentations, files_of_view, min_gap_size=[2, 2]
     return qc_scores, overviews, flagged_frames
 
 
-def get_stats_single_frame_qc(overviews_all):
+def _get_stats_single_frame_qc(overviews_all: dict[str, list[float]]) -> dict[str, int]:
     """Get statistics of the quality control of segmentation.
 
     Args:
-        overviews_all (dict): Dictionary of all interim results per image.
+        overviews_all (dict[str, list[float]]): Dictionary of all interim results per image.
 
     Returns:
-        stats (dict): Dictionary of statistics of the quality control of segmentation.
+        stats (dict[str, int]): Dictionary of statistics of the quality control of segmentation.
     """
     # Count the number of times a certain error occurs.
     cnt_no_LV, cnt_no_MYO, cnt_no_LA = 0, 0, 0
@@ -291,16 +305,18 @@ def get_stats_single_frame_qc(overviews_all):
     return stats
 
 
-def main_single_frame_qc(path_to_segmentations, all_files, views):
-    """Main function for single-frame quality control of segmentation.
+def main_single_frame_qc(
+    path_to_segmentations: str, all_files: list[str], views: list[str]
+) -> dict[str, dict[str, list]]:
+    """MAIN: Do single-frame quality control (QC) assessment of segmentation.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
-        all_files (list): List of all files in the directory.
-        views (list): List of views of the segmentations.
+        all_files (list[str]): List of all files in the directory.
+        views (list[str]): List of views of the segmentations.
 
     Returns:
-        single_frame_qc (dict): Dictionary of the results of the single-frame quality control of segmentation.
+        single_frame_qc (dict[str, dict[str, list]]): Dictionary of the results of the single-frame quality control of segmentation.
     """
     single_frame_qc = defaultdict(dict)
 
@@ -309,7 +325,7 @@ def main_single_frame_qc(path_to_segmentations, all_files, views):
         files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Do single frame QC of segmentation.
-        qc_scores, overview, flagged_frames = do_single_frame_qc(
+        qc_scores, overview, flagged_frames = _do_single_frame_qc(
             path_to_segmentations, files_of_view
         )
 
@@ -319,20 +335,22 @@ def main_single_frame_qc(path_to_segmentations, all_files, views):
         single_frame_qc["flagged_frames"][view] = flagged_frames
 
     # Get statistics of the quality control of segmentation.
-    qc_stats = get_stats_single_frame_qc(single_frame_qc["overview"])
+    qc_stats = _get_stats_single_frame_qc(single_frame_qc["overview"])
     single_frame_qc["stats"] = qc_stats
 
     return single_frame_qc
 
 
-def stats_single_frame_qc(single_frame_qc):
+def stats_single_frame_qc(
+    single_frame_qc: dict[str, dict[str, list]]
+) -> pd.DataFrame(list[float]):
     """Get statistics of the quality control of segmentation.
 
     Args:
-        single_frame_qc (dict): Dictionary of the results of the single-frame quality control of segmentation.
+        single_frame_qc (dict[str, dict[str, list]]): Dictionary of the results of the single-frame quality control of segmentation.
 
     Returns:
-        stats_single_frame_qc (pd.DataFrame): Statistics of the quality control of segmentation.
+        stats_single_frame_qc (pd.DataFrame[list[float]]): Statistics of the quality control of segmentation.
     """
     # Get the statistics of the quality control of segmentation.
     stats_single_frame_qc = pd.DataFrame.from_dict(

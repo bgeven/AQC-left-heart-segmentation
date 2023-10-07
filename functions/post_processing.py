@@ -7,7 +7,21 @@ import SimpleITK as sitk
 from functions.general_utilities import *
 
 
-def find_centroid(seg):
+def _find_largest_contour(contours: list[np.ndarray]) -> list[np.ndarray]:
+    """Find the largest contour within a list of contours, based on area.
+
+    Args:
+        contours (list[np.ndarray]): List of contours.
+
+    Returns:
+        largest_contour (list[np.ndarray]): Largest contour.
+    """
+    largest_contour = max(contours, key=cv2.contourArea)
+
+    return largest_contour
+
+
+def _find_centroid(seg: np.ndarray) -> tuple[int, int]:
     """Find centroid of structures present in segmentation.
 
     Args:
@@ -25,7 +39,7 @@ def find_centroid(seg):
         centroid_x, centroid_y = np.nan, np.nan
     else:
         # Find largest contour in segmentation.
-        main_contour = find_largest_contour(contours)
+        main_contour = _find_largest_contour(contours)
 
         # Find moment and middle coordinates of largest contour.
         moments_main_contour = cv2.moments(main_contour)
@@ -35,38 +49,42 @@ def find_centroid(seg):
     return centroid_x, centroid_y
 
 
-def find_centroids_of_all_structures(centroids, seg):
+def _find_centroids_of_all_structures(
+    centroids: dict[str, np.ndarray], seg: np.ndarray
+) -> dict[str, np.ndarray]:
     """Find centroid of all structures present in segmentation and add to dictionary.
 
     Args:
-        centroids (dict): Initial dictionary with structure numbers as keys and lists of x- and y-coordinates as values.
-        seg (numpy array): Segmentation of structures.
+        centroids (dict[str, np.ndarray]): Initial dictionary with structure numbers as keys and lists of x- and y-coordinates as values.
+        seg (np.ndarray): Segmentation of structures.
 
     Returns:
-        centroids (dict): Extended dictionary with structure numbers as keys and lists of x- and y-coordinates as values.
+        centroids (dict[str, np.ndarray]): Extended dictionary with structure numbers as keys and lists of x- and y-coordinates as values.
     """
     # Separate the segmentations, each with its own structures.
     seg_0, seg_1, seg_2, seg_3 = separate_segmentation(seg)
 
     # Get middle coordinate of each separate segmentation and add to dictionary.
     for structure in centroids:
-        centroid_x, centroid_y = find_centroid(locals()[f"seg_{structure}"])
+        centroid_x, centroid_y = _find_centroid(locals()[f"seg_{structure}"])
         centroids[structure][0].append(centroid_x)
         centroids[structure][1].append(centroid_y)
 
     return centroids
 
 
-def get_mean_centroids(path_to_segmentations, files_of_view, frames_to_process):
+def _get_mean_centroids(
+    path_to_segmentations: str, files_of_view: list[str], frames_to_process: list[int]
+) -> dict[str, tuple[int, int]]:
     """Get the mean middle point of each structure in all segmentations of one person.
 
     Args:
         path_to_segmentations (str): Path to folder with segmentations.
-        files_of_view (list): List of all images of one person.
-        frames_to_process (list): List of frames that are detected as erroneous.
+        files_of_view (list[str]): List of all images of one person.
+        frames_to_process (list[int]): List of frames that are detected as erroneous.
 
     Returns:
-        mean_centroids (dict): Dictionary with structure numbers as keys and tuples of x- and y-coordinates as values.
+        mean_centroids (dict[str, tuple[int, int]]): Dictionary with structure numbers as keys and tuples of x- and y-coordinates as values.
     """
     # Create dictionary to store centroids of structures.
     centroids = {1: ([], []), 2: ([], []), 3: ([], [])}
@@ -74,14 +92,14 @@ def get_mean_centroids(path_to_segmentations, files_of_view, frames_to_process):
     for frame_nr, filename in enumerate(files_of_view):
         # Define file location and load segmentation.
         file_location_seg = os.path.join(path_to_segmentations, filename)
-        seg = get_image_array(file_location_seg)
+        seg = convert_image_to_array(file_location_seg)
 
         # Prevent from not selecting a centroid at all when all frames are detected as erroneous.
         if len(frames_to_process) < round(0.95 * len(files_of_view)):
             if frame_nr not in frames_to_process:
-                centroids = find_centroids_of_all_structures(centroids, seg)
+                centroids = _find_centroids_of_all_structures(centroids, seg)
         else:
-            centroids = find_centroids_of_all_structures(centroids, seg)
+            centroids = _find_centroids_of_all_structures(centroids, seg)
 
     # Compute average centroid of each structure.
     mean_centroids = {
@@ -92,7 +110,9 @@ def get_mean_centroids(path_to_segmentations, files_of_view, frames_to_process):
     return mean_centroids
 
 
-def get_main_contour_lv_la(seg, mean_centroid):
+def _get_main_contour_lv_la(
+    seg: np.ndarray, mean_centroid: tuple[int, int]
+) -> tuple[np.ndarray, int]:
     """Extract the main contour in LV and LA segmentations.
 
     The main contour is the contour that contains the mean centroid of the structure based on all frames in the image sequence.
@@ -100,10 +120,11 @@ def get_main_contour_lv_la(seg, mean_centroid):
 
     Args:
         seg (np.ndarray): Segmentation of structures.
-        mean_centroid (tuple): Tuple of x- and y-coordinates of mean centroid of structure.
+        mean_centroid (tuple[int, int]): Tuple of x- and y-coordinates of mean centroid of structure.
 
     Returns:
         seg_main (np.ndarray): Segmentation of main contour of structure, without redundant contours.
+        num_of_contours (int): Number of contours in segmentation.
     """
     # Find the contours of the structures in segmentation.
     contours = find_contours(seg, "external")
@@ -145,7 +166,9 @@ def get_main_contour_lv_la(seg, mean_centroid):
     return seg_main, num_of_contours
 
 
-def get_main_contour_myo(seg_1, seg_2, threshold_distance=5):
+def _get_main_contour_myo(
+    seg_1: np.ndarray, seg_2: np.ndarray, threshold_distance: int = 5
+) -> np.ndarray:
     """Extract the contours of the myocardium that neighbour the LV.
 
     Args:
@@ -196,7 +219,52 @@ def get_main_contour_myo(seg_1, seg_2, threshold_distance=5):
     return seg_main
 
 
-def fill_holes_within_structure(seg, label):
+def _find_coordinates_of_holes(seg: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Find the coordinates of the holes in a segmentation.
+
+    Args:
+        seg (np.ndarray): Segmentation of the echo image.
+
+    Returns:
+        coordinates_holes (tuple[np.ndarray, np.ndarray]): Coordinates of the holes in the segmentation.
+    """
+    # Set all values larger than 0 to 1.
+    seg_same_val = seg.copy()
+    seg_same_val[seg_same_val > 0] = 1
+
+    # Find the contours of the structures in full segmentation.
+    contours = find_contours(seg_same_val, "external")
+
+    coordinates_holes_x_all, coordinates_holes_y_all = np.array([]), np.array([])
+
+    for contour in contours:
+        # Create a mask from the contour.
+        mask = cv2.drawContours(np.zeros_like(seg_same_val), [contour], 0, 255, -1)
+
+        # Find the positions of all the zero pixels within the contour.
+        coordinates_holes_contour = np.where((mask == 255) & (seg_same_val == 0))
+
+        coordinates_holes_x, coordinates_holes_y = (
+            coordinates_holes_contour[0],
+            coordinates_holes_contour[1],
+        )
+
+        coordinates_holes_x_all = np.append(
+            coordinates_holes_x_all, coordinates_holes_x
+        )
+        coordinates_holes_y_all = np.append(
+            coordinates_holes_y_all, coordinates_holes_y
+        )
+
+    coordinates_holes = (
+        coordinates_holes_x_all.astype("int64"),
+        coordinates_holes_y_all.astype("int64"),
+    )
+
+    return coordinates_holes
+
+
+def _fill_holes_within_structure(seg: np.ndarray, label: int) -> np.ndarray:
     """Fill the holes within a structure.
 
     Args:
@@ -207,7 +275,7 @@ def fill_holes_within_structure(seg, label):
         seg_no_holes (np.ndarray): Segmentation of structure with filled holes.
     """
     # Find coordinates of holes within structure.
-    coordinates_holes = find_coordinates_of_holes(seg)
+    coordinates_holes = _find_coordinates_of_holes(seg)
 
     seg_no_holes = seg.copy()
 
@@ -218,7 +286,9 @@ def fill_holes_within_structure(seg, label):
     return seg_no_holes
 
 
-def find_coordinates_of_structure(seg, label):
+def _find_coordinates_of_structure(
+    seg: np.ndarray, label: int
+) -> list[tuple[int, int]]:
     """Find the coordinates of all pixels in a structure.
 
     Args:
@@ -226,7 +296,7 @@ def find_coordinates_of_structure(seg, label):
         label (int): Label of structure.
 
     Returns:
-        coordinates (list): List of tuples of x- and y-coordinates of pixels in structure.
+        coordinates (list[tuple[int, int]]): List of tuples of x- and y-coordinates of pixels in structure.
     """
     indices = np.argwhere(seg == label)
     coordinates = [(x, y) for y, x in indices]
@@ -234,26 +304,26 @@ def find_coordinates_of_structure(seg, label):
     return coordinates
 
 
-def fill_holes_between_lv_la(segmentation):
+def _fill_holes_between_lv_la(seg: np.ndarray) -> np.ndarray:
     """Fill the holes between LV and LA segmentations.
 
     Args:
-        segmentation (np.ndarray): Segmentation of structures.
+        seg (np.ndarray): Segmentation of structures.
 
     Returns:
         seg_combined (np.ndarray): Segmentation of structures with filled holes between LV and LA.
     """
     # Separate the segmentations, and combine the LV and MYO, and LV and LA segmentations.
-    _, seg_1, seg_2, seg_3 = separate_segmentation(segmentation)
+    _, seg_1, seg_2, seg_3 = separate_segmentation(seg)
     seg_12 = combine_segmentations([seg_1, seg_2], "difference", [1, 2])
     seg_13 = combine_segmentations([seg_1, seg_3], "difference", [1, 3])
 
     # Find the coordinates of holes between seg1/2 and seg2/3.
-    coordinates_holes_12 = find_coordinates_of_holes(seg_12)
-    coordinates_holes_13 = find_coordinates_of_holes(seg_13)
+    coordinates_holes_12 = _find_coordinates_of_holes(seg_12)
+    coordinates_holes_13 = _find_coordinates_of_holes(seg_13)
 
     # Find coordinates of LV.
-    coordinates_seg_1 = find_coordinates_of_structure(seg_1, 1)
+    coordinates_seg_1 = _find_coordinates_of_structure(seg_1, 1)
 
     seg_13_no_holes = seg_13.copy()
 
@@ -281,11 +351,11 @@ def fill_holes_between_lv_la(segmentation):
     return seg_combined
 
 
-def fill_holes_between_myo_la(seg_total):
+def _fill_holes_between_myo_la(seg_total: np.ndarray) -> np.ndarray:
     """Fill the holes between MYO and LA segmentations.
 
     Args:
-        segmentation (np.ndarray): Segmentation of structures.
+        seg_total (np.ndarray): Segmentation of structures.
 
     Returns:
         seg_combined (np.ndarray): Segmentation of structures with filled holes between MYO and LA.
@@ -296,17 +366,16 @@ def fill_holes_between_myo_la(seg_total):
     seg_23 = combine_segmentations([seg_2, seg_3], "difference", [2, 3])
 
     # Find coordinates of the holes between seg1/2 and seg2/3.
-    coordinates_holes_12 = find_coordinates_of_holes(seg_12)
-    coordinates_holes_23 = find_coordinates_of_holes(seg_23)
+    coordinates_holes_12 = _find_coordinates_of_holes(seg_12)
+    coordinates_holes_23 = _find_coordinates_of_holes(seg_23)
 
     # Find coordinates of LV.
-    coordinates_seg_1 = find_coordinates_of_structure(seg_1, 1)
+    coordinates_seg_1 = _find_coordinates_of_structure(seg_1, 1)
 
     seg_23_no_holes = seg_23
 
     # Fill holes between MYO and LA.
     for row, col in zip(coordinates_holes_23[0], coordinates_holes_23[1]):
-
         if (col, row) not in coordinates_seg_1 and (row, col) not in list(
             zip(coordinates_holes_12[0], coordinates_holes_12[1])
         ):
@@ -329,14 +398,14 @@ def fill_holes_between_myo_la(seg_total):
     return seg_combined
 
 
-def find_border_pixels_holes(distances):
+def _find_border_pixels_holes(distances: list[float]) -> list[tuple[int, int]]:
     """Find the start and end indices of the holes between the structures.
 
     Args:
-        distances (list): List of distances between the contours of the structures.
+        distances (list[float]): List of distances between the contours of the structures.
 
     Returns:
-        indices (list): List of tuples of start and end indices of the holes between the structures.
+        indices (list[tuple[int, int]]): List of tuples of start and end indices of the holes between the structures.
     """
     indices = []
     start_idx = None
@@ -356,11 +425,11 @@ def find_border_pixels_holes(distances):
     return indices
 
 
-def fill_holes_between_lv_myo(seg_total):
+def _fill_holes_between_lv_myo(seg_total: np.ndarray) -> np.ndarray:
     """Fill the holes between LV and MYO segmentations.
 
     Args:
-        segmentation (np.ndarray): Segmentation of structures.
+        seg_total (np.ndarray): Segmentation of structures.
 
     Returns:
         seg_filled (np.ndarray): Segmentation of structures with filled holes between LV and MYO.
@@ -391,7 +460,7 @@ def fill_holes_between_lv_myo(seg_total):
             distances = [min(pair) for pair in zip(min_distances_12, min_distances_13)]
 
             # Find coordinates of the holes.
-            holes = find_border_pixels_holes(distances)
+            holes = _find_border_pixels_holes(distances)
 
             for hole in holes:
                 # Define coordinates of start points of holes.
@@ -449,7 +518,7 @@ def fill_holes_between_lv_myo(seg_total):
                             total_seg_12[row, col] = 2
 
         # Recheck for pixels within structure with value 0. If this is still the case, assign pixel value 1 to pixel.
-        zero_positions = find_coordinates_of_holes(total_seg_12)
+        zero_positions = _find_coordinates_of_holes(total_seg_12)
         for row, col in zip(zero_positions[0], zero_positions[1]):
             total_seg_12[row, col] = 1
 
@@ -459,7 +528,9 @@ def fill_holes_between_lv_myo(seg_total):
     return seg_filled
 
 
-def post_process_segmentation(segmentation, centroids):
+def _post_process_segmentation(
+    seg: np.ndarray, centroids: dict[int, tuple[int, int]]
+) -> np.ndarray:
     """Post-process segmentation.
 
     Post-processing consists of the following steps:
@@ -468,8 +539,8 @@ def post_process_segmentation(segmentation, centroids):
         3. Fill holes between structures.
 
     Args:
-        segmentation (np.ndarray): Segmentation of structures.
-        centroids (dict): Dictionary with structure numbers as keys and tuples of x- and y-coordinates as values.
+        seg (np.ndarray): Segmentation of structures.
+        centroids (dict[int, tuple[int, int]]): Dictionary with structure numbers as keys and tuples of x- and y-coordinates as values.
 
     Returns:
         seg_total (np.ndarray): Post-processed segmentation of structures.
@@ -480,29 +551,29 @@ def post_process_segmentation(segmentation, centroids):
         seg_1_before_processing,
         seg_2_before_processing,
         seg_3_before_processing,
-    ) = separate_segmentation(segmentation)
+    ) = separate_segmentation(seg)
 
     # Fill the holes within each structure, this is to fill any holes in any structure before the main contours are found.
-    seg_1_before_processing = fill_holes_within_structure(seg_1_before_processing, 1)
-    seg_3_before_processing = fill_holes_within_structure(seg_3_before_processing, 3)
+    seg_1_before_processing = _fill_holes_within_structure(seg_1_before_processing, 1)
+    seg_3_before_processing = _fill_holes_within_structure(seg_3_before_processing, 3)
 
     # Get separate segmentation and number of contours in the LV and LA.
-    seg_1, num_of_contours1 = get_main_contour_lv_la(
+    seg_1, num_of_contours1 = _get_main_contour_lv_la(
         seg_1_before_processing, centroids[1]
     )
-    seg_3, _ = get_main_contour_lv_la(seg_3_before_processing, centroids[3])
+    seg_3, _ = _get_main_contour_lv_la(seg_3_before_processing, centroids[3])
 
     # If LV contour is present, use this to find main MYO contour(s).
     seg_2 = (
-        get_main_contour_myo(seg_1, seg_2_before_processing)
+        _get_main_contour_myo(seg_1, seg_2_before_processing)
         if num_of_contours1 > 0
         else seg_2_before_processing
     )
 
     # Fill the holes within each structure.
-    seg_1 = fill_holes_within_structure(seg_1, 1)
-    seg_2 = fill_holes_within_structure(seg_2, 2)
-    seg_3 = fill_holes_within_structure(seg_3, 3)
+    seg_1 = _fill_holes_within_structure(seg_1, 1)
+    seg_2 = _fill_holes_within_structure(seg_2, 2)
+    seg_3 = _fill_holes_within_structure(seg_3, 3)
 
     # Combine segmentations between the structures, with different labels for each structure.
     seg_total = combine_segmentations(
@@ -517,37 +588,37 @@ def post_process_segmentation(segmentation, centroids):
     seg_13 = combine_segmentations([seg_1, seg_3], "difference", [1, 3])
 
     # Check for holes between LV and MYO, and fill them if present.
-    if len(find_coordinates_of_holes(seg_12)[0]) > 0:
-        seg_total = fill_holes_between_lv_myo(seg_total)
+    if len(_find_coordinates_of_holes(seg_12)[0]) > 0:
+        seg_total = _fill_holes_between_lv_myo(seg_total)
 
     # Check for holes between LV and LA, and fill them if present.
-    if len(find_coordinates_of_holes(seg_13)[0]) > 0:
-        seg_total = fill_holes_between_lv_la(seg_total)
+    if len(_find_coordinates_of_holes(seg_13)[0]) > 0:
+        seg_total = _fill_holes_between_lv_la(seg_total)
 
     # Check for holes between MYO and LA, and fill them if present.
-    if len(find_coordinates_of_holes(seg_total)[0]) > 0:
-        seg_total = fill_holes_between_myo_la(seg_total)
+    if len(_find_coordinates_of_holes(seg_total)[0]) > 0:
+        seg_total = _fill_holes_between_myo_la(seg_total)
 
     return seg_total
 
 
 def main_post_processing(
-    path_to_segmentations,
-    path_to_final_segmentations,
-    single_frame_qc,
-    all_files,
-    views,
-):
-    """Main function to do post-processing of all segmentations.
+    path_to_segmentations: str,
+    path_to_final_segmentations: str,
+    single_frame_qc: dict[str, list[int]],
+    all_files: list[str],
+    views: list[str],
+) -> None:
+    """MAIN: Post-process all segmentations.
 
     The post-processed segmentations will be saved in the folder specified by path_to_final_segmentations.
 
     Args:
         path_to_segmentations (str): Path to folder with segmentations.
         path_to_final_segmentations (str): Path to folder where post-processed segmentations should be saved.
-        single_frame_QC (dict): Dictionary with patient IDs as keys and lists of frames that are detected as erroneous as values.
-        all_files (list): List of all files in the directory.
-        views (list): List of views of the segmentations.
+        single_frame_QC (dict[str, list[int]]): Dictionary with patient IDs as keys and lists of frames that are detected as erroneous as values.
+        all_files (list[str]): List of all files in the directory.
+        views (list[str]): List of views of the segmentations.
     """
     for view in views:
         # Get all files of one view of one person.
@@ -557,7 +628,7 @@ def main_post_processing(
         frames_to_process = single_frame_qc["flagged_frames"][view]
 
         # Get the mean centroids of all structures from all segmentations of one person.
-        centroids = get_mean_centroids(
+        centroids = _get_mean_centroids(
             path_to_segmentations, files_of_view, frames_to_process
         )
 
@@ -566,10 +637,10 @@ def main_post_processing(
             if frame_nr in frames_to_process:
                 # Define file location and load segmentation.
                 file_location_seg = os.path.join(path_to_segmentations, filename)
-                initial_segmentation = get_image_array(file_location_seg)
+                initial_segmentation = convert_image_to_array(file_location_seg)
 
                 # Post-process segmentation.
-                seg_total = post_process_segmentation(initial_segmentation, centroids)
+                seg_total = _post_process_segmentation(initial_segmentation, centroids)
 
                 # Save post-processed segmentation.
                 itk_seg_after_pp = sitk.GetImageFromArray(seg_total)

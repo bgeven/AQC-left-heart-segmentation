@@ -3,14 +3,14 @@ import os
 import numpy as np
 from scipy.signal import find_peaks
 from collections import defaultdict
-from functions.general_utilities import get_image_array, get_list_with_files_of_view
+from functions.general_utilities import *
 
 
-def comp_factor_px2_to_cm2(pixel_spacing):
-    """Calculate factor to convert pixel size to cm2.
+def _comp_factor_px2_to_cm2(pixel_spacing: list[float]) -> float:
+    """Compute pixel size to cm2 conversion factor.
 
     Args:
-        pixel_spacing (list): Pixel spacing in x and y direction.
+        pixel_spacing (list[float]): Pixel spacing in x and y direction.
 
     Returns:
         px2cm2_factor (float): Factor to convert pixel size to cm2.
@@ -22,11 +22,13 @@ def comp_factor_px2_to_cm2(pixel_spacing):
     return px2cm2_factor
 
 
-def comp_area_from_seg(seg, label, px2cm2_factor):
-    """Calculate the area of a certain label in a segmentation.
+def _comp_area_from_seg(seg: np.ndarray, label: int, px2cm2_factor: float) -> float:
+    """Compute the area of a certain label in a segmentation.
 
     Args:
         seg (np.ndarray): Segmentation of the echo image.
+        label (int): The label to calculate the area for.
+        px2cm2_factor (float): Factor to convert pixel size to cm2.
 
     Returns:
         area (float): Area of the label in cm2.
@@ -40,21 +42,23 @@ def comp_area_from_seg(seg, label, px2cm2_factor):
     return area
 
 
-def comp_areas_in_sequence(path_to_segmentation, frames, label, px2cm2_factor):
-    """Calculate the area of a certain label in the segmentation of every frame in a sequence.
+def _comp_areas_in_sequence(
+    path_to_segmentation: str, frames: list[int], label: int, px2cm2_factor: float
+) -> list[float]:
+    """Compute the area of a certain label in the segmentation of every frame in a sequence.
 
     Args:
         path_to_segmentation (str): Path to the segmentations.
-        frames (list): Frames in the sequence.
+        frames (list[int]): Frames in the sequence.
         label (int): Label of the segmentation.
         px2cm2_factor (float): Factor to convert pixel size to cm2.
 
     Returns:
-        areas (list): list of areas of the label in cm2.
+        areas (list[float]): list of areas of the label in cm2.
     """
     areas = [
-        comp_area_from_seg(
-            get_image_array(os.path.join(path_to_segmentation, frame)),
+        _comp_area_from_seg(
+            convert_image_to_array(os.path.join(path_to_segmentation, frame)),
             label,
             px2cm2_factor,
         )
@@ -64,16 +68,18 @@ def comp_areas_in_sequence(path_to_segmentation, frames, label, px2cm2_factor):
     return areas
 
 
-def find_nr_of_ed_points(frames_r_wave, nr_of_frames, threshold_peak=10):
-    """Determine the number of end-diastolic points based on the number of R-wave peaks.
+def _find_nr_of_ed_points(
+    frames_r_wave: list[int], nr_of_frames: int, threshold_peak: int = 10
+) -> int:
+    """Determine the number of end-diastolic (ED) points based on the number of R-wave peaks.
 
     Args:
-        frames_r_wave (list): Frame numbers with R-wave peaks.
+        frames_r_wave (list[int]): Frame numbers with R-wave peaks.
         nr_of_frames (int): Number of frames in the sequence.
         threshold_peak (int): Threshold to account for the last peak if not detected by the find_peaks function (default: 10).
 
     Returns:
-        nr_ed_points (int): number of end-diastolic points.
+        nr_ed_points (int): number of ED points.
     """
     nr_of_ed_points = len(frames_r_wave)
 
@@ -85,14 +91,14 @@ def find_nr_of_ed_points(frames_r_wave, nr_of_frames, threshold_peak=10):
     return nr_of_ed_points
 
 
-def pad_areas(areas):
+def _pad_areas(areas: list[float]) -> list[float]:
     """Pad the list with minimum areas.
 
     Args:
-        areas (list): Areas of the label in cm2.
+        areas (list[float]): Areas of the label in cm2.
 
     Returns:
-        areas_padded (list): Areas of the label in cm2, padded with minimum area.
+        areas_padded (list[float]): Areas of the label in cm2, padded with minimum area.
     """
     areas_padded = areas.copy()
     min_value = min(areas)
@@ -104,19 +110,19 @@ def pad_areas(areas):
     return areas_padded
 
 
-def find_es_points(areas, frames_r_wave=[]):
-    """Determine the end-systole points from LV areas.
+def _find_es_points(areas: list[float], frames_r_wave: list[int] = []) -> list[int]:
+    """Determine the end-systole (ES) points from LV areas.
 
     Args:
-        areas (list): Areas of the label in cm2.
-        frames_r_wave (list): Frame numbers with R-wave peaks.
+        areas (list[float]): Areas of the label in cm2.
+        frames_r_wave (list[int]): Frame numbers with R-wave peaks (default: []).
 
     Returns:
-        es_points (list): End-systole (ES) points.
+        es_points (list[int]): ES points.
     """
     # Find number of ED points and subtract 1 to find number of ES peaks.
     if len(frames_r_wave) > 0:
-        nr_peaks = find_nr_of_ed_points(frames_r_wave, len(areas)) - 1
+        nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas)) - 1
     else:
         nr_peaks = 3  # Set default number of ES points to 3
 
@@ -135,19 +141,19 @@ def find_es_points(areas, frames_r_wave=[]):
     return es_points
 
 
-def find_ed_points(areas, frames_r_wave=[]):
+def _find_ed_points(areas: list[float], frames_r_wave: list[int] = []) -> list[int]:
     """Determine the end-diastole (ED) points from LV areas.
 
     Args:
-        areas (list): Areas of the label in cm2.
-        frames_r_wave (list): Frame numbers with R-wave peaks.
+        areas (list[float]): Areas of the label in cm2.
+        frames_r_wave (list[int]): Frame numbers with R-wave peaks.
 
     Returns:
-        ed_points (list): ED points.
+        ed_points (list[int]): ED points.
     """
     # Find number of ED points.
     if len(frames_r_wave) > 0:
-        nr_peaks = find_nr_of_ed_points(frames_r_wave, len(areas))
+        nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas))
     else:
         nr_peaks = 4  # Set default number of ED points to 4.
 
@@ -156,7 +162,7 @@ def find_ed_points(areas, frames_r_wave=[]):
 
     # Find indices of peaks, use padding to take side peaks into account.
     areas_padded = areas.copy()
-    areas_padded = pad_areas(areas_padded)
+    areas_padded = _pad_areas(areas_padded)
     peak_indices, _ = find_peaks(np.array(areas_padded), distance=frame_difference)
 
     # Find the areas that correspond with the indices, -1 because of padding.
@@ -169,20 +175,25 @@ def find_ed_points(areas, frames_r_wave=[]):
     return ed_points
 
 
-def main_get_parameters(path_to_segmentations, all_files, views, dicom_properties):
-    """Main function to get the segmentation parameters from the segmentations in a directory.
+def main_derive_parameters(
+    path_to_segmentations: str,
+    all_files: list[str],
+    views: list[str],
+    dicom_properties: dict[str, dict[str, list[float]]],
+) -> dict[str, dict[str, list[float]]]:
+    """MAIN: Derive basic parameters/properties from the segmentations in a directory.
 
     The areas of the labels in the segmentations are calculated for each frame in the sequence.
-    The ED and ES points are found based on the areas of the LV.
+    The end-diastolic (ED) and end-systolic (ES) points are found based on the areas of the LV.
 
     Args:
         path_to_segmentations (str): Directory containing the segmentations.
-        all_files (list): List of all files in the directory.
-        views (list): List of views of the segmentations.
-        dicom_properties (dict): Dictionary containing the properties of the DICOM files.
+        all_files (list[str]): List of all files in the directory.
+        views (list[str]): List of views of the segmentations.
+        dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
 
     Returns:
-        segmentation_properties (dict): Dictionary containing the segmentation parameters.
+        segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
     """
     # Create dictionaries to store the segmentation properties.
     segmentation_properties = defaultdict(dict)
@@ -192,23 +203,23 @@ def main_get_parameters(path_to_segmentations, all_files, views, dicom_propertie
         files_of_view = get_list_with_files_of_view(all_files, view)
 
         # Get pixel spacing and ED peaks from ECG R-wave from dicom properties dictionary.
-        pixel_spacing = comp_factor_px2_to_cm2(dicom_properties["pixel_spacing"][view])
+        pixel_spacing = _comp_factor_px2_to_cm2(dicom_properties["pixel_spacing"][view])
         frames_r_waves = dicom_properties["frames_r_waves"][view]
 
         # Compute the areas per frame for each of the labels.
-        lv_areas = comp_areas_in_sequence(
+        lv_areas = _comp_areas_in_sequence(
             path_to_segmentations, files_of_view, 1, pixel_spacing
         )
-        myo_areas = comp_areas_in_sequence(
+        myo_areas = _comp_areas_in_sequence(
             path_to_segmentations, files_of_view, 2, pixel_spacing
         )
-        la_areas = comp_areas_in_sequence(
+        la_areas = _comp_areas_in_sequence(
             path_to_segmentations, files_of_view, 3, pixel_spacing
         )
 
         # Find ED and ES points.
-        ed_points = find_ed_points(lv_areas, frames_r_waves)
-        es_points = find_es_points(lv_areas, frames_r_waves)
+        ed_points = _find_ed_points(lv_areas, frames_r_waves)
+        es_points = _find_es_points(lv_areas, frames_r_waves)
 
         # Save properties in dictionaries.
         segmentation_properties["lv_areas"][view] = lv_areas

@@ -1,4 +1,4 @@
-# This script contains general functions used in various other scripts.
+# This script contains general functions used in multiple scripts or main workflow.
 import os
 import cv2
 import json
@@ -6,15 +6,17 @@ import numpy as np
 import SimpleITK as sitk
 
 
-def get_list_with_views(all_files, length_view_identifier=29):
+def get_list_with_views(
+    all_files: list[str], length_view_identifier: int = 29
+) -> list[str]:
     """Get list of the views of the segmentations present in one folder.
 
     Args:
-        all_files (list): List of all the files in the folder.
+        all_files (list[str]): List of all the files in the folder.
         length_view_identifier (int): Length of the view identifier (default: 29).
 
     Returns:
-        views (list): List of the views of the segmentations present in one folder.
+        views (list[str]): List of the views of the segmentations present in one folder.
     """
     # Get list of the views in one folder containing the segmentations of one patient.
     views = sorted(set([i[:length_view_identifier] for i in all_files]))
@@ -22,16 +24,18 @@ def get_list_with_views(all_files, length_view_identifier=29):
     return views
 
 
-def get_list_with_files_of_view(all_files, view_identifier, length_ext=7):
+def get_list_with_files_of_view(
+    all_files: list[str], view_identifier: str, length_ext: int = 7
+) -> list[str]:
     """Get list of the files belonging to a specific view.
 
     Args:
-        all_files (list): List of all the files in the folder.
+        all_files (list[str]): List of all the files in the folder.
         view_identifier (str): Identifier of the view.
         length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
 
     Returns:
-        images_of_one_view (list): List of the files belonging to a specific view.
+        images_of_one_view (list[str]): List of the files belonging to a specific view.
     """
     images_of_one_view_unsrt = [i for i in all_files if i.startswith(view_identifier)]
     images_of_one_view = sorted(
@@ -42,7 +46,7 @@ def get_list_with_files_of_view(all_files, view_identifier, length_ext=7):
     return images_of_one_view
 
 
-def get_image_array(file_location):
+def convert_image_to_array(file_location: str) -> np.ndarray:
     """Convert nifti or dicom file to 2D array.
 
     Args:
@@ -67,7 +71,9 @@ def get_image_array(file_location):
     return image
 
 
-def separate_segmentation(seg):
+def separate_segmentation(
+    seg: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Separate the LV, MYO and LA from the full segmentation into separate segmentations.
 
     Args:
@@ -87,7 +93,7 @@ def separate_segmentation(seg):
     return seg_bg, seg_lv, seg_myo, seg_la
 
 
-def find_contours(seg, spec="all"):
+def find_contours(seg: np.ndarray, spec: str = "all") -> list[np.ndarray]:
     """Find the contours within the segmentation.
 
     Args:
@@ -95,7 +101,7 @@ def find_contours(seg, spec="all"):
         spec (str): Specification of the contours to find.
 
     Returns:
-        contours (list): List of contours.
+        contours (list[np.ndarray]): List of contours.
     """
     # Define the retrieval modes.
     retrieval_modes = {
@@ -112,23 +118,11 @@ def find_contours(seg, spec="all"):
     return contours
 
 
-def find_largest_contour(contours):
-    """Find the largest contour within a list of contours, based on area.
-
-    Args:
-        contours (list): List of contours.
-
-    Returns:
-        largest_contour (list): Largest contour.
-    """
-    largest_contour = max(contours, key=cv2.contourArea)
-
-    return largest_contour
-
-
 def combine_segmentations(
-    segmentations, typeOfCombination="difference", labels=[1, 2, 3]
-):
+    segmentations: list[np.ndarray],
+    typeOfCombination: str = "difference",
+    labels: list[int] = [1, 2, 3],
+) -> np.ndarray:
     """Combine the segmentations of the LV, MYO and LA into one segmentation.
 
     A distinction can be made between the following types of combination:
@@ -137,9 +131,9 @@ def combine_segmentations(
     - no difference: all structures get same value.
 
     Args:
-        segmentations (list): List of segmentations of the echo image.
-        typeOfCombination (str): Type of combination of the segmentations.
-        labels (list): List of labels of the segmentations.
+        segmentations (list[np.ndarray]): List of segmentations of the echo image.
+        typeOfCombination (str): Type of combination of the segmentations (default: difference).
+        labels (list[int]): List of labels of the segmentations (default: [1, 2, 3]).
 
     Returns:
         total_seg (np.ndarray): Segmentation of the image with all structures.
@@ -181,53 +175,10 @@ def combine_segmentations(
     return total_seg
 
 
-def find_coordinates_of_holes(seg):
-    """Find the coordinates of the holes in a segmentation.
-
-    Args:
-        seg (np.ndarray): Segmentation of the echo image.
-
-    Returns:
-        coordinates_holes (tuple): Coordinates of the holes in the segmentation.
-    """
-    # Set all values larger than 0 to 1.
-    seg_same_val = seg.copy()
-    seg_same_val[seg_same_val > 0] = 1
-
-    # Find the contours of the structures in full segmentation.
-    contours = find_contours(seg_same_val, "external")
-
-    coordinates_holes_x_all, coordinates_holes_y_all = np.array([]), np.array([])
-
-    for contour in contours:
-        # Create a mask from the contour.
-        mask = cv2.drawContours(np.zeros_like(seg_same_val), [contour], 0, 255, -1)
-
-        # Find the positions of all the zero pixels within the contour.
-        coordinates_holes_contour = np.where((mask == 255) & (seg_same_val == 0))
-
-        coordinates_holes_x, coordinates_holes_y = (
-            coordinates_holes_contour[0],
-            coordinates_holes_contour[1],
-        )
-
-        coordinates_holes_x_all = np.append(
-            coordinates_holes_x_all, coordinates_holes_x
-        )
-        coordinates_holes_y_all = np.append(
-            coordinates_holes_y_all, coordinates_holes_y
-        )
-
-    coordinates_holes = (
-        coordinates_holes_x_all.astype("int64"),
-        coordinates_holes_y_all.astype("int64"),
-    )
-
-    return coordinates_holes
-
-
-def get_path_to_images(path_to_images, filename, length_ext=7, input_channel="0000"):
-    """Get the path to the image.
+def define_path_to_images(
+    path_to_images: str, filename: str, length_ext: int = 7, input_channel: str = "0000"
+) -> str:
+    """Define the path to the image.
 
     Args:
         path_to_images (str): Path to the folder containing the images.
@@ -246,15 +197,15 @@ def get_path_to_images(path_to_images, filename, length_ext=7, input_channel="00
     return file_location_image
 
 
-def load_atlases(path_to_atlases):
+def load_atlases(path_to_atlases: str) -> tuple[list[float], list[float]]:
     """Load the atlases.
 
     Args:
         path_to_atlases (str): Path to the atlases.
-    
+
     Returns:
-        atlas_lv (list): List containing the LV atlas.
-        atlas_la (list): List containing the LA atlas.
+        atlas_lv (list[float]): List containing the LV atlas.
+        atlas_la (list[float]): List containing the LA atlas.
     """
     if len(os.listdir(path_to_atlases)) >= 2:
         with open(os.path.join(path_to_atlases, "atlas_lv.json"), "r") as file:
@@ -262,21 +213,21 @@ def load_atlases(path_to_atlases):
 
         with open(os.path.join(path_to_atlases, "atlas_la.json"), "r") as file:
             atlas_la = json.load(file)
-    
+
     else:
         raise ValueError("No atlases found. Please check the path to the atlases.")
 
     return atlas_lv, atlas_la
 
 
-def normalise_list(list_to_normalise):
+def normalise_list(list_to_normalise: list[float]) -> list[float]:
     """Normalise a list of values to a range of 0 to 1.
 
     Args:
-        list_to_normalise (list): List of values to normalise.
+        list_to_normalise (list[float]): List of values to normalise.
 
     Returns:
-        normalised_list (list): Normalised list of values.
+        normalised_list (list[float]): Normalised list of values.
     """
     # Find the minimum and maximum values in the list.
     min_value = min(list_to_normalise)
@@ -289,18 +240,3 @@ def normalise_list(list_to_normalise):
     normalised_list = [(value - min_value) / value_range for value in list_to_normalise]
 
     return normalised_list
-
-
-# Calculate factor to convert pixel to pixel distance to cm
-def conv_pixel_spacing_to_cm(pixel_spacing):  
-    """Calculate the factor to convert pixel to pixel distance to cm.
-    
-    Args:
-        pixel_spacing (list): List of the pixel spacing in mm.
-    
-    Returns:
-        pixel_spacing_cm (float): Average pixel spacing in cm.
-    """
-    pixel_spacing_cm = (pixel_spacing[0] + pixel_spacing[1]) / 20 
-    
-    return pixel_spacing_cm
