@@ -111,7 +111,7 @@ def _get_mean_centroids(
 
 
 def _get_main_contour_lv_la(
-    seg: np.ndarray, mean_centroid: tuple[int, int]
+    seg: np.ndarray, mean_centroid: tuple[int, int], extra_check_points: int = 25
 ) -> tuple[np.ndarray, int]:
     """Extract the main contour in LV and LA segmentations.
 
@@ -136,19 +136,19 @@ def _get_main_contour_lv_la(
         if (
             cv2.pointPolygonTest(contour, mean_centroid, False) >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0] - 25, mean_centroid[1]), False
+                contour, (mean_centroid[0] - extra_check_points, mean_centroid[1]), False
             )
             >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0] + 25, mean_centroid[1]), False
+                contour, (mean_centroid[0] + extra_check_points, mean_centroid[1]), False
             )
             >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0], mean_centroid[1] - 25), False
+                contour, (mean_centroid[0], mean_centroid[1] - extra_check_points), False
             )
             >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0], mean_centroid[1] + 25), False
+                contour, (mean_centroid[0], mean_centroid[1] + extra_check_points), False
             )
             >= 0
         )
@@ -167,15 +167,16 @@ def _get_main_contour_lv_la(
 
 
 def _get_main_contour_myo(
-    seg_1: np.ndarray, seg_2: np.ndarray, threshold_distance: int = 5
+    seg_1: np.ndarray, seg_2: np.ndarray, distance_threshold: int = 5, size_closing_kernel: int = 25
 ) -> np.ndarray:
     """Extract the contours of the myocardium that neighbour the LV.
 
     Args:
         seg_1 (np.ndarray): Segmentation of LV.
         seg_2 (np.ndarray): Segmentation of MYO.
-        threshold_distance (int): Threshold for maximum distance from contour 2 to contour 1 (default: 5).
-
+        distance_threshold (int): Threshold for maximum distance from contour 2 to contour 1 (default: 5).
+        size_closing_kernel (int): Size of the closing kernel (default: 25).
+        
     Returns:
         seg_main (np.ndarray): Segmentation of main contour of MYO, without redundant contours.
     """
@@ -201,7 +202,7 @@ def _get_main_contour_myo(
         abs_distances = [abs(ele) for ele in min_distances]
 
         # Add the contour to the segmentation if the minimum absolute distance is smaller than the threshold distance.
-        if min(abs_distances) < threshold_distance:
+        if min(abs_distances) < distance_threshold:
             neighboring_contours.append(i)
 
     # Convert selected MYO contour(s) back to segmentation.
@@ -213,7 +214,7 @@ def _get_main_contour_myo(
     # Close the segmentation to fill the (small) holes between the contours if multiple contours are selected.
     if len(neighboring_contours) > 1:
         seg_main = cv2.morphologyEx(
-            seg_main, cv2.MORPH_CLOSE, np.ones((25, 25), np.uint8)
+            seg_main, cv2.MORPH_CLOSE, np.ones((size_closing_kernel, size_closing_kernel), np.uint8)
         )
 
     return seg_main
@@ -455,7 +456,7 @@ def _fill_holes_between_lv_myo(seg_total: np.ndarray) -> np.ndarray:
         ]
 
         # Check if the distance between LV and MYO and LV and LA are both smaller or equal to 1.
-        if min(min_distances_12) <= 1.0 and min(min_distances_13) <= 1.0:
+        if min(min_distances_12) <= 1 and min(min_distances_13) <= 1:
             # Find the minimum distance between the border of contour 1 and both other contours.
             distances = [min(pair) for pair in zip(min_distances_12, min_distances_13)]
 

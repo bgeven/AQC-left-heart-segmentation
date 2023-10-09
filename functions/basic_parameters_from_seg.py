@@ -6,18 +6,19 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def _comp_factor_px2_to_cm2(pixel_spacing: list[float]) -> float:
+def _comp_factor_px2_to_cm2(pixel_spacing: list[float], conv_factor: int = 100) -> float:
     """Compute pixel size to cm2 conversion factor.
 
     Args:
         pixel_spacing (list[float]): Pixel spacing in x and y direction.
+        conv_factor (int): Conversion factor to convert from xxx to cm2 (default: 100).
 
     Returns:
         px2cm2_factor (float): Factor to convert pixel size to cm2.
     """
     px2cm2_factor = (
         pixel_spacing[0] * pixel_spacing[1]
-    ) / 100  # Divide by 100 to convert to cm2.
+    ) / conv_factor  # Convert xxx to cm2.
 
     return px2cm2_factor
 
@@ -69,14 +70,14 @@ def _comp_areas_in_sequence(
 
 
 def _find_nr_of_ed_points(
-    frames_r_wave: list[int], nr_of_frames: int, threshold_peak: int = 10
+    frames_r_wave: list[int], nr_of_frames: int, peak_threshold: int = 10
 ) -> int:
     """Determine the number of end-diastolic (ED) points based on the number of R-wave peaks.
 
     Args:
         frames_r_wave (list[int]): Frame numbers with R-wave peaks.
         nr_of_frames (int): Number of frames in the sequence.
-        threshold_peak (int): Threshold to account for the last peak if not detected by the find_peaks function (default: 10).
+        peak_threshold (int): Threshold to account for the last peak if not detected by the find_peaks function (default: 10).
 
     Returns:
         nr_ed_points (int): number of ED points.
@@ -85,7 +86,7 @@ def _find_nr_of_ed_points(
 
     # This is to account for the last peak if not detected by the find_peaks function.
     nr_of_ed_points += (
-        1 if abs(frames_r_wave[-1] - nr_of_frames) > threshold_peak else 0
+        1 if abs(frames_r_wave[-1] - nr_of_frames) > peak_threshold else 0
     )
 
     return nr_of_ed_points
@@ -110,21 +111,32 @@ def _pad_areas(areas: list[float]) -> list[float]:
     return areas_padded
 
 
-def _find_es_points(areas: list[float], frames_r_wave: list[int] = []) -> list[int]:
+def _find_es_points(areas: list[float], frames_r_wave: list[int] = [], dflt_nr_peaks: int = 3, nr_peak_type: str = "auto") -> list[int]:
     """Determine the end-systole (ES) points from LV areas.
 
     Args:
         areas (list[float]): Areas of the label in cm2.
         frames_r_wave (list[int]): Frame numbers with R-wave peaks (default: []).
+        dflt_nr_peaks (int): Number of peaks to find (default: 3).
+        nr_peak_type (str): Type of peak to find (default: "auto").
 
     Returns:
         es_points (list[int]): ES points.
     """
-    # Find number of ED points and subtract 1 to find number of ES peaks.
-    if len(frames_r_wave) > 0:
-        nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas)) - 1
+    
+    if nr_peak_type == "auto":
+        # Find number of ED points automatically and subtract 1 to find number of ES peaks.
+        if len(frames_r_wave) > 0:
+            nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas)) - 1
+        
+        else:
+            raise ValueError("nr_peak_type is 'auto', but frames_r_wave is empty.")
+
+    elif nr_peak_type == "force":
+        nr_peaks = dflt_nr_peaks  # Set default number of ES points. 
+    
     else:
-        nr_peaks = 3  # Set default number of ES points to 3
+        raise ValueError("nr_peak_type should be 'auto' or 'force'.")
 
     # Define the estimated frame difference between the peaks.
     frame_difference = len(areas) / (nr_peaks + 1)
@@ -141,7 +153,7 @@ def _find_es_points(areas: list[float], frames_r_wave: list[int] = []) -> list[i
     return es_points
 
 
-def _find_ed_points(areas: list[float], frames_r_wave: list[int] = []) -> list[int]:
+def _find_ed_points(areas: list[float], frames_r_wave: list[int] = [], dflt_nr_peaks: int = 4, nr_peak_type: str = "auto") -> list[int]:
     """Determine the end-diastole (ED) points from LV areas.
 
     Args:
@@ -152,10 +164,16 @@ def _find_ed_points(areas: list[float], frames_r_wave: list[int] = []) -> list[i
         ed_points (list[int]): ED points.
     """
     # Find number of ED points.
-    if len(frames_r_wave) > 0:
-        nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas))
+    if nr_peak_type == "auto":
+        if len(frames_r_wave) > 0:
+            nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas))
+        else:
+            raise ValueError("nr_peak_type is 'auto', but frames_r_wave is empty.")
+    elif nr_peak_type == "force":
+        nr_peaks = dflt_nr_peaks  # Set default number of ED points to 4.
+
     else:
-        nr_peaks = 4  # Set default number of ED points to 4.
+        raise ValueError("nr_peak_type should be 'auto' or 'force'.")
 
     # Define the estimated frame difference between the peaks.
     frame_difference = len(areas) / (nr_peaks)
@@ -218,8 +236,8 @@ def main_derive_parameters(
         )
 
         # Find ED and ES points.
-        ed_points = _find_ed_points(lv_areas, frames_r_waves)
-        es_points = _find_es_points(lv_areas, frames_r_waves)
+        ed_points = _find_ed_points(lv_areas, frames_r_waves, nr_peak_type="auto")
+        es_points = _find_es_points(lv_areas, frames_r_waves, nr_peak_type="auto")
 
         # Save properties in dictionaries.
         segmentation_properties["lv_areas"][view] = lv_areas

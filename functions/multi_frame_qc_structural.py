@@ -9,7 +9,7 @@ def _check_for_surrounded_lv(
     seg_1: np.ndarray,
     seg_2: np.ndarray,
     seg_3: np.ndarray,
-    threshold_surrounded_lv: int = 1,
+    lv_surrounded_threshold: int = 1,
 ) -> bool:
     """Check if the left ventricle is fully surrounded by the myocardium and left atrium.
 
@@ -17,7 +17,7 @@ def _check_for_surrounded_lv(
         seg_1 (np.ndarray): Segmentation of the image with only label 1, LV.
         seg_2 (np.ndarray): Segmentation of the image with only label 2, MYO.
         seg_3 (np.ndarray): Segmentation of the image with only label 3, LA.
-        threshold_surrounded_lv (int): Threshold to adjust robustness of the check (default: 1.0).
+        lv_surrounded_threshold (int): Threshold to adjust robustness of the check (default: 1.0).
 
     Returns:
         not_fully_surrounded (bool): Boolean indicating if the left ventricle is fully surrounded by the myocardium and left atrium.
@@ -31,30 +31,30 @@ def _check_for_surrounded_lv(
     distances_12, distances_13 = [], []
 
     # Check if contours are present for all structures.
-    if len(contour_1) > 0 and len(contour_2) > 0 and len(contour_3) > 0:
-        for j in range(len(contour_1[0])):
-            # Get the coordinates of the left ventricular contour.
-            coordinates_1 = tuple(
-                [int(contour_1[0][j][0][0]), int(contour_1[0][j][0][1])]
-            )
+    if len(contour_1) == 0 or len(contour_2) == 0 or len(contour_3) == 0:
+        not_fully_surrounded = True
+        return not_fully_surrounded
 
-            # Get the distance between the left ventricular contour and the other contours.
-            distance_12 = cv2.pointPolygonTest(contour_2[0], coordinates_1, True)
-            distances_12.append(abs(distance_12))
+    for j in range(len(contour_1[0])):
+        # Get the coordinates of the left ventricular contour.
+        coordinates_1 = tuple(
+            [int(contour_1[0][j][0][0]), int(contour_1[0][j][0][1])]
+        )
 
-            distance_13 = cv2.pointPolygonTest(contour_3[0], coordinates_1, True)
-            distances_13.append(abs(distance_13))
+        # Get the distance between the left ventricular contour and the other contours.
+        distance_12 = cv2.pointPolygonTest(contour_2[0], coordinates_1, True)
+        distances_12.append(abs(distance_12))
 
-        # Check if both structures neighbour the left ventricle.
-        if min(distances_12) <= 1.0 and min(distances_13) <= 1.0:
-            # Find the minimum distance between the border of contour 1 and both other contours.
-            distances = [min(pair) for pair in zip(distances_12, distances_13)]
+        distance_13 = cv2.pointPolygonTest(contour_3[0], coordinates_1, True)
+        distances_13.append(abs(distance_13))
 
-            # Check if the maximum distance is larger than the threshold.
-            not_fully_surrounded = max(distances) > threshold_surrounded_lv
+    # Check if both structures neighbour the left ventricle.
+    if min(distances_12) <= 1 and min(distances_13) <= 1:
+        # Find the minimum distance between the border of contour 1 and both other contours.
+        distances = [min(pair) for pair in zip(distances_12, distances_13)]
 
-        else:
-            not_fully_surrounded = True
+        # Check if the maximum distance is larger than the threshold.
+        not_fully_surrounded = max(distances) > lv_surrounded_threshold
 
     else:
         not_fully_surrounded = True
@@ -66,7 +66,7 @@ def _check_for_cut_off_la(
     seg: np.ndarray,
     contour: list[np.ndarray],
     rows_to_exclude: int = 5,
-    threshold_cut_off_LA: int = 10,
+    la_cut_off_threshold: int = 10,
 ) -> bool:
     """Check if the left atrium is cut off.
 
@@ -74,10 +74,10 @@ def _check_for_cut_off_la(
         seg (np.ndarray): Segmentation of the image.
         contour (list[np.ndarray]): List of contours of the left atrium.
         rows_to_exclude (int): Number of rows to exclude from the bottom of the segmentation (default: 5).
-        threshold_cut_off_LA (int): Threshold to adjust robustness of the check (default: 10).
+        la_cut_off_threshold (int): Threshold to adjust robustness of the check (default: 10).
 
     Returns:
-        cut_off_LA (bool): Boolean indicating if the left atrium is cut off.
+        la_cut_off (bool): Boolean indicating if the left atrium is cut off.
     """
     # Get the number of rows in the segmentation, excluding the x bottom rows.
     vert_boundary_seg = seg.shape[0] - rows_to_exclude
@@ -94,24 +94,24 @@ def _check_for_cut_off_la(
         count = sum(1 for value in coordinates_la_vert if value == maximum_la_row)
 
         # Check if there are more than x bottom rows of the LA present in the segmentation.
-        cut_off_LA = count > threshold_cut_off_LA
+        la_cut_off = count > la_cut_off_threshold
     else:
-        cut_off_LA = False
+        la_cut_off = False
 
-    return cut_off_LA
+    return la_cut_off
 
 
 def _flag_frames_structural(
     path_to_segmentations: str,
     files_of_view: list[str],
-    threshold_surrounded_lv: int = 3.0,
+    lv_surrounded_threshold: int = 3,
 ) -> tuple[list[int], list[int]]:
     """Flag the frames with structural faults, this is a part of multi-frame QC.
 
     Args:
         path_to_segmentations (str): Path to the segmentations.
         files_of_view (list[str]): List of filenames names of one view.
-        threshold_surrounded_lv (float): Threshold to adjust robustness of the check (default: 3.0).
+        lv_surrounded_threshold (int): Threshold to adjust robustness of the check (default: 3.0).
 
     Returns:
         flagged_frames_lv (list[int]): List of frames to be flagged by multi-frame QC for the left ventricle.
@@ -132,7 +132,7 @@ def _flag_frames_structural(
         contours_3 = find_contours(seg_3, "external")
 
         # Check if LV is fully surrounded.
-        if _check_for_surrounded_lv(seg_1, seg_2, seg_3, threshold_surrounded_lv):
+        if _check_for_surrounded_lv(seg_1, seg_2, seg_3, lv_surrounded_threshold):
             flagged_frames_lv.append(frame_nr)
 
         # Check if LA is cut off.
@@ -146,7 +146,7 @@ def main_multi_frame_qc_structural(
     path_to_segmentations: str,
     all_files: list[str],
     views: list[str],
-    threshold_surrounded: int = 3,
+    lv_surrounded_threshold: int = 3,
 ) -> dict[str, dict[str, list[int]]]:
     """MAIN: Do multi-frame QC assessment based on structural criteria.
 
@@ -171,7 +171,7 @@ def main_multi_frame_qc_structural(
 
         # Find frames flagged by multi-frame QC.
         flagged_frames_lv, flagged_frames_la = _flag_frames_structural(
-            path_to_segmentations, files_of_view, threshold_surrounded
+            path_to_segmentations, files_of_view, lv_surrounded_threshold
         )
 
         # Save the results in a dictionary.

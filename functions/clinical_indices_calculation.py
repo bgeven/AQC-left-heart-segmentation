@@ -1,7 +1,8 @@
 # This script contains functions to calculate clinical indices of the left ventricle.
 import numpy as np
-from scipy.ndimage import map_coordinates
+from typing import Union
 from collections import defaultdict
+from scipy.ndimage import map_coordinates
 from functions.general_utilities import *
 
 
@@ -52,7 +53,7 @@ def _find_indices_of_neighbouring_contours(
     y_coordinates_a: np.ndarray,
     x_coordinates_b: np.ndarray,
     y_coordinates_b: np.ndarray,
-    threshold_distance: int = 1,
+    distance_threshold: int = 1,
 ) -> np.ndarray:
     """Find the indices of the coordinates of contour A that are neighboring contour B.
 
@@ -61,7 +62,7 @@ def _find_indices_of_neighbouring_contours(
         y_coordinates_a (np.ndarray): The y-coordinates of contour A.
         x_coordinates_b (np.ndarray): The x-coordinates of contour B.
         y_coordinates_b (np.ndarray): The y-coordinates of contour B.
-        threshold_distance (float): The threshold distance between two points.
+        distance_threshold (float): The threshold distance between two points.
 
     Returns:
         neighbor_indices (np.ndarray): The indices of the coordinates of contour A that are neighboring contour B.
@@ -73,7 +74,7 @@ def _find_indices_of_neighbouring_contours(
     )
 
     # Find the indices where the distance is smaller than a certain threshold.
-    neighbor_indices = np.unique(np.where(distances <= threshold_distance)[0])
+    neighbor_indices = np.unique(np.where(distances <= distance_threshold)[0])
 
     return neighbor_indices
 
@@ -107,8 +108,9 @@ def _find_mitral_valve_border_coordinates(
     seg_1: np.ndarray,
     seg_2: np.ndarray,
     seg_3: np.ndarray,
-    threshold_distance: int = 1,
-    threshold_length_valve: int = 15,
+    distance_threshold: int = 1,
+    max_distance_threshold: int = 10,
+    valve_length_threshold: int = 15,
 ) -> tuple[int, int, int, int]:
     """Find the coordinates of the pixels on the outside of the mitral valve.
 
@@ -116,8 +118,9 @@ def _find_mitral_valve_border_coordinates(
         seg_1 (np.ndarray): The segmentation of the left ventricle.
         seg_2 (np.ndarray): The segmentation of the myocardium.
         seg_3 (np.ndarray): The segmentation of the left atrium.
-        threshold_distance (float): The threshold distance between two points.
-        threshold_length_valve (float): The minimum length of the mitral valve.
+        distance_threshold (int): The threshold distance between two points.
+        max_distance_threshold (int): The maximum threshold distance between two points.
+        valve_length_threshold (int): The minimum length of the mitral valve.
 
     Returns:
         x1 (int): The x-coordinate of the first border point.
@@ -131,60 +134,59 @@ def _find_mitral_valve_border_coordinates(
     contours_3 = find_contours(seg_3, spec="external")
 
     # Check if all structures are represented by at least one contour.
-    if len(contours_1) > 0 and len(contours_2) > 0 and len(contours_3) > 0:
-        # Find the x and y coordinates of all structures.
-        x_coordinates_1, y_coordinates_1 = _find_coordinates(contours_1)
-        x_coordinates_2, y_coordinates_2 = _find_coordinates(contours_2)
-        x_coordinates_3, y_coordinates_3 = _find_coordinates(contours_3)
+    if len(contours_1) == 0 or len(contours_2) == 0 or len(contours_3) == 0:
+        return 0, 0, 0, 0
 
-        valve_coordinates_not_found = True
+    # Find the x and y coordinates of all structures.
+    x_coordinates_1, y_coordinates_1 = _find_coordinates(contours_1)
+    x_coordinates_2, y_coordinates_2 = _find_coordinates(contours_2)
+    x_coordinates_3, y_coordinates_3 = _find_coordinates(contours_3)
 
-        # Continue loop while no common points are found or when threshold distance of LA to LV is larger than 10 px.
-        while valve_coordinates_not_found and threshold_distance < 10:
-            neighbor_indices_LV_MYO = _find_indices_of_neighbouring_contours(
-                x_coordinates_1,
-                y_coordinates_1,
-                x_coordinates_2,
-                y_coordinates_2,
-                threshold_distance,
-            )
-            neighbor_indices_LV_LA = _find_indices_of_neighbouring_contours(
-                x_coordinates_1,
-                y_coordinates_1,
-                x_coordinates_3,
-                y_coordinates_3,
-                threshold_distance,
-            )
+    valve_coordinates_not_found = True
 
-            # Find common points between the neighboring pixels of LV and MYO and LV and LA.
-            common_indices = np.intersect1d(
-                neighbor_indices_LV_LA, neighbor_indices_LV_MYO
-            )
+    # Continue loop while no common points are found or when threshold distance of LA to LV is larger than maximum threshold distance.
+    while valve_coordinates_not_found and distance_threshold < max_distance_threshold:
+        neighbor_indices_LV_MYO = _find_indices_of_neighbouring_contours(
+            x_coordinates_1,
+            y_coordinates_1,
+            x_coordinates_2,
+            y_coordinates_2,
+            distance_threshold,
+        )
+        neighbor_indices_LV_LA = _find_indices_of_neighbouring_contours(
+            x_coordinates_1,
+            y_coordinates_1,
+            x_coordinates_3,
+            y_coordinates_3,
+            distance_threshold,
+        )
 
-            # Check if there are at least 2 common points and the distance between the points is larger than x px,
-            # else, increase the threshold distance and continue while loop.
-            if (len(common_indices) >= 2) and (
-                max(common_indices) - min(common_indices) > threshold_length_valve
-            ):
-                valve_coordinates_not_found = False
-            else:
-                threshold_distance += 0.25
+        # Find common points between the neighboring pixels of LV and MYO and LV and LA.
+        common_indices = np.intersect1d(
+            neighbor_indices_LV_LA, neighbor_indices_LV_MYO
+        )
 
-        # Check if the number of common points is indeed larger than 2.
-        if len(common_indices) >= 2:
-            # Find common points and coordinates of the points furthest away from each other.
-            common_points = [min(common_indices), max(common_indices)]
-            x1, y1 = (
-                x_coordinates_1[common_points[0]],
-                y_coordinates_1[common_points[0]],
-            )
-            x2, y2 = (
-                x_coordinates_1[common_points[1]],
-                y_coordinates_1[common_points[1]],
-            )
-
+        # Check if there are at least 2 common points and the distance between the points is larger than x px,
+        # else, increase the threshold distance and continue while loop.
+        if (len(common_indices) >= 2) and (
+            max(common_indices) - min(common_indices) > valve_length_threshold
+        ):
+            valve_coordinates_not_found = False
         else:
-            x1, y1, x2, y2 = 0, 0, 0, 0
+            distance_threshold += 0.25
+
+    # Check if the number of common points is indeed larger than 2.
+    if len(common_indices) >= 2:
+        # Find common points and coordinates of the points furthest away from each other.
+        common_points = [min(common_indices), max(common_indices)]
+        x1, y1 = (
+            x_coordinates_1[common_points[0]],
+            y_coordinates_1[common_points[0]],
+        )
+        x2, y2 = (
+            x_coordinates_1[common_points[1]],
+            y_coordinates_1[common_points[1]],
+        )
 
     else:
         x1, y1, x2, y2 = 0, 0, 0, 0
@@ -381,35 +383,35 @@ def _comp_length_and_diameter(
     midpoint_x, midpoint_y = _find_midpoint_mitral_valve(seg_1, seg_2, seg_3)
 
     # Check if the midpoint is not equal to 0 and if there are pixels in the segmentation.
-    if midpoint_x != 0 and np.sum(np.array(seg_1) == 1) > 0:
-        x_apex, y_apex = _find_apex(
-            seg_1, midpoint_x, midpoint_y, mode="before_rotation"
-        )
-
-        # Find angle of rotation and rotate segmentation.
-        angle = np.pi + np.arctan2(x_apex - midpoint_x, y_apex - midpoint_y)
-        seg_rot = _rotate_array(seg, angle, (midpoint_x, midpoint_y))
-
-        # Find coordinates of apex in rotated segmentation.
-        _, seg1_rot, _, _ = separate_segmentation(seg_rot)
-        x_apex_rot, y_apex_rot = _find_apex(
-            seg1_rot, midpoint_x, midpoint_y, mode="after_rotation"
-        )
-
-        # Compute the length from LV apex to middle of mitral valve.
-        length = _comp_length_midpoint_apex(
-            midpoint_x, midpoint_y, x_apex_rot, y_apex_rot, pixel_spacing
-        )
-
-        # Find the diameters perpendicular to the line from mitral valve to apex.
-        diameters = _define_diameters(
-            seg_rot, label, midpoint_y, y_apex_rot, pixel_spacing, nr_of_diameters
-        )
-
-    # If the midpoint is equal to 0 or there are no pixels in the segmentation, return NaN values.
-    else:
+    if midpoint_x == 0 or np.sum(np.array(seg_1) == 1) == 0:
         length = 0
-        diameters = np.array([np.nan] * nr_of_diameters)
+        diameters = np.array([np.nan] * nr_of_diameters) 
+
+        return length, diameters
+    
+    x_apex, y_apex = _find_apex(
+        seg_1, midpoint_x, midpoint_y, mode="before_rotation"
+    )
+
+    # Find angle of rotation and rotate segmentation.
+    angle = np.pi + np.arctan2(x_apex - midpoint_x, y_apex - midpoint_y)
+    seg_rot = _rotate_array(seg, angle, (midpoint_x, midpoint_y))
+
+    # Find coordinates of apex in rotated segmentation.
+    _, seg1_rot, _, _ = separate_segmentation(seg_rot)
+    x_apex_rot, y_apex_rot = _find_apex(
+        seg1_rot, midpoint_x, midpoint_y, mode="after_rotation"
+    )
+
+    # Compute the length from LV apex to middle of mitral valve.
+    length = _comp_length_midpoint_apex(
+        midpoint_x, midpoint_y, x_apex_rot, y_apex_rot, pixel_spacing
+    )
+
+    # Find the diameters perpendicular to the line from mitral valve to apex.
+    diameters = _define_diameters(
+        seg_rot, label, midpoint_y, y_apex_rot, pixel_spacing, nr_of_diameters
+    )
 
     return length, diameters
 
@@ -485,14 +487,14 @@ def _process_coordinates(
 
 
 def _comp_circumference(
-    seg_A: np.ndarray, seg_B: np.ndarray, threshold_distance: int = 2
+    seg_A: np.ndarray, seg_B: np.ndarray, distance_threshold: int = 2
 ) -> float:
     """Compute the circumference of the structure, without including pixels neighboring a specific structure.
 
     Args:
         seg_A (np.ndarray): The segmentation of the structure.
         seg_B (np.ndarray): The segmentation of the neighboring structure, used to find pixels to exclude.
-        threshold_distance (int): The threshold distance between two points (default: 2).
+        distance_threshold (int): The threshold distance between two points (default: 2).
 
     Returns:
         circumference (float): The circumference of the structure.
@@ -514,30 +516,29 @@ def _comp_circumference(
     for i, (x_A, y_A) in enumerate(zip(x_coordinates_A, y_coordinates_A)):
         for x_B, y_B in zip(x_coordinates_B, y_coordinates_B):
             distance = np.sqrt((x_A - x_B) ** 2 + (y_A - y_B) ** 2)
-            if distance < threshold_distance:
+            if distance < distance_threshold:
                 neighbor_indices.append(i)
                 break
 
     # Check if there are more than 10 neighboring or overlapping coordinates.
-    if len(neighbor_indices) > 10:
-        # Process the coordinates of the first contour by removing the neighboring or overlapping coordinates.
-        x_coordinates_A_processed = _process_coordinates(
-            x_coordinates_A, neighbor_indices
-        )
-        y_coordinates_A_processed = _process_coordinates(
-            y_coordinates_A, neighbor_indices
-        )
+    if len(neighbor_indices) <= 10:
+        return np.nan
 
-        # Calculate the difference between each coordinate.
-        dx = np.diff(x_coordinates_A_processed)
-        dy = np.diff(y_coordinates_A_processed)
+    # Process the coordinates of the first contour by removing the neighboring or overlapping coordinates.
+    x_coordinates_A_processed = _process_coordinates(
+        x_coordinates_A, neighbor_indices
+    )
+    y_coordinates_A_processed = _process_coordinates(
+        y_coordinates_A, neighbor_indices
+    )
 
-        # Calculate the distance between each coordinate and sum them to get the circumference.
-        dist_squared = dx**2 + dy**2
-        circumference = np.sum(np.sqrt(dist_squared))
+    # Calculate the difference between each coordinate.
+    dx = np.diff(x_coordinates_A_processed)
+    dy = np.diff(y_coordinates_A_processed)
 
-    else:
-        circumference = np.nan
+    # Calculate the distance between each coordinate and sum them to get the circumference.
+    dist_squared = dx**2 + dy**2
+    circumference = np.sum(np.sqrt(dist_squared))
 
     return circumference
 
@@ -603,16 +604,17 @@ def _resize_segmentation(seg: np.ndarray, change_factor: int = 4) -> np.ndarray:
     return resized_segmentation
 
 
-def _comp_factor_px_to_cm(pixel_spacing: list[float]) -> float:
+def _comp_factor_px_to_cm(pixel_spacing: list[float], conv_factor: int = 10) -> float:
     """Compute pixel size to cm conversion factor.
 
     Args:
-        pixel_spacing (list[float]): List of the pixel spacing in mm.
+        pixel_spacing (list[float]): List of the pixel spacing (often in mm).
+        conv_factor (int): The factor by which the pixel spacing is converted to cm (default: 10).
 
     Returns:
         pixel_spacing_cm (float): Average pixel spacing in cm.
     """
-    pixel_spacing_cm = (pixel_spacing[0] + pixel_spacing[1]) / 20
+    pixel_spacing_cm = (pixel_spacing[0] + pixel_spacing[1]) / (2 * conv_factor)
 
     return pixel_spacing_cm
 
@@ -621,24 +623,26 @@ def _main_cavity_properties(
     path_to_segmentations: str,
     views: list[str],
     all_files: list[str],
-    cycle_information: dict[str, dict[str, float]],
-    dicom_properties: dict[str, dict[str, float]],
-    segmentation_properties: dict[str, dict[str, float]],
+    cycle_information: dict[str, dict[str, list[int]]],
+    dicom_properties: dict[str, dict[str, list[float]]],
+    segmentation_properties: dict[str, dict[str, list[float]]],
     change_factor: int = 4,
-) -> dict[str, dict[str, float]]:
+    nr_diameters_default: int = 20,
+) -> dict[str, dict[str, Union[list[float], float]]]:
     """Determine the diameters and length of the structure for every view.
 
     Args:
         path_to_segmentations (str): The path to the folder containing the segmentations.
         views (list[str]): The views of the structure.
         all_files (list[str]): The list of all files in the folder.
-        cycle_information (dict[str, dict[str, float]]): The dictionary containing the information of the cardiac cycle.
-        dicom_properties (dict[str, dict[str, float]]): The dictionary containing the DICOM properties.
-        segmentation_properties (dict[str, dict[str, float]]): The dictionary containing the segmentation properties.
+        cycle_information (dict[str, dict[str, list[int]]]): The dictionary containing the information of the cardiac cycle.
+        dicom_properties (dict[str, dict[str, list[float]]]): The dictionary containing the DICOM properties.
+        segmentation_properties (dict[str, dict[str, list[float]]]): The dictionary containing the segmentation properties.
         change_factor (int): The factor by which the segmentation is changed (default: 4).
+        nr_diameters_default (int): The number of diameters to be defined (default: 20).
 
     Returns:
-        cavity_properties (dict[str, dict[str, float]]): The dictionary containing the diameters, length and area of the cavities for every view.
+        cavity_properties (dict[str, dict[str, Union[list[float], float]]): The dictionary containing the diameters, length and area of the cavities for every view.
     """
     cavity_properties = defaultdict(dict)
 
@@ -684,7 +688,7 @@ def _main_cavity_properties(
                 # If the frame is flagged, set length and area to 0 and diameters to NaN values.
                 else:
                     length = 0
-                    diameters = [np.nan] * 20  # CHANGE
+                    diameters = [np.nan] * nr_diameters_default
 
                 # Store length and diameters in dictionary.
                 if idx in ed_points:
@@ -711,21 +715,18 @@ def _main_cavity_properties(
 
 
 def _comp_volume_main(
-    views: list[str], cavity_properties: dict[str, dict[str, float]]
+    views: list[str], cavity_properties: dict[str, dict[str, Union[list[float], float]]]
 ) -> tuple[float, float]:
     """Compute the volume of the structure using the Simpson's method.
 
     Args:
         views (list[str]): The views of the structure.
-        cavity_properties (dict[str, dict[str, float]]): The dictionary containing the diameters and length of the structure for every view.
+        cavity_properties (dict[str, dict[str, Union[list[float], float]]): The dictionary containing the diameters and length of the structure for every view.
 
     Returns:
         volume_simpson_ed (float): The end-diastolic volume.
         volume_simpson_es (float): The end-systolic volume.
     """
-    volume_simpson_ed = np.nan
-    volume_simpson_es = np.nan
-
     # Load diameters and lengths of the structure for every view.
     for view in views:
         if "a2ch" in view:
@@ -741,18 +742,22 @@ def _comp_volume_main(
             length_es_a4ch = cavity_properties["length_es"][view]
 
         else:
-            raise ValueError("Name of view is not recognised, check this.")
+            raise ValueError("Name of view is not recognised, check name of files.")
 
     # Check if the diameters and lengths are not equal to 0 and calculate the ED and ES volumes of the structure.
     if length_ed_a2ch != 0 and length_ed_a4ch != 0:
         volume_simpson_ed = _comp_volume_simpson(
             diameters_ed_a2ch, diameters_ed_a4ch, length_ed_a2ch, length_ed_a4ch
         )
+    else:
+        volume_simpson_ed = np.nan
 
     if length_es_a2ch != 0 and length_es_a4ch != 0:
         volume_simpson_es = _comp_volume_simpson(
             diameters_es_a2ch, diameters_es_a4ch, length_es_a2ch, length_es_a4ch
         )
+    else:     
+        volume_simpson_es = np.nan
 
     return volume_simpson_ed, volume_simpson_es
 
@@ -795,9 +800,9 @@ def main_computation_clinical_indices(
     patient: str,
     views: list[str],
     all_files: list[str],
-    cycle_information: dict[str, dict[str, float]],
-    dicom_properties: dict[str, dict[str, float]],
-    segmentation_properties: dict[str, dict[str, float]],
+    cycle_information: dict[str, dict[str, list[int]]],
+    dicom_properties: dict[str, dict[str, list[float]]],
+    segmentation_properties: dict[str, dict[str, list[float]]],
 ) -> dict[str, dict[str, float]]:
     """MAIN: Compute the clinical indices of the structure.
 
@@ -808,9 +813,9 @@ def main_computation_clinical_indices(
         patient (str): The patient ID.
         views (list[str]): The views of the structure.
         all_files (list[str]): The list of all files in the folder.
-        cycle_information (dict[str, dict[str, float]]): The dictionary containing the information of the cardiac cycle.
-        dicom_properties (dict[str, dict[str, float]]): The dictionary containing the DICOM properties.
-        segmentation_properties (dict[str, dict[str, float]]): The dictionary containing the properties of the segmentations.
+        cycle_information (dict[str, dict[str, list[int]]]): The dictionary containing the information of the cardiac cycle.
+        dicom_properties (dict[str, dict[str, list[float]]]): The dictionary containing the DICOM properties.
+        segmentation_properties (dict[str, dict[str, list[float]]]): The dictionary containing the properties of the segmentations.
 
     Returns:
         clinical_indices (dict[str, dict[str, float]]): The dictionary containing the clinical indices of the structure.

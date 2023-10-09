@@ -3,6 +3,7 @@ import os
 import cv2
 import numpy as np
 from PIL import Image
+from typing import Union
 import matplotlib.pyplot as plt
 from functions.general_utilities import *
 
@@ -25,7 +26,7 @@ def _color_segmentation(seg: np.ndarray, colors_for_labels: np.ndarray) -> np.nd
 def _remove_neighboring_pixels(
     contours_1: list[np.ndarray],
     contours_2: list[np.ndarray],
-    threshold_distance: int = 3,
+    distance_threshold: int = 3,
 ) -> list[np.ndarray]:
     """Remove points on the contours that neighbor the left ventricular (LV) contour.
 
@@ -51,7 +52,7 @@ def _remove_neighboring_pixels(
                 min_distance = cv2.pointPolygonTest(contours_1[0], coordinates_2, True)
 
                 # If the distance between the point on the MYO or LA contour and the LV contour is larger than x pixels, add the point to the list of points.
-                if abs(min_distance) > threshold_distance:
+                if abs(min_distance) > distance_threshold:
                     contour_adapted.append([x_coordinate_2, y_coordinate_2])
 
         # Convert list of points to a numpy array and reshape to format of original contours.
@@ -138,8 +139,8 @@ def main_plot_area_time_curves(
     path_to_segmentations: str,
     all_files: list[str],
     views: list[str],
-    dicom_properties: dict[str, dict[str, list[int]]],
-    segmentation_properties: dict[str, dict[str, list[int]]],
+    dicom_properties: dict[str, dict[str, list[float]]],
+    segmentation_properties: dict[str, dict[str, Union[list[float], list[int]]]],
     colors_for_labels: np.ndarray,
     font_size: int = 8,
     dpi_value: int = 100,
@@ -152,7 +153,7 @@ def main_plot_area_time_curves(
         all_files (list[str]): List of all files in the directory.
         views (list[str]): List of views of the segmentations.
         dicom_properties (dict[str, dict[str, list[int]]]): Dictionary with dicom properties of all patients.
-        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary with segmentation properties of all patients.
+        segmentation_properties (dict[str, dict[str, Union[list[float], list[int]]]]): Dictionary with segmentation properties of all patients.
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
@@ -295,9 +296,8 @@ def show_post_processing_results(
     path_to_final_segmentations: str,
     all_files: list[str],
     views: list[str],
-    single_frame_qc: dict[str, dict[str, list[int]]],
+    single_frame_qc: dict[str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]],
     colors_for_labels: np.ndarray,
-    font_size: int = 8,
 ) -> None:
     """Function to plot the results of the post-processing.
 
@@ -307,10 +307,8 @@ def show_post_processing_results(
         path_to_final_segmentations (str): Directory of the folder with the final segmentations.
         all_files (list[str]): List of all files in the directory.
         views (list[str]): List of views of the segmentations.
-        single_frame_qc (dict[str, dict[str, list[int]]]): Dictionary with the single frame QC results.
+        single_frame_qc (dict[str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]]): Dictionary with the single frame QC results.
         colors_for_labels (np.ndarray): Color definitions for each label.
-        font_size (int): Font size of the figure (default: 8).
-        dpi_value (int): DPI value of the figure (default: 100).
     """
     for view in views:
         # Get the frames that need to be processed.
@@ -350,21 +348,17 @@ def show_post_processing_results(
                 # Subplot 1: Echo image.
                 plt.subplot(1, 3, 1)
                 plt.imshow(echo_image, cmap="gray")
-                plt.title("Echo image", fontsize=font_size)
+                plt.title("Echo image")
                 plt.axis("off")
 
                 # Subplot 2: Segmentation before post-processing.
                 plt.subplot(1, 3, 2)
                 plt.imshow(seg_before_pp)
-                plt.title(
-                    "Segmentation before post-processing", fontsize=font_size, wrap=True
-                )
+                plt.title("Segmentation before post-processing")
                 plt.axis("off")
 
                 # Subplot 3: Segmentation after post-processing.
                 plt.subplot(1, 3, 3)
                 plt.imshow(seg_after_pp)
-                plt.title(
-                    "Segmentation after post-processing", fontsize=font_size, wrap=True
-                )
+                plt.title("Segmentation after post-processing")
                 plt.axis("off")

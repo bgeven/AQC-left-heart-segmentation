@@ -46,6 +46,7 @@ def _create_mask(
         mask[seg == label] = 255
 
     # Give all pixels within mask same values as image, otherwise exclude them.
+    # 300 is an arbitrary value, as long as it is not a value that can be found in the image.
     masked_image = np.where(mask, echo_image, 300)
     masked_image = masked_image[masked_image != 300]
 
@@ -186,6 +187,8 @@ def _give_score_per_criterion(
             4 if item == min_value else 0 if item == max_value else 2
             for item in my_list_rounded
         ]
+    else: 
+        raise ValueError("Method not recognized.")
 
     return scores
 
@@ -221,13 +224,13 @@ def _find_best_cycle(
 
     # If more than 1 cycle has the highest score, add 1 to score of cycle with highest cnr.
     if len(max_score_indices) > 1:
-        # Check if there is at least 1 cycle with a positive CNR.
+        # Check if there is at least 1 cycle with a valid CNR.
         if np.nanmean(cnr_cycles) > 0:
             idx_max_cnr = max(max_score_indices, key=lambda idx: cnr_cycles[idx])
             scores_tot[idx_max_cnr] += 1
 
         else:
-            # If no cycle has a positive CNR, select the cycle with the lowest number of flagged frames.
+            # If no cycle has a valid CNR, select the cycle with the lowest number of flagged frames.
             idx_min_flagged_frames = min(
                 max_score_indices,
                 key=lambda idx: nr_flagged_frames_sf_qc[idx]

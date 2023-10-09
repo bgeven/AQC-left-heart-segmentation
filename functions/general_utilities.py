@@ -111,9 +111,12 @@ def find_contours(seg: np.ndarray, spec: str = "all") -> list[np.ndarray]:
     }
 
     # Find contours based on the specified mode.
-    contours, _ = cv2.findContours(
-        seg, retrieval_modes.get(spec, cv2.RETR_LIST), cv2.CHAIN_APPROX_NONE
-    )
+    if spec in retrieval_modes.keys():
+        _, contours, _ = cv2.findContours(
+            seg, retrieval_modes.get(spec, cv2.RETR_LIST), cv2.CHAIN_APPROX_NONE
+        )
+    else:
+        raise ValueError("Invalid specification of contours.")
 
     return contours
 
@@ -129,6 +132,8 @@ def combine_segmentations(
     - difference: each structure gets other value.
     - difference with overlap: each structure gets other value, but overlap is accounted for.
     - no difference: all structures get same value.
+
+    It is assumed that the labels of the segmentations are as described in the README.
 
     Args:
         segmentations (list[np.ndarray]): List of segmentations of the echo image.
@@ -153,7 +158,7 @@ def combine_segmentations(
                 total_seg += seg * labels[nr + 1]
 
     # Each structure gets other value, but overlap is accounted for.
-    if typeOfCombination == "difference_with_overlap":
+    elif typeOfCombination == "difference_with_overlap":
         for nr, seg in enumerate(segmentations[1:]):
             if seg.max() == labels[nr + 1]:
                 total_seg += seg
@@ -171,6 +176,9 @@ def combine_segmentations(
             total_seg += seg
 
         total_seg[total_seg > 0] = 1
+
+    else:
+        raise ValueError("Invalid type of combination.")
 
     return total_seg
 
