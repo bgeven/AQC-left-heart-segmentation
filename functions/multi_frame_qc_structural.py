@@ -158,7 +158,7 @@ def main_multi_frame_qc_structural(
         path_to_segmentations (str): Path to the segmentations.
         all_files (list[str]): List of all files in the directory.
         views (list[str]): List of views of the segmentations.
-        threshold_surrounded (int): Threshold to adjust robustness of the check (default: 3).
+        lv_surrounded_threshold (int): Threshold to adjust robustness of the check (default: 3).
 
     Returns:
         multi_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the frames flagged by multi-frame QC for the left ventricle and left atrium.
