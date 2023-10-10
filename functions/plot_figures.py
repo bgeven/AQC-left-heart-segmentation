@@ -192,7 +192,7 @@ def main_plot_area_time_curves(
             )
 
             plt.figure(dpi=dpi_value)
-            plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
+            plt.suptitle("Segmentation, frame " + str(frame_nr))
 
             # Format figure with subplots.
             X = [(2, 3, 1), (2, 3, 2), (2, 3, 3), (2, 3, (4, 5))]
