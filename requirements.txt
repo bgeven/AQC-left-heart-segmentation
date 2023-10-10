@@ -6,3 +6,4 @@ Pillow==10.0.1
 pydicom==2.4.3
 scipy==1.10.0
 SimpleITK==2.3.0
+pandas==2.1.1
