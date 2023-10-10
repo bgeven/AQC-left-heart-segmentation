@@ -317,7 +317,8 @@ def show_post_processing_results(
         frames_to_process = single_frame_qc["flagged_frames"][view]
 
         if len(frames_to_process) == 0:
-            print("No frames were processed for view " + view + ".")
+            print("No frames were processed for this view")
+            #print("No frames were processed for view " + view + ".")
 
         # Get all files of one view of one person.
         files_of_view = get_list_with_files_of_view(all_files, view)
@@ -345,7 +346,7 @@ def show_post_processing_results(
                 )
 
                 plt.figure(figsize=(15, 5))
-                plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
+                plt.suptitle(("Segmentation, frame " + str(frame_nr)))
 
                 # Subplot 1: Echo image.
                 plt.subplot(1, 3, 1)
