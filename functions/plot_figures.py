@@ -144,7 +144,7 @@ def main_plot_area_time_curves(
     colors_for_labels: np.ndarray,
     font_size: int = 8,
     dpi_value: int = 100,
-) -> None:
+) -> plt.figure:
     """Plot area-time curves for all patients.
 
     Args:
@@ -157,7 +157,12 @@ def main_plot_area_time_curves(
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
+
+    Returns:
+        fig (list[plt.figure]): Figures with image, segmentation and area-time curves for each image. 
     """
+    figures = []
+
     # Define directories of images and segmentations.
     for view in views:
         # Get dicom and segmentation properties of one patient
@@ -191,42 +196,40 @@ def main_plot_area_time_curves(
                 echo_image, seg, colors_for_labels
             )
 
-            plt.figure(dpi=dpi_value)
-            plt.suptitle("Segmentation, frame " + str(frame_nr))
+            fig = plt.figure(dpi=dpi_value)
+            fig.suptitle("Segmentation, frame " + str(frame_nr))
 
             # Format figure with subplots.
             X = [(2, 3, 1), (2, 3, 2), (2, 3, 3), (2, 3, (4, 5))]
 
             for nr_plot, (nrows, ncols, plot_number) in enumerate(X):
+                ax = fig.add_subplot(nrows, ncols, plot_number)
+
                 if nr_plot == 0:
-                    plt.subplot(nrows, ncols, plot_number)
-                    plt.imshow(echo_image, cmap="gray")
-                    plt.title("Echo image", fontsize=font_size, loc="left")
-                    plt.axis("off")
+                    ax.imshow(echo_image, cmap="gray")
+                    ax.set_title("Echo image", fontsize=font_size, loc="left")
+                    ax.axis("off")
 
                 elif nr_plot == 1:
-                    plt.subplot(nrows, ncols, plot_number)
-                    plt.imshow(seg_colored)
-                    plt.title("Segmentation", fontsize=font_size, loc="left")
-                    plt.axis("off")
+                    ax.imshow(seg_colored)
+                    ax.set_title("Segmentation", fontsize=font_size, loc="left")
+                    ax.axis("off")
 
                 elif nr_plot == 2:
-                    plt.subplot(nrows, ncols, plot_number)
-                    plt.imshow(contours_seg, cmap="gray", interpolation="none")
-                    plt.title("Overlay", fontsize=font_size, loc="left")
-                    plt.axis("off")
+                    ax.imshow(contours_seg, cmap="gray", interpolation="none")
+                    ax.set_title("Overlay", fontsize=font_size, loc="left")
+                    ax.axis("off")
 
                 elif nr_plot == 3:
-                    plt.subplot(nrows, ncols, plot_number)
-                    plt.title("Area-time curves", fontsize=font_size, loc="left")
-                    plt.plot(
+                    ax.set_title("Area-time curves", fontsize=font_size, loc="left")
+                    ax.plot(
                         frame_times, lv_areas, color="green", label="Left Ventricle"
                     )
-                    plt.plot(frame_times, myo_areas, color="red", label="Myocardium")
-                    plt.plot(frame_times, la_areas, color="blue", label="Left Atrium")
+                    ax.plot(frame_times, myo_areas, color="red", label="Myocardium")
+                    ax.plot(frame_times, la_areas, color="blue", label="Left Atrium")
 
                     # Plot vertical lines for current frame, ES and ED points
-                    plt.axvline(
+                    ax.axvline(
                         x=frame_times[frame_nr],
                         color="c",
                         linewidth=1,
@@ -235,14 +238,14 @@ def main_plot_area_time_curves(
                     )
 
                     # Plot vertical lines for all ED and ES points
-                    plt.axvline(
+                    ax.axvline(
                         x=frame_times[es_points[0]],
                         color="m",
                         linewidth=1,
                         linestyle="--",
                         label="ES point",
                     )
-                    plt.axvline(
+                    ax.axvline(
                         x=frame_times[ed_points[0]],
                         color="y",
                         linewidth=1,
@@ -250,44 +253,55 @@ def main_plot_area_time_curves(
                         label="ED point",
                     )
                     for idx in range(1, len(es_points)):
-                        plt.axvline(
+                        ax.axvline(
                             x=frame_times[es_points[idx]],
                             color="m",
                             linewidth=1,
                             linestyle="--",
                         )
                     for idx in range(1, len(ed_points)):
-                        plt.axvline(
+                        ax.axvline(
                             x=frame_times[ed_points[idx]],
                             color="y",
                             linewidth=1,
                             linestyle="--",
                         )
 
-                    plt.xlabel("Time [ms]")
-                    plt.ylabel("Area [cm$^{2}$]")
-                    plt.xlim(frame_times[0] - 40, frame_times[-1] + 40)
-                    plt.ylim(min_y_val, max_y_val)
-                    plt.legend(bbox_to_anchor=(1, 0.5), loc="center left")
+                    ax.set_xlabel("Time [ms]")
+                    ax.set_ylabel("Area [cm$^{2}$]")
+                    ax.set_xlim(frame_times[0] - 40, frame_times[-1] + 40)
+                    ax.set_ylim(min_y_val, max_y_val)
+                    ax.legend(bbox_to_anchor=(1, 0.5), loc="center left")
+
+            # Append the current figure to the list
+            figures.append(fig)
+
+    return figures
 
 
 def show_atlases(
     atlas_lv: list[float], atlas_la: list[float], dpi_value: int = 100
-) -> None:
+) -> tuple[plt.figure, plt.axes]:
     """Function to plot the atlases (population priors) for the LV and LA.
 
     Args:
         atlas_lv (list[float]): Atlas of the LV.
         atlas_la (list[float]): Atlas of the LA.
         dpi_value (int): DPI value of the figure (default: 100).
+
+    Returns:
+        fig (plt.figure): Figure with the atlases.
+        ax (plt.axes): Axes of the figure.
     """
-    plt.figure(dpi=dpi_value)
-    plt.title("Atlases LV and LA area-time curves")
-    plt.plot(atlas_lv, color=(0, 1, 0), linewidth=5)
-    plt.plot(atlas_la, color=(0, 0, 1), linewidth=5)
-    plt.legend(["LV", "LA"])
-    plt.xlabel("% of a cardiac cycle")
-    plt.ylabel("Normalised area [-]")
+    fig, ax = plt.subplots(dpi=dpi_value)
+    ax.set_title("Atlases LV and LA area-time curves")
+    ax.plot(atlas_lv, color=(0, 1, 0), linewidth=5)
+    ax.plot(atlas_la, color=(0, 0, 1), linewidth=5)
+    ax.legend(["LV", "LA"])
+    ax.set_xlabel("% of a cardiac cycle")
+    ax.set_ylabel("Normalised area [-]")
+
+    return fig, ax
 
 
 def show_post_processing_results(
@@ -300,7 +314,7 @@ def show_post_processing_results(
         str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]
     ],
     colors_for_labels: np.ndarray,
-) -> None:
+) -> tuple[plt.figure, plt.axes, plt.axes, plt.axes]:
     """Function to plot the results of the post-processing.
 
     Args:
@@ -311,7 +325,12 @@ def show_post_processing_results(
         views (list[str]): List of views of the segmentations.
         single_frame_qc (dict[str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]]): Dictionary with the single frame QC results.
         colors_for_labels (np.ndarray): Color definitions for each label.
+
+    Returns:
+        fig (list[plt.figure]): Figures with the results of the post-processing.   
     """
+    figures = []
+
     for view in views:
         # Get the frames that need to be processed.
         frames_to_process = single_frame_qc["flagged_frames"][view]
@@ -326,7 +345,7 @@ def show_post_processing_results(
         for frame_nr, filename in enumerate(files_of_view):
             if frame_nr in frames_to_process:
                 # Define file locations and load images and segmentations.
-                images_present = os.listdir(path_to_images) > 0
+                images_present = len(os.listdir(path_to_images)) > 0
                 if images_present == True:
                     file_location_image = define_path_to_images(path_to_images, filename)
                     echo_image = convert_image_to_array(file_location_image)
@@ -347,26 +366,26 @@ def show_post_processing_results(
                     colors_for_labels,
                 )
 
-                fig, ax = plt.subplots(figsize=(15, 5))
-                fig.suptitle(("Segmentation, frame " + str(frame_nr)))
+                fig, (ax1, ax2, ax3) = plt.subplots(nrows = 1, ncols= 3, figsize=(15, 5))
+                fig.suptitle("Visualisation post-processing, frame " + str(frame_nr))
 
                 # Subplot 1: Echo image.
                 if images_present == True:
-                    ax.subplot(1, 3, 1)
-                    ax.imshow(echo_image, cmap="gray")
-                    ax.title("Echo image")
-                    ax.axis("off")
+                    ax1.imshow(echo_image, cmap="gray")
+                    ax1.set_title("Echo image")
+                    ax1.axis("off")
 
                 # Subplot 2: Segmentation before post-processing.
-                ax.subplot(1, 3, 2)
-                ax.imshow(seg_before_pp)
-                ax.title("Segmentation before post-processing")
-                ax.axis("off")
+                ax2.imshow(seg_before_pp)
+                ax2.set_title("Segmentation before post-processing")
+                ax2.axis("off")
 
                 # Subplot 3: Segmentation after post-processing.
-                ax.subplot(1, 3, 3)
-                ax.imshow(seg_after_pp)
-                ax.title("Segmentation after post-processing")
-                ax.axis("off")
+                ax3.imshow(seg_after_pp)
+                ax3.set_title("Segmentation after post-processing")
+                ax3.axis("off")
 
-            return fig, ax
+                # Append the current figure to the list
+                figures.append(fig)
+
+    return figures
