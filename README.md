@@ -2,9 +2,9 @@
 
 This repository was created for the automated analysis of 2D echocardiography images, with the addition of a quality control and calculation of several routine clinical indices. The workflow is described in the conference paper "Automated quality-controlled left heart segmentation from 2D echocardiography", which was accepted for publication at the MICCAI-STACOM 2023 workshop. The code in this repository was used to generate the results in the paper.
 
-Bram Geven - bgev545@aucklanduni.ac.nz
-Debbie Zhao - debbie.zhao@auckland.ac.nz
-Stephen Creamer - stephen.creamer@auckland.ac.nz
+- Bram Geven - bgev545@aucklanduni.ac.nz
+- Debbie Zhao - debbie.zhao@auckland.ac.nz
+- Stephen Creamer - stephen.creamer@auckland.ac.nz
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
