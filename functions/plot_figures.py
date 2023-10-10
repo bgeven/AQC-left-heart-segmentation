@@ -296,7 +296,9 @@ def show_post_processing_results(
     path_to_final_segmentations: str,
     all_files: list[str],
     views: list[str],
-    single_frame_qc: dict[str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]],
+    single_frame_qc: dict[
+        str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]
+    ],
     colors_for_labels: np.ndarray,
 ) -> None:
     """Function to plot the results of the post-processing.

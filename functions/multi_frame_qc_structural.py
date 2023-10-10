@@ -37,9 +37,7 @@ def _check_for_surrounded_lv(
 
     for j in range(len(contour_1[0])):
         # Get the coordinates of the left ventricular contour.
-        coordinates_1 = tuple(
-            [int(contour_1[0][j][0][0]), int(contour_1[0][j][0][1])]
-        )
+        coordinates_1 = tuple([int(contour_1[0][j][0][0]), int(contour_1[0][j][0][1])])
 
         # Get the distance between the left ventricular contour and the other contours.
         distance_12 = cv2.pointPolygonTest(contour_2[0], coordinates_1, True)

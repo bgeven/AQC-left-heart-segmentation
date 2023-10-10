@@ -162,9 +162,7 @@ def _find_mitral_valve_border_coordinates(
         )
 
         # Find common points between the neighboring pixels of LV and MYO and LV and LA.
-        common_indices = np.intersect1d(
-            neighbor_indices_LV_LA, neighbor_indices_LV_MYO
-        )
+        common_indices = np.intersect1d(neighbor_indices_LV_LA, neighbor_indices_LV_MYO)
 
         # Check if there are at least 2 common points and the distance between the points is larger than x px,
         # else, increase the threshold distance and continue while loop.
@@ -385,13 +383,11 @@ def _comp_length_and_diameter(
     # Check if the midpoint is not equal to 0 and if there are pixels in the segmentation.
     if midpoint_x == 0 or np.sum(np.array(seg_1) == 1) == 0:
         length = 0
-        diameters = np.array([np.nan] * nr_of_diameters) 
+        diameters = np.array([np.nan] * nr_of_diameters)
 
         return length, diameters
-    
-    x_apex, y_apex = _find_apex(
-        seg_1, midpoint_x, midpoint_y, mode="before_rotation"
-    )
+
+    x_apex, y_apex = _find_apex(seg_1, midpoint_x, midpoint_y, mode="before_rotation")
 
     # Find angle of rotation and rotate segmentation.
     angle = np.pi + np.arctan2(x_apex - midpoint_x, y_apex - midpoint_y)
@@ -525,12 +521,8 @@ def _comp_circumference(
         return np.nan
 
     # Process the coordinates of the first contour by removing the neighboring or overlapping coordinates.
-    x_coordinates_A_processed = _process_coordinates(
-        x_coordinates_A, neighbor_indices
-    )
-    y_coordinates_A_processed = _process_coordinates(
-        y_coordinates_A, neighbor_indices
-    )
+    x_coordinates_A_processed = _process_coordinates(x_coordinates_A, neighbor_indices)
+    y_coordinates_A_processed = _process_coordinates(y_coordinates_A, neighbor_indices)
 
     # Calculate the difference between each coordinate.
     dx = np.diff(x_coordinates_A_processed)
@@ -756,7 +748,7 @@ def _comp_volume_main(
         volume_simpson_es = _comp_volume_simpson(
             diameters_es_a2ch, diameters_es_a4ch, length_es_a2ch, length_es_a4ch
         )
-    else:     
+    else:
         volume_simpson_es = np.nan
 
     return volume_simpson_ed, volume_simpson_es

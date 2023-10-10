@@ -187,7 +187,7 @@ def _give_score_per_criterion(
             4 if item == min_value else 0 if item == max_value else 2
             for item in my_list_rounded
         ]
-    else: 
+    else:
         raise ValueError("Method not recognized.")
 
     return scores

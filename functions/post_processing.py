@@ -136,19 +136,27 @@ def _get_main_contour_lv_la(
         if (
             cv2.pointPolygonTest(contour, mean_centroid, False) >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0] - extra_check_points, mean_centroid[1]), False
+                contour,
+                (mean_centroid[0] - extra_check_points, mean_centroid[1]),
+                False,
             )
             >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0] + extra_check_points, mean_centroid[1]), False
+                contour,
+                (mean_centroid[0] + extra_check_points, mean_centroid[1]),
+                False,
             )
             >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0], mean_centroid[1] - extra_check_points), False
+                contour,
+                (mean_centroid[0], mean_centroid[1] - extra_check_points),
+                False,
             )
             >= 0
             or cv2.pointPolygonTest(
-                contour, (mean_centroid[0], mean_centroid[1] + extra_check_points), False
+                contour,
+                (mean_centroid[0], mean_centroid[1] + extra_check_points),
+                False,
             )
             >= 0
         )
@@ -167,7 +175,10 @@ def _get_main_contour_lv_la(
 
 
 def _get_main_contour_myo(
-    seg_1: np.ndarray, seg_2: np.ndarray, distance_threshold: int = 5, size_closing_kernel: int = 25
+    seg_1: np.ndarray,
+    seg_2: np.ndarray,
+    distance_threshold: int = 5,
+    size_closing_kernel: int = 25,
 ) -> np.ndarray:
     """Extract the contours of the myocardium that neighbour the LV.
 
@@ -176,7 +187,7 @@ def _get_main_contour_myo(
         seg_2 (np.ndarray): Segmentation of MYO.
         distance_threshold (int): Threshold for maximum distance from contour 2 to contour 1 (default: 5).
         size_closing_kernel (int): Size of the closing kernel (default: 25).
-        
+
     Returns:
         seg_main (np.ndarray): Segmentation of main contour of MYO, without redundant contours.
     """
@@ -214,7 +225,9 @@ def _get_main_contour_myo(
     # Close the segmentation to fill the (small) holes between the contours if multiple contours are selected.
     if len(neighboring_contours) > 1:
         seg_main = cv2.morphologyEx(
-            seg_main, cv2.MORPH_CLOSE, np.ones((size_closing_kernel, size_closing_kernel), np.uint8)
+            seg_main,
+            cv2.MORPH_CLOSE,
+            np.ones((size_closing_kernel, size_closing_kernel), np.uint8),
         )
 
     return seg_main

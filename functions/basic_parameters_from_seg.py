@@ -6,7 +6,9 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def _comp_factor_px2_to_cm2(pixel_spacing: list[float], conv_factor: int = 100) -> float:
+def _comp_factor_px2_to_cm2(
+    pixel_spacing: list[float], conv_factor: int = 100
+) -> float:
     """Compute pixel size to cm2 conversion factor.
 
     Args:
@@ -111,7 +113,12 @@ def _pad_areas(areas: list[float]) -> list[float]:
     return areas_padded
 
 
-def _find_es_points(areas: list[float], frames_r_wave: list[int] = [], dflt_nr_peaks: int = 3, nr_peak_type: str = "auto") -> list[int]:
+def _find_es_points(
+    areas: list[float],
+    frames_r_wave: list[int] = [],
+    dflt_nr_peaks: int = 3,
+    nr_peak_type: str = "auto",
+) -> list[int]:
     """Determine the end-systole (ES) points from LV areas.
 
     Args:
@@ -123,18 +130,18 @@ def _find_es_points(areas: list[float], frames_r_wave: list[int] = [], dflt_nr_p
     Returns:
         es_points (list[int]): ES points.
     """
-    
+
     if nr_peak_type == "auto":
         # Find number of ED points automatically and subtract 1 to find number of ES peaks.
         if len(frames_r_wave) > 0:
             nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas)) - 1
-        
+
         else:
             raise ValueError("nr_peak_type is 'auto', but frames_r_wave is empty.")
 
     elif nr_peak_type == "force":
-        nr_peaks = dflt_nr_peaks  # Set default number of ES points. 
-    
+        nr_peaks = dflt_nr_peaks  # Set default number of ES points.
+
     else:
         raise ValueError("nr_peak_type should be 'auto' or 'force'.")
 
@@ -153,7 +160,12 @@ def _find_es_points(areas: list[float], frames_r_wave: list[int] = [], dflt_nr_p
     return es_points
 
 
-def _find_ed_points(areas: list[float], frames_r_wave: list[int] = [], dflt_nr_peaks: int = 4, nr_peak_type: str = "auto") -> list[int]:
+def _find_ed_points(
+    areas: list[float],
+    frames_r_wave: list[int] = [],
+    dflt_nr_peaks: int = 4,
+    nr_peak_type: str = "auto",
+) -> list[int]:
     """Determine the end-diastole (ED) points from LV areas.
 
     Args:

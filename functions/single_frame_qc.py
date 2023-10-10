@@ -18,7 +18,9 @@ def _find_num_contours(seg: np.ndarray, size_closing_kernel: int = 2) -> int:
         number_of_contours (int): Number of external contours in the segmentation.
     """
     # Perform morphological closing to fill in small gaps in segmentation.
-    closed_seg = cv2.morphologyEx(seg, cv2.MORPH_CLOSE, np.array([size_closing_kernel, size_closing_kernel]))
+    closed_seg = cv2.morphologyEx(
+        seg, cv2.MORPH_CLOSE, np.array([size_closing_kernel, size_closing_kernel])
+    )
 
     contours = find_contours(closed_seg, "external")
     number_of_contours = len(contours)
@@ -69,7 +71,7 @@ def _check_for_gap_between_structures(
         seg_B (np.ndarray): Segmentation of the second structure.
         num_gaps_A (int): Number of gaps in the first structure.
         num_gaps_B (int): Number of gaps in the second structure.
-        min_size (list[int]): Minimum size of a gap (default: [1, 1]). 
+        min_size (list[int]): Minimum size of a gap (default: [1, 1]).
 
     Returns:
         num_gaps (int): Number of gaps between the two structures.
@@ -342,9 +344,7 @@ def main_single_frame_qc(
     return single_frame_qc
 
 
-def stats_single_frame_qc(
-    single_frame_qc: dict[str, dict[str, list]]
-) -> pd.DataFrame:
+def stats_single_frame_qc(single_frame_qc: dict[str, dict[str, list]]) -> pd.DataFrame:
     """Get statistics of the quality control of segmentation.
 
     Args:
