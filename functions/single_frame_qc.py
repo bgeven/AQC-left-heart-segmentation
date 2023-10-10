@@ -351,7 +351,7 @@ def stats_single_frame_qc(single_frame_qc: dict[str, dict[str, list]]) -> pd.Dat
         single_frame_qc (dict[str, dict[str, list]]): Dictionary of the results of the single-frame quality control of segmentation.
 
     Returns:
-        stats_single_frame_qc (pd.DataFrame[list[float]]): Statistics of the quality control of segmentation.
+        stats_single_frame_qc (pd.DataFrame): Statistics of the quality control of segmentation.
     """
     # Get the statistics of the quality control of segmentation.
     stats_single_frame_qc = pd.DataFrame.from_dict(

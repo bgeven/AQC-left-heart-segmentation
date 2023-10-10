@@ -344,7 +344,7 @@ def show_post_processing_results(
                     colors_for_labels,
                 )
 
-                plt.figure()
+                plt.figure(figsize=(15, 5))
                 plt.suptitle(("Segmentation of " + view + ", frame " + str(frame_nr)))
 
                 # Subplot 1: Echo image.

@@ -112,7 +112,7 @@ def find_contours(seg: np.ndarray, spec: str = "all") -> list[np.ndarray]:
 
     # Find contours based on the specified mode.
     if spec in retrieval_modes.keys():
-        _, contours, _ = cv2.findContours(
+        contours, _ = cv2.findContours(
             seg, retrieval_modes.get(spec, cv2.RETR_LIST), cv2.CHAIN_APPROX_NONE
         )
     else:
