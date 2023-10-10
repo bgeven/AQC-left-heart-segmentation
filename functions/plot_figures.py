@@ -326,8 +326,10 @@ def show_post_processing_results(
         for frame_nr, filename in enumerate(files_of_view):
             if frame_nr in frames_to_process:
                 # Define file locations and load images and segmentations.
-                file_location_image = define_path_to_images(path_to_images, filename)
-                echo_image = convert_image_to_array(file_location_image)
+                images_present = os.listdir(path_to_images) > 0
+                if images_present == True:
+                    file_location_image = define_path_to_images(path_to_images, filename)
+                    echo_image = convert_image_to_array(file_location_image)
 
                 file_location_seg_before_pp = os.path.join(
                     path_to_segmentations, filename
@@ -345,23 +347,26 @@ def show_post_processing_results(
                     colors_for_labels,
                 )
 
-                plt.figure(figsize=(15, 5))
-                plt.suptitle(("Segmentation, frame " + str(frame_nr)))
+                fig, ax = plt.subplots(figsize=(15, 5))
+                fig.suptitle(("Segmentation, frame " + str(frame_nr)))
 
                 # Subplot 1: Echo image.
-                plt.subplot(1, 3, 1)
-                plt.imshow(echo_image, cmap="gray")
-                plt.title("Echo image")
-                plt.axis("off")
+                if images_present == True:
+                    ax.subplot(1, 3, 1)
+                    ax.imshow(echo_image, cmap="gray")
+                    ax.title("Echo image")
+                    ax.axis("off")
 
                 # Subplot 2: Segmentation before post-processing.
-                plt.subplot(1, 3, 2)
-                plt.imshow(seg_before_pp)
-                plt.title("Segmentation before post-processing")
-                plt.axis("off")
+                ax.subplot(1, 3, 2)
+                ax.imshow(seg_before_pp)
+                ax.title("Segmentation before post-processing")
+                ax.axis("off")
 
                 # Subplot 3: Segmentation after post-processing.
-                plt.subplot(1, 3, 3)
-                plt.imshow(seg_after_pp)
-                plt.title("Segmentation after post-processing")
-                plt.axis("off")
+                ax.subplot(1, 3, 3)
+                ax.imshow(seg_after_pp)
+                ax.title("Segmentation after post-processing")
+                ax.axis("off")
+
+            return fig, ax
