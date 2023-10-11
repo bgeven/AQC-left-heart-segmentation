@@ -483,7 +483,7 @@ def _process_coordinates(
 
 
 def _comp_circumference(
-    seg_A: np.ndarray, seg_B: np.ndarray, distance_threshold: int = 2
+    seg_A: np.ndarray, seg_B: np.ndarray, distance_threshold: int = 2, neighbor_threshold: int = 10,
 ) -> float:
     """Compute the circumference of the structure, without including pixels neighboring a specific structure.
 
@@ -491,6 +491,7 @@ def _comp_circumference(
         seg_A (np.ndarray): The segmentation of the structure.
         seg_B (np.ndarray): The segmentation of the neighboring structure, used to find pixels to exclude.
         distance_threshold (int): The threshold distance between two points (default: 2).
+        neighbor_threshold (int): The threshold number of neighboring or overlapping coordinates (default: 10).
 
     Returns:
         circumference (float): The circumference of the structure.
@@ -516,8 +517,8 @@ def _comp_circumference(
                 neighbor_indices.append(i)
                 break
 
-    # Check if there are more than 10 neighboring or overlapping coordinates.
-    if len(neighbor_indices) <= 10:
+    # Check if there are more than xx neighboring or overlapping coordinates, to ensure that the derived indices are valid. 
+    if len(neighbor_indices) <= neighbor_threshold:
         return np.nan
 
     # Process the coordinates of the first contour by removing the neighboring or overlapping coordinates.
