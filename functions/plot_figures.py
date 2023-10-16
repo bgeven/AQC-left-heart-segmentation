@@ -184,20 +184,23 @@ def main_plot_area_time_curves(
         # Only plot the first frame for now.
         for frame_nr, filename in enumerate(files_of_view[0:1]):
             # Define file location and load echo image frame.
-            file_location_image = define_path_to_images(path_to_images, filename)
-            echo_image = convert_image_to_array(file_location_image)
+            images_present = len(os.listdir(path_to_images)) > 0
+            if images_present == True:
+                file_location_image = define_path_to_images(path_to_images, filename)
+                echo_image = convert_image_to_array(file_location_image)
 
             # Define file location and load segmentation.
             file_location_seg = os.path.join(path_to_segmentations, filename)
             seg = convert_image_to_array(file_location_seg)
             seg_colored = _color_segmentation(seg, colors_for_labels)
 
-            contours_seg = _project_segmentation_on_image(
-                echo_image, seg, colors_for_labels
-            )
+            if images_present == True:
+                contours_seg = _project_segmentation_on_image(
+                    echo_image, seg, colors_for_labels
+                )
 
             fig = plt.figure(dpi=dpi_value)
-            fig.suptitle("Segmentation, frame " + str(frame_nr))
+            fig.suptitle("Segmentation and area-time curves. View: {}, frame {}.".format(view, str(frame_nr)))
 
             # Format figure with subplots.
             X = [(2, 3, 1), (2, 3, 2), (2, 3, 3), (2, 3, (4, 5))]
@@ -206,9 +209,13 @@ def main_plot_area_time_curves(
                 ax = fig.add_subplot(nrows, ncols, plot_number)
 
                 if nr_plot == 0:
-                    ax.imshow(echo_image, cmap="gray")
-                    ax.set_title("Echo image", fontsize=font_size, loc="left")
-                    ax.axis("off")
+                    if images_present == True:
+                        ax.imshow(echo_image, cmap="gray")
+                        ax.set_title("Echo image", fontsize=font_size, loc="left")
+                        ax.axis("off")
+                    else:    
+                        ax.axis("off")
+                        ax.text(0.5, 0.5, "No image available.", clip_on=True, horizontalalignment='center', verticalalignment='center')
 
                 elif nr_plot == 1:
                     ax.imshow(seg_colored)
@@ -219,7 +226,7 @@ def main_plot_area_time_curves(
                     ax.imshow(contours_seg, cmap="gray", interpolation="none")
                     ax.set_title("Overlay", fontsize=font_size, loc="left")
                     ax.axis("off")
-
+                    
                 elif nr_plot == 3:
                     ax.set_title("Area-time curves", fontsize=font_size, loc="left")
                     ax.plot(
@@ -367,13 +374,16 @@ def show_post_processing_results(
                 )
 
                 fig, (ax1, ax2, ax3) = plt.subplots(nrows = 1, ncols= 3, figsize=(15, 5))
-                fig.suptitle("Visualisation post-processing, frame " + str(frame_nr))
+                fig.suptitle("Visualisation post-processing. View: {}, frame: {}.".format(view, str(frame_nr)))
 
                 # Subplot 1: Echo image.
                 if images_present == True:
                     ax1.imshow(echo_image, cmap="gray")
                     ax1.set_title("Echo image")
                     ax1.axis("off")
+                else:    
+                    ax1.axis("off")
+                    ax1.text(0.5, 0.5, "No image available.", clip_on=True, horizontalalignment='center', verticalalignment='center')
 
                 # Subplot 2: Segmentation before post-processing.
                 ax2.imshow(seg_before_pp)

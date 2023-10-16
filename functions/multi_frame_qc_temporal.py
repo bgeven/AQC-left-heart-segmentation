@@ -56,6 +56,9 @@ def _prepare_area_time_curves(
     Returns:
         values_adjusted (list[float]): List of values of the area-time curve of a structure, prepared for the DTW analysis.
     """
+    if len(frame_times) == 0:
+        frame_times = list(range(len(values)))
+
     # Find the values and timings of the previously selected cycle.
     values_cycle = values[time_points[0] : time_points[1] + 1]
     timings_cycle = frame_times[time_points[0] : time_points[1] + 1]
@@ -116,6 +119,7 @@ def main_multi_frame_qc_temporal(
     atlas_la: list[float],
 ) -> dict[str, dict[str, float]]:
     """MAIN: Do multi-frame QC assessment based on temporal criteria (dynamic time warping (DTW) distance).
+    
     Args:
         views (list[str]): List of views of the segmentations.
         cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cycles.
