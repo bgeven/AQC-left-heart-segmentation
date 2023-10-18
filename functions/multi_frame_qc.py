@@ -42,9 +42,9 @@ def main_multi_frame_qc(
     Args:
         patient (str): Patient ID.
         views (list[str]): Plane views of the segmentations.
-        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cardiac cycle.
-        multi_frame_qc_structural (dict[str, dict[str, list[int]]]): Dictionary containing the structural quality control information.
-        multi_frame_qc_temporal (dict[str, dict[str, list[int]]]): Dictionary containing the temporal quality control information.
+        cycle_information (dict[str, dict[str, list[float]]]): Dictionary containing the information of the cardiac cycle.
+        multi_frame_qc_structural (dict[str, dict[str, list[float]]]): Dictionary containing the structural quality control information.
+        multi_frame_qc_temporal (dict[str, dict[str, list[float]]]): Dictionary containing the temporal quality control information.
         flagged_frame_threshold (int): Threshold for the number of flagged frames within a cycle (default: 2).
         dtw_thresholds (list[int]): Thresholds for the DTW distance between the area-time curve of a cycle and the atlas (default: [1,2]).
 

@@ -122,14 +122,14 @@ def main_multi_frame_qc_temporal(
     
     Args:
         views (list[str]): Plane views of the segmentations.
-        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cardiac cycle.
-        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary containing the segmentation parameters.
-        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the DICOM files.
+        cycle_information (dict[str, dict[str, list[float]]]): Dictionary containing the information of the cardiac cycle.
+        segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
+        dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
         atlas_lv (list[float]): Values of the area-time curve of the atlas for the LV.
         atlas_la (list[float]): Values of the area-time curve of the atlas for the LA.
 
     Returns:
-        area_time_analysis (dict[str, dict[str, list[int]]]): Dictionary containing the results of the area-time analysis.
+        area_time_analysis (dict[str, dict[str, list[float]]]): Dictionary containing the results of the area-time analysis.
     """
     # Create dictionary to store the area-time analysis.
     area_time_analysis = defaultdict(dict)

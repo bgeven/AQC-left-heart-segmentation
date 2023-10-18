@@ -159,7 +159,7 @@ def main_multi_frame_qc_structural(
         lv_surrounded_threshold (int): Threshold to adjust robustness of the check (default: 3).
 
     Returns:
-        multi_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the results of the multi-frame QC.
+        multi_frame_qc (dict[str, dict[str, list[float]]]): Dictionary containing the results of the multi-frame QC.
     """
     multi_frame_qc = defaultdict(dict)
 

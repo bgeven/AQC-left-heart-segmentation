@@ -620,7 +620,7 @@ def _post_process_segmentation(
 def main_post_processing(
     path_to_segmentations: str,
     path_to_final_segmentations: str,
-    single_frame_qc: dict[str, list[int]],
+    single_frame_qc: dict[str, dict[str, list]],
     all_files: list[str],
     views: list[str],
 ) -> None:
@@ -631,7 +631,7 @@ def main_post_processing(
     Args:
         path_to_segmentations (str): Path to the directory containing the segmentations.
         path_to_final_segmentations (str): Path to the directory where post-processed segmentations should be saved.
-        single_frame_QC (dict[str, list[int]]): Dictionary containing the results of the single-frame QC.
+        single_frame_QC (dict[str, dict[str, list]]): Dictionary containing the results of the single-frame QC.
         all_files (list[str]): All files in the directory.
         views (list[str]): Plane views of the segmentations.
     """

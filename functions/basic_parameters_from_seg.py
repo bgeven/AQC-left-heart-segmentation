@@ -46,13 +46,13 @@ def _comp_area_from_seg(seg: np.ndarray, label: int, px_to_cm2_factor: float) ->
 
 
 def _comp_areas_in_sequence(
-    path_to_segmentation: str, frames: list[int], label: int, px_to_cm2_factor: float
+    path_to_segmentation: str, frames: list[float], label: int, px_to_cm2_factor: float
 ) -> list[float]:
     """Compute the area of a certain label in the segmentation of every frame in a sequence.
 
     Args:
         path_to_segmentation (str): Path to the directory containing the segmentations.
-        frames (list[int]): Frame numbers present in the sequence.
+        frames (list[float]): Frame numbers present in the sequence.
         label (int): Label of the structure in the segmentation.
         px_to_cm2_factor (float): Factor to convert pixel size to cm2.
 

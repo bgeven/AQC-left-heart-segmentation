@@ -332,14 +332,14 @@ def main_cycle_selection(
     Args:
         path_to_images (str): Path to the directory containing the echo images.
         path_to_segmentations (str): Path to the directory containing the segmentations.
-        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary containing the segmentation parameters.
-        single_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the results of the single-frame QC.
-        multi_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the results of the multi-frame QC.
+        segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
+        single_frame_qc (dict[str, dict[str, list[float]]]): Dictionary containing the results of the single-frame QC.
+        multi_frame_qc (dict[str, dict[str, list[float]]]): Dictionary containing the results of the multi-frame QC.
         all_files (list[str]): All files in the directory.
         views (list[str]): Plane views of the segmentations.
 
     Returns:
-        cycle_info (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cardiac cycle.
+        cycle_info (dict[str, dict[str, list[float]]]): Dictionary containing the information of the cardiac cycle.
     """
     cycle_info = defaultdict(dict)
 

@@ -80,7 +80,7 @@ def main_get_dicom_properties(
         default_frames_r_waves (list[int]): Default frame numbers corresponding to the R-wave(s) in the image sequence (default: []).
 
     Returns:
-        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the DICOM files.
+        dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
     """
     # Create dictionary to store the properties of the DICOM files.
     dicom_properties = defaultdict(dict)

@@ -628,7 +628,7 @@ def _main_cavity_properties(
         path_to_segmentations (str): Path to the directory containing the segmentations.
         views (list[str]): Plane views of the segmentations.
         all_files (list[str]): All files in the directory.
-        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cardiac cycle.
+        cycle_information (dict[str, dict[str, list[float]]]): Dictionary containing the information of the cardiac cycle.
         dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
         segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
         change_factor (int): Factor by which the segmentation is changed (default: 4).
@@ -806,7 +806,7 @@ def main_computation_clinical_indices(
         patient (str): The patient ID.
         views (list[str]): Plane views of the segmentations.
         all_files (list[str]): All files in the directory.
-        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cardiac cycle.
+        cycle_information (dict[str, dict[str, list[float]]]): Dictionary containing the information of the cardiac cycle.
         dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
         segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
 

@@ -140,7 +140,7 @@ def main_plot_area_time_curves(
     all_files: list[str],
     views: list[str],
     dicom_properties: dict[str, dict[str, list[float]]],
-    segmentation_properties: dict[str, dict[str, Union[list[float], list[int]]]],
+    segmentation_properties: dict[str, dict[str, list[float]]],
     colors_for_labels: np.ndarray,
     font_size: int = 8,
     dpi_value: int = 100,
@@ -152,8 +152,8 @@ def main_plot_area_time_curves(
         path_to_segmentations (str): Path to the directory containing the segmentations.
         all_files (list[str]): All files in the directory.
         views (list[str]): Plane views of the segmentations.
-        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the DICOM files.
-        segmentation_properties (dict[str, dict[str, Union[list[float], list[int]]]]): Dictionary containing the segmentation parameters.
+        dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
+        segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
@@ -317,9 +317,7 @@ def show_post_processing_results(
     path_to_final_segmentations: str,
     all_files: list[str],
     views: list[str],
-    single_frame_qc: dict[
-        str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]
-    ],
+    single_frame_qc: dict[str, dict[str, list]],
     colors_for_labels: np.ndarray,
 ) -> tuple[plt.figure, plt.axes, plt.axes, plt.axes]:
     """Function to plot the results of the post-processing.
@@ -330,7 +328,7 @@ def show_post_processing_results(
         path_to_final_segmentations (str): Path to the directory containing the final segmentations.
         all_files (list[str]): All files in the directory.
         views (list[str]): Plane views of the segmentations.
-        single_frame_qc (dict[str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]]): Dictionary containing the results of the single-frame QC.
+        single_frame_qc (dict[str, dict[str, list]]): Dictionary containing the results of the single-frame QC.
         colors_for_labels (np.ndarray): Color definitions for each label.
 
     Returns:
