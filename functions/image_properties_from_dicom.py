@@ -32,7 +32,7 @@ def _get_pixel_spacing(dicom_data: pydicom.FileDataset) -> list[float]:
         dicom_data (pydicom.FileDataset): Pydicom object containing DICOM file data.
 
     Returns:
-        pixel_spacing (list[float]): Pixel spacing of the image sequence for each dimension.
+        pixel_spacing (list[float]): Spacing between pixels in x and y direction.
     """
     pixel_spacing = [float(s) for s in dicom_data.PixelSpacing._list]
 
@@ -75,7 +75,7 @@ def main_get_dicom_properties(
 
     Args:
         path_to_dicom_files (str): Path to the directory containing the DICOM files.
-        views (list[str]): List of views of the segmentations.
+        views (list[str]): Plane views of the segmentations.
         default_pixel_spacing (list[float]): Default pixel spacing of the image sequence for each dimension (default: [0.1, 0.1]).
         default_frames_r_waves (list[int]): Default frame numbers corresponding to the R-wave(s) in the image sequence (default: []).
 

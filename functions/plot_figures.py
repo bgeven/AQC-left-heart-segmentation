@@ -31,12 +31,12 @@ def _remove_neighboring_pixels(
     """Remove points on the contours that neighbor the left ventricular (LV) contour.
 
     Args:
-        contours_1 (list[np.ndarray]): List of contours of the LV.
-        contours_2 (list[np.ndarray]): List of contours of the myocardium (MYO) or left atrium (LA).
+        contours_1 (list[np.ndarray]): Contour(s) of the LV.
+        contours_2 (list[np.ndarray]): Contour(s) of the myocardium (MYO) or left atrium (LA).
         threshold_distance (int): Threshold distance between the LV and MYO or LA contour to remove points on the MYO or LA contour (default: 3).
 
     Returns:
-        contour_adapted (list[np.ndarray]): List of contours of the MYO or LA with points removed.
+        contour_adapted (list[np.ndarray]): Contour(s) of the MYO or LA with points removed.
     """
     if len(contours_1) > 0 and len(contours_2) > 0:
         contour_adapted = []
@@ -148,12 +148,12 @@ def main_plot_area_time_curves(
     """Plot area-time curves for all patients.
 
     Args:
-        path_to_images (str): Directory of the folder with the echo images.
-        path_to_segmentations (str): Directory of the folder with the segmentations.
-        all_files (list[str]): List of all files in the directory.
-        views (list[str]): List of views of the segmentations.
-        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary with dicom properties of all patients.
-        segmentation_properties (dict[str, dict[str, Union[list[float], list[int]]]]): Dictionary with segmentation properties of all patients.
+        path_to_images (str): Path to the directory containing the echo images.
+        path_to_segmentations (str): Path to the directory containing the segmentations.
+        all_files (list[str]): All files in the directory.
+        views (list[str]): Plane views of the segmentations.
+        dicom_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the DICOM files.
+        segmentation_properties (dict[str, dict[str, Union[list[float], list[int]]]]): Dictionary containing the segmentation parameters.
         colors_for_labels (np.ndarray): Color definitions for each label.
         font_size (int): Font size of the figure (default: 8).
         dpi_value (int): DPI value of the figure (default: 100).
@@ -292,8 +292,8 @@ def show_atlases(
     """Function to plot the atlases (population priors) for the LV and LA.
 
     Args:
-        atlas_lv (list[float]): Atlas of the LV.
-        atlas_la (list[float]): Atlas of the LA.
+        atlas_lv (list[float]): Values of the area-time curve of the atlas for the LV.
+        atlas_la (list[float]): Values of the area-time curve of the atlas for the LA.
         dpi_value (int): DPI value of the figure (default: 100).
 
     Returns:
@@ -325,12 +325,12 @@ def show_post_processing_results(
     """Function to plot the results of the post-processing.
 
     Args:
-        path_to_images (str): Directory of the folder with the echo images.
-        path_to_segmentations (str): Directory of the folder with the segmentations.
-        path_to_final_segmentations (str): Directory of the folder with the final segmentations.
-        all_files (list[str]): List of all files in the directory.
-        views (list[str]): List of views of the segmentations.
-        single_frame_qc (dict[str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]]): Dictionary with the single frame QC results.
+        path_to_images (str): Path to the directory containing the echo images.
+        path_to_segmentations (str): Path to the directory containing the segmentations.
+        path_to_final_segmentations (str): Path to the directory containing the final segmentations.
+        all_files (list[str]): All files in the directory.
+        views (list[str]): Plane views of the segmentations.
+        single_frame_qc (dict[str, Union[dict[str, list[bool]], dict[str, list[int]], dict[str, int]]]): Dictionary containing the results of the single-frame QC.
         colors_for_labels (np.ndarray): Color definitions for each label.
 
     Returns:

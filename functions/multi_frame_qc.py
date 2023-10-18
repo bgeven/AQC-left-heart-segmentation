@@ -8,12 +8,12 @@ def _count_values_in_range(
     """Count the number of values in a list that fall within a specified range.
 
     Args:
-        list_values (list[int]): The list of values to search through.
-        start_value (int): The lower bound of the range.
-        end_value (int): The upper bound of the range.
+        list_values (list[int]): Values to search through.
+        start_value (int): Lower bound of the range.
+        end_value (int): Upper bound of the range.
 
     Returns:
-        count (int): The number of values in the list that fall within the specified range.
+        count (int): Number of values in the list that fall within the specified range.
 
     Raises:
         ValueError: If start_value is greater than end_value.
@@ -40,18 +40,18 @@ def main_multi_frame_qc(
     The labels are combined to generate an overall patient-level label.
 
     Args:
-        patient (str): The patient ID.
-        views (list[str]): The list of views.
-        cycle_information (dict[str, dict[str, list[int]]]): The cycle information.
-        multi_frame_qc_structural (dict[str, dict[str, list[int]]]): The structural quality control information.
-        multi_frame_qc_temporal (dict[str, dict[str, list[int]]]): The temporal quality control information.
-        flagged_frame_threshold (int): The threshold for the number of flagged frames within a cycle (default: 2).
-        dtw_thresholds (list[int]): The thresholds for the DTW distance between the area-time curve of a cycle and the atlas (default: [1,2]).
+        patient (str): Patient ID.
+        views (list[str]): Plane views of the segmentations.
+        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cardiac cycle.
+        multi_frame_qc_structural (dict[str, dict[str, list[int]]]): Dictionary containing the structural quality control information.
+        multi_frame_qc_temporal (dict[str, dict[str, list[int]]]): Dictionary containing the temporal quality control information.
+        flagged_frame_threshold (int): Threshold for the number of flagged frames within a cycle (default: 2).
+        dtw_thresholds (list[int]): Thresholds for the DTW distance between the area-time curve of a cycle and the atlas (default: [1,2]).
 
     Returns:
-        analysis (dict[str, dict[str, bool]]): A dictionary containing analysis results.
-            - "label_per_view": A dictionary mapping views to their quality control labels.
-            - "label_combined": The combined quality control label for the patient.
+        analysis (dict[str, dict[str, bool]]): Dictionary containing analysis results.
+            - "label_per_view": Dictionary mapping views to their quality control labels.
+            - "label_combined": Combined quality control label for the patient.
 
     """
     analysis = defaultdict(dict)

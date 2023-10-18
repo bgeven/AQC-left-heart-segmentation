@@ -12,11 +12,11 @@ def get_list_with_views(
     """Get list of the views of the segmentations present in one folder.
 
     Args:
-        all_files (list[str]): List of all the files in the folder.
+        all_files (list[str]): All files in the directory.
         length_view_identifier (int): Length of the view identifier.
 
     Returns:
-        views (list[str]): List of the views of the segmentations present in one folder.
+        views (list[str]): Plane views of the segmentations.
     """
     # Get list of the views in one folder containing the segmentations of one patient.
     views = sorted(set([i[:length_view_identifier] for i in all_files]))
@@ -30,12 +30,12 @@ def get_list_with_files_of_view(
     """Get list of the files belonging to a specific view.
 
     Args:
-        all_files (list[str]): List of all the files in the folder.
+        all_files (list[str]): All files in the directory.
         view_identifier (str): Identifier of the view.
         length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
 
     Returns:
-        images_of_one_view (list[str]): List of the files belonging to a specific view.
+        images_of_one_view (list[str]): Files belonging to a specific view.
     """
     images_of_one_view_unsrt = [i for i in all_files if i.startswith(view_identifier)]
     images_of_one_view = sorted(
@@ -101,7 +101,7 @@ def find_contours(seg: np.ndarray, spec: str = "all") -> list[np.ndarray]:
         spec (str): Specification of the contours to find.
 
     Returns:
-        contours (list[np.ndarray]): List of contours.
+        contours (list[np.ndarray]): Contour(s) of a structure.
     """
     # Define the retrieval modes.
     retrieval_modes = {
@@ -136,9 +136,9 @@ def combine_segmentations(
     It is assumed that the labels of the segmentations are as described in the README.
 
     Args:
-        segmentations (list[np.ndarray]): List of segmentations of the echo image.
+        segmentations (list[np.ndarray]): Segmentation(s) of different structures in the echo image.
         typeOfCombination (str): Type of combination of the segmentations (default: difference).
-        labels (list[int]): List of labels of the segmentations (default: [1, 2, 3]).
+        labels (list[int]): Labels of the segmentations that need to be combined (default: [1, 2, 3]).
 
     Returns:
         total_seg (np.ndarray): Segmentation of the image with all structures.
@@ -189,8 +189,8 @@ def define_path_to_images(
     """Define the path to the image.
 
     Args:
-        path_to_images (str): Path to the folder containing the images.
-        filename (str): Name of the image.
+        path_to_images (str): Path to the directory containing the echo images.
+        filename (str): Filename of the segmentation.
         length_ext (int): Length of the file extension (default: 7 (.nii.gz)).
         input_channel (str): Input channel of the image (default: 0000).
 
@@ -212,8 +212,8 @@ def load_atlases(path_to_atlases: str) -> tuple[list[float], list[float]]:
         path_to_atlases (str): Path to the atlases.
 
     Returns:
-        atlas_lv (list[float]): List containing the LV atlas.
-        atlas_la (list[float]): List containing the LA atlas.
+        atlas_lv (list[float]): Left ventricular atlas.
+        atlas_la (list[float]): Left atrial atlas.
     """
     if len(os.listdir(path_to_atlases)) >= 2:
         with open(os.path.join(path_to_atlases, "atlas_lv.json"), "r") as file:
@@ -232,10 +232,10 @@ def normalise_list(list_to_normalise: list[float]) -> list[float]:
     """Normalise a list of values to a range of 0 to 1.
 
     Args:
-        list_to_normalise (list[float]): List of values to normalise.
+        list_to_normalise (list[float]): Values to normalise.
 
     Returns:
-        normalised_list (list[float]): Normalised list of values.
+        normalised_list (list[float]): Normalised values.
     """
     # Find the minimum and maximum values in the list.
     min_value = min(list_to_normalise)

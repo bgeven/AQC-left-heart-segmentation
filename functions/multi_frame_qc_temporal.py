@@ -10,11 +10,11 @@ def _interpolate_missing_areas(timings: list[float], areas: list[float]) -> list
     """Interpolate between the non-zero values in the area list to correct for missing values.
 
     Args:
-        timings (list[float]): List of timings of frames.
-        areas (list[float]): List of areas over time for a specific structure.
+        timings (list[float]): Timings of frames.
+        areas (list[float]): Areas over time for a specific structure.
 
     Returns:
-        areas_interpolated (list[float]): List of areas over time for a specific structure, with missing values interpolated.
+        areas_interpolated (list[float]): Areas over time for a specific structure, with missing values interpolated.
     """
     # If there are zero values in the list of areas, interpolate between the non-zero values.
     if min(areas) == 0:
@@ -48,13 +48,13 @@ def _prepare_area_time_curves(
     """Prepare the area-time curves for the DTW analysis.
 
     Args:
-        values (list[float]): List of values of the area-time curve of a structure.
-        frame_times (list[float]): List of timings of frames.
-        time_points (list[int]): List of the first and last frame of the cycle.
+        values (list[float]): Values of the area-time curve of a structure.
+        frame_times (list[float]): Timings of frames.
+        time_points (list[int]): First and last frame of the cycle.
         nr_time_points (int): Number of time points to interpolate to.
 
     Returns:
-        values_adjusted (list[float]): List of values of the area-time curve of a structure, prepared for the DTW analysis.
+        values_adjusted (list[float]): Values of the area-time curve of a structure, prepared for the DTW analysis.
     """
     if len(frame_times) == 0:
         frame_times = list(range(len(values)))
@@ -91,8 +91,8 @@ def _comp_dtw_distance(cycle_values: list[float], atlas: list[float]) -> float:
     """Compute the dynamic time warping (DTW) distance between the area-time curve of a cycle and the atlas.
 
     Args:
-        cycle_values (list[float]): List of values of the area-time curve of a cycle.
-        atlas (list[float]): List of values of the area-time curve of the atlas.
+        cycle_values (list[float]): Values of the area-time curve of a cycle.
+        atlas (list[float]): Values of the area-time curve of the atlas.
 
     Returns:
         dtw_distance (float): DTW distance between the area-time curve of a cycle and the atlas.
@@ -121,12 +121,12 @@ def main_multi_frame_qc_temporal(
     """MAIN: Do multi-frame QC assessment based on temporal criteria (dynamic time warping (DTW) distance).
     
     Args:
-        views (list[str]): List of views of the segmentations.
-        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cycles.
-        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the segmentations.
+        views (list[str]): Plane views of the segmentations.
+        cycle_information (dict[str, dict[str, list[int]]]): Dictionary containing the information of the cardiac cycle.
+        segmentation_properties (dict[str, dict[str, list[int]]]): Dictionary containing the segmentation parameters.
         dicom_properties (dict[str, dict[str, list[int]]]): Dictionary containing the properties of the DICOM files.
-        atlas_lv (list[float]): List of values of the area-time curve of the atlas for the LV.
-        atlas_la (list[float]): List of values of the area-time curve of the atlas for the LA.
+        atlas_lv (list[float]): Values of the area-time curve of the atlas for the LV.
+        atlas_la (list[float]): Values of the area-time curve of the atlas for the LA.
 
     Returns:
         area_time_analysis (dict[str, dict[str, list[int]]]): Dictionary containing the results of the area-time analysis.

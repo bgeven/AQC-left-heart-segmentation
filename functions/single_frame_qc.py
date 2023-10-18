@@ -11,7 +11,7 @@ def _find_num_contours(seg: np.ndarray, size_closing_kernel: int = 2) -> int:
     """Find the number of external contours in a segmentation.
 
     Args:
-        seg (np.ndarray): Segmentation of the image.
+        seg (np.ndarray): Segmentation of a certain structure.
         size_closing_kernel (int): Size of the kernel for morphological closing (default: 2).
 
     Returns:
@@ -37,7 +37,7 @@ def _check_seg_for_gaps(
 
     Args:
         num_of_contours_ext (int): Number of external contours in the segmentation.
-        contours_all (list[np.ndarray]): List of all contours in the segmentation.
+        contours_all (list[np.ndarray]): All contours in the segmentation.
         min_size (list[int]): Minimum size of a gap (default: [2, 2]).
 
     Returns:
@@ -109,7 +109,7 @@ def _check_for_gaps_full(
     """Check if gaps are present in a segmentation.
 
     Args:
-        contours (list[np.ndarray]): List of all contours in the segmentation.
+        contours (list[np.ndarray]): All contours in the segmentation.
         num_gaps_1 (int): Number of gaps in the first structure.
         num_gaps_2 (int): Number of gaps in the second structure.
         num_gaps_3 (int): Number of gaps in the third structure.
@@ -154,14 +154,14 @@ def _do_single_frame_qc(
     2. No gaps within and between structures.
 
     Args:
-        path_to_segmentations (str): Path to folder with segmentations.
-        files_of_view (list[str]): List of all images of one person.
+        path_to_segmentations (str): Path to the directory containing the segmentations.
+        files_of_view (list[str]): All images of one person.
         min_gap_size (list[str]): Minimum size of a gap (default: [2, 2]).
 
     Returns:
-        qc_scores (list[int]): List of QC scores per image.
+        qc_scores (list[int]): QC scores per image.
         overviews (dict[str, list[float]]): Dictionary of all interim results per image.
-        flagged_frames (list[int]): List of frames with a QC score > 0.
+        flagged_frames (list[int]): Frames with a QC score > 0.
     """
     qc_scores, overviews = [], {}
 
@@ -314,12 +314,12 @@ def main_single_frame_qc(
     """MAIN: Do single-frame quality control (QC) assessment of segmentation.
 
     Args:
-        path_to_segmentations (str): Path to the segmentations.
-        all_files (list[str]): List of all files in the directory.
-        views (list[str]): List of views of the segmentations.
+        path_to_segmentations (str): Path to the directory containing the segmentations.
+        all_files (list[str]): All files in the directory.
+        views (list[str]): Plane views of the segmentations.
 
     Returns:
-        single_frame_qc (dict[str, dict[str, list]]): Dictionary of the results of the single-frame quality control of segmentation.
+        single_frame_qc (dict[str, dict[str, list]]): Dictionary containing the results of the single-frame QC.
     """
     single_frame_qc = defaultdict(dict)
 
@@ -348,7 +348,7 @@ def stats_single_frame_qc(single_frame_qc: dict[str, dict[str, list]]) -> pd.Dat
     """Get statistics of the quality control of segmentation.
 
     Args:
-        single_frame_qc (dict[str, dict[str, list]]): Dictionary of the results of the single-frame quality control of segmentation.
+        single_frame_qc (dict[str, dict[str, list]]): Dictionary containing the results of the single-frame QC.
 
     Returns:
         stats_single_frame_qc (pd.DataFrame): Statistics of the quality control of segmentation.

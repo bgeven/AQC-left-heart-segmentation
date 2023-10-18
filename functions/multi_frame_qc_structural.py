@@ -69,8 +69,8 @@ def _check_for_cut_off_la(
     """Check if the left atrium is cut off.
 
     Args:
-        seg (np.ndarray): Segmentation of the image.
-        contour (list[np.ndarray]): List of contours of the left atrium.
+        seg (np.ndarray): Segmentation of the echo image.
+        contour (list[np.ndarray]): Contour of the left atrium.
         rows_to_exclude (int): Number of rows to exclude from the bottom of the segmentation (default: 5).
         la_cut_off_threshold (int): Threshold to adjust robustness of the check (default: 10).
 
@@ -107,13 +107,13 @@ def _flag_frames_structural(
     """Flag the frames with structural faults, this is a part of multi-frame QC.
 
     Args:
-        path_to_segmentations (str): Path to the segmentations.
-        files_of_view (list[str]): List of filenames names of one view.
+        path_to_segmentations (str): Path to the directory containing the segmentations.
+        files_of_view (list[str]): Filenames names of one view.
         lv_surrounded_threshold (int): Threshold to adjust robustness of the check (default: 3.0).
 
     Returns:
-        flagged_frames_lv (list[int]): List of frames to be flagged by multi-frame QC for the left ventricle.
-        flagged_frames_la (list[int]): List of frames to be flagged by multi-frame QC for the left atrium.
+        flagged_frames_lv (list[int]): Frames to be flagged by multi-frame QC for the left ventricle.
+        flagged_frames_la (list[int]): Frames to be flagged by multi-frame QC for the left atrium.
     """
     # Create lists to store frames that do not meet the QC criteria.
     flagged_frames_lv, flagged_frames_la = [], []
@@ -153,13 +153,13 @@ def main_multi_frame_qc_structural(
         - Left atrium is not cut off by image plane.
 
     Args:
-        path_to_segmentations (str): Path to the segmentations.
-        all_files (list[str]): List of all files in the directory.
-        views (list[str]): List of views of the segmentations.
+        path_to_segmentations (str): Path to the directory containing the segmentations.
+        all_files (list[str]): All files in the directory.
+        views (list[str]): Plane views of the segmentations.
         lv_surrounded_threshold (int): Threshold to adjust robustness of the check (default: 3).
 
     Returns:
-        multi_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the frames flagged by multi-frame QC for the left ventricle and left atrium.
+        multi_frame_qc (dict[str, dict[str, list[int]]]): Dictionary containing the results of the multi-frame QC.
     """
     multi_frame_qc = defaultdict(dict)
 
