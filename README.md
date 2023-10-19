@@ -8,6 +8,10 @@ This repository was created for the automated analysis of 2D echocardiography im
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+## Warning
+
+It is seen that the way of implementation of the Simpson's biplane method has a large impact on the calculated values. Therefore, we do not guarantee that the method that is used in this repository is optimal. 
+
 ## Installing libraries
 
 In the Terminal or Command Prompt, change the directory to the repository: 
@@ -26,16 +30,16 @@ pip install -r requirements.txt
 
 
 ```
-DatasetName/ 
-├── Patient_0001
-├── Patient_0002
+path_to_data/ 
+├── participant_id_1
+├── participant_id_2
 ├── ... 
 ```
 
-Within each patient folder, the following structure is expected:
+Within each participant folder, the following structure is expected:
 
 ```
-DatasetName/Patient_0001/
+path_to_data/participant_id/
 ├── DICOM_files (optional)
 ├── images (optional)
 ├── segmentations_original
@@ -46,4 +50,16 @@ DatasetName/Patient_0001/
 Please note that it is possible to run the workflow without the DICOM files and images, but without information about e.g. pixel spacing and R-wave peaks, the clinical values cannot be calculated. 
 
 ## Segmentations
+
 The code in this repository was written to analyse segmentations of apical two-chamber (A2CH) and apical four-chamber (A4CH) views with a focus on the left side of the heart. These segmentations must contain labels for the left ventricular cavity (LV), myocardium (MYO) and left atrium (LA), each with a unique label value. The LV has label value 1, the MYO has label value 2 and the LA has label value 3, background has value 0.
+
+## Test data
+
+Segmentations of 1 cardiac cycle of 1 participant are publicly available, and accessible via: https://auckland.figshare.com/articles/dataset/AQC-left-heart-segmentation_zip/24376909
+
+This folder contains of the following:
+    
+    ``` 
+    area_time_curves: the population priors of the area-time curves of the LV and LA. 
+    patient_0001: the segmentations of 1 cardiac cycle of 1 participant. 
+    ```
