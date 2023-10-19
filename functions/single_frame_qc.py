@@ -58,43 +58,43 @@ def _check_seg_for_gaps(
 
 
 def _check_for_gap_between_structures(
-    seg_A: np.ndarray,
-    seg_B: np.ndarray,
-    num_gaps_A: int,
-    num_gaps_B: int,
-    num_struc_A: int,
-    num_struc_B: int,
+    seg_a: np.ndarray,
+    seg_b: np.ndarray,
+    num_gaps_a: int,
+    num_gaps_b: int,
+    num_struc_a: int,
+    num_struc_b: int,
     min_size: list[int] = [1, 1],
 ) -> int:
     """Check if segmentation contains gaps between two structures.
 
     Args:
-        seg_A (np.ndarray): Segmentation of the first structure.
-        seg_B (np.ndarray): Segmentation of the second structure.
-        num_gaps_A (int): Number of gaps in the first structure.
-        num_gaps_B (int): Number of gaps in the second structure.
-        num_struc_A (int): Number of structures in the first structure.
-        num_struc_B (int): Number of structures in the second structure.
+        seg_a (np.ndarray): Segmentation of the first structure.
+        seg_b (np.ndarray): Segmentation of the second structure.
+        num_gaps_a (int): Number of gaps in the first structure.
+        num_gaps_b (int): Number of gaps in the second structure.
+        num_struc_a (int): Number of structures in the first structure.
+        num_struc_b (int): Number of structures in the second structure.
         min_size (list[int]): Minimum size of a gap (default: [1, 1]).
 
     Returns:
         num_gaps (int): Number of gaps between the two structures.
     """
     # Create total segmentation of different combinations of structures
-    total_seg = combine_segmentations([seg_A, seg_B], "no_difference")
+    total_seg = combine_segmentations([seg_a, seg_b], "no_difference")
 
     # Find contours within combined segmentations 1 and 2
-    contours_AB = find_contours(total_seg, "all")
+    contours_ab = find_contours(total_seg, "all")
     filtered_contours = [
         contour
-        for contour in contours_AB
+        for contour in contours_ab
         if cv2.contourArea(contour) >= (min_size[0] * min_size[1])
     ]
 
     # Find number of gaps within segmentations A and B
-    nr_of_gaps = num_gaps_A + num_gaps_B
+    nr_of_gaps = num_gaps_a + num_gaps_b
 
-    nr_excessive_structures = num_struc_A + num_struc_B - 2
+    nr_excessive_structures = num_struc_a + num_struc_b - 2
 
     # Define the presence of a gap between 2 structures as the number of contours seg A and B
     # minus number of gaps within seg A and B minus 1 (because of minimal number of contours A and B of 1).
@@ -205,10 +205,22 @@ def _do_single_frame_qc(
         num_gaps_3 = _check_seg_for_gaps(num_contours_3, contours_3_all, min_gap_size)
 
         num_gaps_12 = _check_for_gap_between_structures(
-            seg_1, seg_2, num_gaps_1, num_gaps_2, num_contours_1, num_contours_2, min_gap_size
+            seg_1,
+            seg_2,
+            num_gaps_1,
+            num_gaps_2,
+            num_contours_1,
+            num_contours_2,
+            min_gap_size,
         )
         num_gaps_13 = _check_for_gap_between_structures(
-            seg_1, seg_3, num_gaps_1, num_gaps_3, num_contours_1, num_contours_3, min_gap_size
+            seg_1,
+            seg_3,
+            num_gaps_1,
+            num_gaps_3,
+            num_contours_1,
+            num_contours_3,
+            min_gap_size,
         )
         num_gaps_23 = _check_for_gaps_full(
             contours_0_all,

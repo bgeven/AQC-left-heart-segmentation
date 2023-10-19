@@ -114,8 +114,16 @@ def main_get_dicom_properties(
             dicom_properties["times_frames"][view] = []
 
             print("No DICOM files found in the directory, so default values are used.")
-            print("WARNING: The pixel spacing is set to {} and {}, in x- and y-direction respectively.".format(default_pixel_spacing[0], default_pixel_spacing[1]))
-            print("WARNING: Please check default number of cardiac cycles (dflt_nr_ed_peaks).")
-            print("WARNING: If these default values are incorrect, the calculated clinical indices will be incorrect.")
+            print(
+                "WARNING: The pixel spacing is set to {} and {}, in x- and y-direction respectively.".format(
+                    default_pixel_spacing[0], default_pixel_spacing[1]
+                )
+            )
+            print(
+                "WARNING: Please check default number of cardiac cycles (dflt_nr_ed_peaks)."
+            )
+            print(
+                "WARNING: If these default values are incorrect, the calculated clinical indices will be incorrect."
+            )
 
     return dicom_properties

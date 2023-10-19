@@ -6,9 +6,7 @@ import numpy as np
 import SimpleITK as sitk
 
 
-def get_list_with_views(
-    all_files: list[str], length_view_identifier: int
-) -> list[str]:
+def get_list_with_views(all_files: list[str], length_view_identifier: int) -> list[str]:
     """Get list of the views of the segmentations present in one folder.
 
     Args:

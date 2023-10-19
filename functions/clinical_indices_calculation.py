@@ -14,7 +14,7 @@ def _rotate_array(
     Args:
         array (np.ndarray): 2D array to be rotated.
         angle (float): Rotation angle, in radians.
-        rotation_point (tuple[float, float]): Rotation point. 
+        rotation_point (tuple[float, float]): Rotation point.
 
     Returns:
         array_rotated (np.ndarray): Rotated array.
@@ -483,7 +483,10 @@ def _process_coordinates(
 
 
 def _comp_circumference(
-    seg_a: np.ndarray, seg_b: np.ndarray, distance_threshold: int = 2, neighbor_threshold: int = 10,
+    seg_a: np.ndarray,
+    seg_b: np.ndarray,
+    distance_threshold: int = 2,
+    neighbor_threshold: int = 10,
 ) -> float:
     """Compute the circumference of the structure, without including pixels neighboring a specific structure.
 
@@ -517,7 +520,7 @@ def _comp_circumference(
                 neighbor_indices.append(i)
                 break
 
-    # Check if there are more than xx neighboring or overlapping coordinates, to ensure that the derived indices are valid. 
+    # Check if there are more than xx neighboring or overlapping coordinates, to ensure that the derived indices are valid.
     if len(neighbor_indices) <= neighbor_threshold:
         return np.nan
 
@@ -762,7 +765,7 @@ def _comp_circumference_all_frames(
 
     Args:
         path_to_segmentations (str): Path to the directory containing the segmentations.
-        view (str): Plane view of the image/segmentation. 
+        view (str): Plane view of the image/segmentation.
         all_files (list[str]): All files in the directory.
 
     Returns:
@@ -864,7 +867,7 @@ def show_clinical_indices(clinical_indices: dict[str, dict[str, float]]) -> None
     """Show the clinical indices of the patient(s) in a clear way.
 
     Args:
-        clinical_indices (dict[str, dict[str, float]]): Dictionary containing the clinical indices of the structure. 
+        clinical_indices (dict[str, dict[str, float]]): Dictionary containing the clinical indices of the structure.
     """
     for patient, values in clinical_indices.items():
         print("{:<30} {:<30}".format("Indices", patient))

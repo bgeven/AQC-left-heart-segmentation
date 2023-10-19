@@ -6,9 +6,7 @@ from collections import defaultdict
 from functions.general_utilities import *
 
 
-def _comp_factor_px_to_cm2(
-    pixel_spacing: list[float], conv_factor: int = 100
-) -> float:
+def _comp_factor_px_to_cm2(pixel_spacing: list[float], conv_factor: int = 100) -> float:
     """Compute pixel size to cm2 conversion factor.
 
     Args:
@@ -126,7 +124,7 @@ def _find_es_points(
         frames_r_wave (list[int]): Frame numbers with R-wave peaks (default: []).
         nr_peak_type (str): Type of peak determination (default: "auto").
         dflt_nr_peaks (int): Default number of peaks (default: 3).
-    
+
     Returns:
         es_points (list[int]): Frames corresponding to ES phase of the cardiac cycle.
     """
@@ -164,7 +162,6 @@ def _find_ed_points(
     frames_r_wave: list[int] = [],
     nr_peak_type: str = "auto",
     dflt_nr_peaks: int = 2,
-    
 ) -> list[int]:
     """Determine the end-diastole (ED) points from LV areas.
 
@@ -183,7 +180,7 @@ def _find_ed_points(
             nr_peaks = _find_nr_of_ed_points(frames_r_wave, len(areas))
         else:
             raise ValueError("nr_peak_type is 'auto', but frames_r_wave is empty.")
-        
+
     elif nr_peak_type == "force":
         nr_peaks = dflt_nr_peaks  # Set default number of ED points.
 
@@ -254,15 +251,22 @@ def main_derive_parameters(
             path_to_segmentations, files_of_view, 3, pixel_spacing
         )
 
-        if dicom_properties["frames_r_waves"][view] == [] and peak_type_initial == "auto":
+        if (
+            dicom_properties["frames_r_waves"][view] == []
+            and peak_type_initial == "auto"
+        ):
             print("No R-wave frames found, using default number of ED points.")
             peak_type = "force"
         else:
             peak_type = peak_type_initial
 
         # Find ED and ES points.
-        ed_points = _find_ed_points(lv_areas, frames_r_waves, peak_type, dflt_nr_ed_peaks)
-        es_points = _find_es_points(lv_areas, frames_r_waves, peak_type, dflt_nr_ed_peaks -1)
+        ed_points = _find_ed_points(
+            lv_areas, frames_r_waves, peak_type, dflt_nr_ed_peaks
+        )
+        es_points = _find_es_points(
+            lv_areas, frames_r_waves, peak_type, dflt_nr_ed_peaks - 1
+        )
 
         # Save properties in dictionaries.
         segmentation_properties["lv_areas"][view] = lv_areas

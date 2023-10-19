@@ -351,9 +351,11 @@ def _fill_holes_between_lv_la(seg: np.ndarray) -> np.ndarray:
                 # Extract the neighborhood of the pixel to change.
                 new_pixel_value = 0
                 ext = 1
-                
+
                 while new_pixel_value == 0 and ext < 50:
-                    neighborhood = seg_13[row - ext: row + ext + 1, col - ext: col + ext + 1]
+                    neighborhood = seg_13[
+                        row - ext : row + ext + 1, col - ext : col + ext + 1
+                    ]
 
                     # Count number of MYO and LA pixels in neighborhood.
                     num_lv_px = np.count_nonzero(neighborhood == 1)
@@ -367,12 +369,12 @@ def _fill_holes_between_lv_la(seg: np.ndarray) -> np.ndarray:
                     else:
                         new_pixel_value = 0
                         ext += 1
-                    
+
                 # Change the pixel value in the original image.
                 seg_13_no_holes[row, col] = new_pixel_value
 
                 coordinates_holes_13 = _find_coordinates_of_holes(seg_13_no_holes)
-                
+
     # Combine the segmentations of all structures.
     seg_combined = seg_2 + seg_13_no_holes
 
@@ -468,7 +470,7 @@ def _fill_holes_between_lv_myo(seg_total: np.ndarray) -> np.ndarray:
 
     # Find position of possible gaps within structure
     zero_positions = _find_coordinates_of_holes(total_seg_12)
-    
+
     # Find contours of LV, MYO and LA.
     contour_1 = find_contours(seg_1, "external")
     contour_2 = find_contours(seg_2, "external")

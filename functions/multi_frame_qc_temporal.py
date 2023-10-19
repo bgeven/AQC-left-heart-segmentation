@@ -87,7 +87,9 @@ def _prepare_area_time_curves(
     return values_adjusted
 
 
-def _comp_dtw_distance(cycle_values: list[float], atlas: list[float], show_dtw: bool = False) -> float:
+def _comp_dtw_distance(
+    cycle_values: list[float], atlas: list[float], show_dtw: bool = False
+) -> float:
     """Compute the dynamic time warping (DTW) distance between the area-time curve of a cycle and the atlas.
 
     Args:
@@ -122,7 +124,7 @@ def main_multi_frame_qc_temporal(
     show_dtw: bool = False,
 ) -> dict[str, dict[str, float]]:
     """MAIN: Do multi-frame QC assessment based on temporal criteria (dynamic time warping (DTW) distance).
-    
+
     Args:
         views (list[str]): Plane views of the segmentations.
         cycle_information (dict[str, dict[str, list[float]]]): Dictionary containing the information of the cardiac cycle.
@@ -154,8 +156,12 @@ def main_multi_frame_qc_temporal(
         )
 
         # Compute the DTW distance between the area-time curve of a cycle and the atlas.
-        lv_dtw_distance = _comp_dtw_distance(lv_areas_cycle_prepared, atlas_lv, show_dtw)
-        la_dtw_distance = _comp_dtw_distance(la_areas_cycle_prepared, atlas_la, show_dtw)
+        lv_dtw_distance = _comp_dtw_distance(
+            lv_areas_cycle_prepared, atlas_lv, show_dtw
+        )
+        la_dtw_distance = _comp_dtw_distance(
+            la_areas_cycle_prepared, atlas_la, show_dtw
+        )
 
         # Save the DTW distance in the dictionary.
         area_time_analysis["dtw_lv"][view] = lv_dtw_distance
