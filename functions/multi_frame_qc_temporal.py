@@ -87,12 +87,13 @@ def _prepare_area_time_curves(
     return values_adjusted
 
 
-def _comp_dtw_distance(cycle_values: list[float], atlas: list[float]) -> float:
+def _comp_dtw_distance(cycle_values: list[float], atlas: list[float], show_dtw: bool = False) -> float:
     """Compute the dynamic time warping (DTW) distance between the area-time curve of a cycle and the atlas.
 
     Args:
         cycle_values (list[float]): Values of the area-time curve of a cycle.
         atlas (list[float]): Values of the area-time curve of the atlas.
+        show_dtw (bool): Whether to show the DTW visualisation (default: False).
 
     Returns:
         dtw_distance (float): DTW distance between the area-time curve of a cycle and the atlas.
@@ -103,9 +104,10 @@ def _comp_dtw_distance(cycle_values: list[float], atlas: list[float]) -> float:
 
     dtw_distance = dtw.distance(cycle_values_dtw, atlas_dtw)
 
-    # Visualise DTW
-    # dtw_path = dtw.warping_path(cycle_values_dtw, atlas_dtw, penalty=0.1)
-    # dtw_visualisation.plot_warping(cycle_values_dtw, atlas_dtw, dtw_path)
+    # Visualise DTW if wanted.
+    if show_dtw:
+        dtw_path = dtw.warping_path(cycle_values_dtw, atlas_dtw, penalty=0.1)
+        dtw_visualisation.plot_warping(cycle_values_dtw, atlas_dtw, dtw_path)
 
     return dtw_distance
 
@@ -117,6 +119,7 @@ def main_multi_frame_qc_temporal(
     dicom_properties: dict[str, dict[str, list[int]]],
     atlas_lv: list[float],
     atlas_la: list[float],
+    show_dtw: bool = False,
 ) -> dict[str, dict[str, float]]:
     """MAIN: Do multi-frame QC assessment based on temporal criteria (dynamic time warping (DTW) distance).
     
@@ -127,6 +130,7 @@ def main_multi_frame_qc_temporal(
         dicom_properties (dict[str, dict[str, list[float]]]): Dictionary containing the properties of the DICOM files.
         atlas_lv (list[float]): Values of the area-time curve of the atlas for the LV.
         atlas_la (list[float]): Values of the area-time curve of the atlas for the LA.
+        show_dtw (bool): Whether to show the DTW visualisation (default: False).
 
     Returns:
         area_time_analysis (dict[str, dict[str, list[float]]]): Dictionary containing the results of the area-time analysis.
@@ -150,8 +154,8 @@ def main_multi_frame_qc_temporal(
         )
 
         # Compute the DTW distance between the area-time curve of a cycle and the atlas.
-        lv_dtw_distance = _comp_dtw_distance(lv_areas_cycle_prepared, atlas_lv)
-        la_dtw_distance = _comp_dtw_distance(la_areas_cycle_prepared, atlas_la)
+        lv_dtw_distance = _comp_dtw_distance(lv_areas_cycle_prepared, atlas_lv, show_dtw)
+        la_dtw_distance = _comp_dtw_distance(la_areas_cycle_prepared, atlas_la, show_dtw)
 
         # Save the DTW distance in the dictionary.
         area_time_analysis["dtw_lv"][view] = lv_dtw_distance

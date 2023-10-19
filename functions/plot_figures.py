@@ -184,20 +184,15 @@ def main_plot_area_time_curves(
         # Only plot the first frame for now.
         for frame_nr, filename in enumerate(files_of_view[0:1]):
             # Define file location and load echo image frame.
-            images_present = len(os.listdir(path_to_images)) > 0
-            if images_present == True:
-                file_location_image = define_path_to_images(path_to_images, filename)
-                echo_image = convert_image_to_array(file_location_image)
+            file_location_image = define_path_to_images(path_to_images, filename)
+            echo_image = convert_image_to_array(file_location_image)
 
             # Define file location and load segmentation.
             file_location_seg = os.path.join(path_to_segmentations, filename)
             seg = convert_image_to_array(file_location_seg)
             seg_colored = _color_segmentation(seg, colors_for_labels)
 
-            if images_present == True:
-                contours_seg = _project_segmentation_on_image(
-                    echo_image, seg, colors_for_labels
-                )
+            contours_seg = _project_segmentation_on_image(echo_image, seg, colors_for_labels)
 
             fig = plt.figure(dpi=dpi_value)
             fig.suptitle("Segmentation and area-time curves. View: {}, frame {}.".format(view, str(frame_nr)))
@@ -209,13 +204,9 @@ def main_plot_area_time_curves(
                 ax = fig.add_subplot(nrows, ncols, plot_number)
 
                 if nr_plot == 0:
-                    if images_present == True:
-                        ax.imshow(echo_image, cmap="gray")
-                        ax.set_title("Echo image", fontsize=font_size, loc="left")
-                        ax.axis("off")
-                    else:    
-                        ax.axis("off")
-                        ax.text(0.5, 0.5, "No image available.", clip_on=True, horizontalalignment='center', verticalalignment='center')
+                    ax.imshow(echo_image, cmap="gray")
+                    ax.set_title("Echo image", fontsize=font_size, loc="left")
+                    ax.axis("off")
 
                 elif nr_plot == 1:
                     ax.imshow(seg_colored)
@@ -282,6 +273,85 @@ def main_plot_area_time_curves(
 
             # Append the current figure to the list
             figures.append(fig)
+
+    return figures
+
+
+def alt_plot_area_time_curves(
+    views: list[str],
+    segmentation_properties: dict[str, dict[str, list[float]]],
+    dpi_value: int = 100,
+) -> plt.figure:
+    """Plot area-time curves for all patients.
+
+    Args:
+        views (list[str]): Plane views of the segmentations.
+        segmentation_properties (dict[str, dict[str, list[float]]]): Dictionary containing the segmentation parameters.
+        dpi_value (int): DPI value of the figure (default: 100).
+
+    Returns:
+        fig (list[plt.figure]): Figures with area-time curves for each image. 
+    """
+    figures = []
+
+    # Define directories of images and segmentations.
+    for view in views:
+        # Get dicom and segmentation properties of one patient
+        ed_points = segmentation_properties["ed_points"][view]
+        es_points = segmentation_properties["es_points"][view]
+        lv_areas = segmentation_properties["lv_areas"][view]
+        myo_areas = segmentation_properties["myo_areas"][view]
+        la_areas = segmentation_properties["la_areas"][view]
+
+        # Plotting settings
+        min_y_val = int(0.9 * min(min(lv_areas), min(myo_areas), min(la_areas)))
+        max_y_val = int(1.1 * max(max(lv_areas), max(myo_areas), max(la_areas)))
+
+        # Plot area-time curves for all frames of one patient.
+        fig, ax = plt.subplots(dpi=dpi_value)
+        fig.suptitle("Area-time curves. View: {}.".format(view))
+
+        ax.plot(lv_areas, color="green", label="Left Ventricle")
+        ax.plot(myo_areas, color="red", label="Myocardium")
+        ax.plot(la_areas, color="blue", label="Left Atrium")
+
+        # Plot vertical lines for all ED and ES points
+        ax.axvline(
+            x=es_points[0],
+            color="m",
+            linewidth=1,
+            linestyle="--",
+            label="ES point",
+        )
+        ax.axvline(
+            x=ed_points[0],
+            color="y",
+            linewidth=1,
+            linestyle="--",
+            label="ED point",
+        )
+        for idx in range(1, len(es_points)):
+            ax.axvline(
+                x=es_points[idx],
+                color="m",
+                linewidth=1,
+                linestyle="--",
+            )
+        for idx in range(1, len(ed_points)):
+            ax.axvline(
+                x=ed_points[idx],
+                color="y",
+                linewidth=1,
+                linestyle="--",
+            )
+
+        ax.set_xlabel("Frame number [-]")
+        ax.set_ylabel("Area [cm$^{2}$]")
+        ax.set_ylim(min_y_val, max_y_val)
+        ax.legend(bbox_to_anchor=(1, 0.5), loc="center left")
+
+        # Append the current figure to the list
+        figures.append(fig)
 
     return figures
 
