@@ -48,7 +48,7 @@ Please note that it is possible to run the workflow without the DICOM files and 
 The code in this repository was written to analyse segmentations of apical two-chamber (A2CH) and apical four-chamber (A4CH) views with a focus on the left side of the heart. These segmentations must contain labels for the left ventricular cavity (LV), myocardium (MYO) and left atrium (LA), each with a unique label value. The LV has label value 1, the MYO has label value 2 and the LA has label value 3, background has value 0.
 
 ## Test data
-Segmentations of 1 cardiac cycle of 1 participant and the population priors of the area-time curves of the LV and LA are publicly available, and accessible via: https://auckland.figshare.com/articles/dataset/AQC-left-heart-segmentation_zip/24376909.
+Segmentations of 1 cardiac cycle of 1 participant and the population priors of the area-time curves of the LV and LA are publicly available, and accessible via [this link](https://auckland.figshare.com/articles/dataset/AQC-left-heart-segmentation_zip/24376909).
 
 This folder contains of the following:
     
