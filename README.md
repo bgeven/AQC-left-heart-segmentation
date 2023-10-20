@@ -53,4 +53,4 @@ Segmentations of 1 cardiac cycle of 1 participant and the population priors of t
 This folder contains of the following:
     
 * area_time_curves: the population priors of the area-time curves of the LV and LA. 
-* patient_0001: the segmentations of 1 cardiac cycle of 1 participant. 
+* patient_0001: the segmentations of 1 cardiac cycle of 1 participant. Several segmentations are manually modified to showcase the effect of the post-processing step.
