@@ -53,6 +53,9 @@ def main_multi_frame_qc(
             - "label_per_view": Dictionary mapping views to their quality control labels.
             - "label_combined": Combined quality control label for the patient.
 
+    TODO: 
+        Generalise variable names to allow for easy addition of new criteria. 
+
     """
     analysis = defaultdict(dict)
 

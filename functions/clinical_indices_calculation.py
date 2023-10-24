@@ -770,6 +770,9 @@ def _comp_circumference_all_frames(
 
     Returns:
         all_circumferences (list[float]): Circumference of the structure for every time frame.
+
+    TODO: 
+        The code to calculate the circumference is not very efficient and slow. This can be improved.
     """
     all_circumferences = []
 
@@ -785,6 +788,7 @@ def _comp_circumference_all_frames(
         _, seg_1, _, seg_3 = separate_segmentation(seg)
 
         # Calculate the circumference of the structure and append it to the list.
+        # TODO: Improve efficiency of this circumference code.
         circumference = _comp_circumference(seg_1, seg_3)
         all_circumferences.append(circumference)
 
